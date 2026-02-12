@@ -3,35 +3,185 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
+import { ALL_MAPS } from '../../game/data/allMaps';
+
+// Seeded random for consistent decorations per map
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
+}
+
+// Cache decorations per map so they don't regenerate each frame
+const mapDecorationsCache: Record<string, { trees: {x:number,y:number,type:number,size:number}[], flowers: {x:number,y:number,color:string}[], rocks: {x:number,y:number,size:number}[], bushes: {x:number,y:number,size:number}[] }> = {};
+
+function isNearPath(px: number, py: number, waypoints: Point[], dist: number): boolean {
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const ax = waypoints[i].x, ay = waypoints[i].y;
+    const bx = waypoints[i+1].x, by = waypoints[i+1].y;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx*dx + dy*dy;
+    if (len2 === 0) continue;
+    let t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / len2));
+    const cx = ax + t*dx, cy = ay + t*dy;
+    const d2 = (px-cx)*(px-cx) + (py-cy)*(py-cy);
+    if (d2 < dist*dist) return true;
+  }
+  return false;
+}
+
+function isNearSlot(px: number, py: number, slots: Slot[], dist: number): boolean {
+  for (const s of slots) {
+    if ((px-s.x)*(px-s.x) + (py-s.y)*(py-s.y) < dist*dist) return true;
+  }
+  return false;
+}
+
+function getDecorations(mapId: string, waypoints: Point[], slots: Slot[]) {
+  if (mapDecorationsCache[mapId]) return mapDecorationsCache[mapId];
+  
+  const rand = seededRandom(mapId.charCodeAt(0) * 1000 + mapId.charCodeAt(1||0) * 100);
+  const trees: {x:number,y:number,type:number,size:number}[] = [];
+  const flowers: {x:number,y:number,color:string}[] = [];
+  const rocks: {x:number,y:number,size:number}[] = [];
+  const bushes: {x:number,y:number,size:number}[] = [];
+  
+  const flowerColors = ['#ff6688', '#ffaa44', '#ffff66', '#88bbff', '#ff88ff', '#ffffff'];
+  
+  // Generate trees
+  for (let i = 0; i < 25; i++) {
+    const x = rand() * CANVAS_WIDTH;
+    const y = rand() * CANVAS_HEIGHT;
+    if (!isNearPath(x, y, waypoints, 40) && !isNearSlot(x, y, slots, 30)) {
+      trees.push({ x, y, type: Math.floor(rand() * 3), size: 12 + rand() * 10 });
+    }
+  }
+  
+  // Generate flowers
+  for (let i = 0; i < 40; i++) {
+    const x = rand() * CANVAS_WIDTH;
+    const y = rand() * CANVAS_HEIGHT;
+    if (!isNearPath(x, y, waypoints, 25) && !isNearSlot(x, y, slots, 20)) {
+      flowers.push({ x, y, color: flowerColors[Math.floor(rand() * flowerColors.length)] });
+    }
+  }
+  
+  // Generate rocks
+  for (let i = 0; i < 12; i++) {
+    const x = rand() * CANVAS_WIDTH;
+    const y = rand() * CANVAS_HEIGHT;
+    if (!isNearPath(x, y, waypoints, 30) && !isNearSlot(x, y, slots, 25)) {
+      rocks.push({ x, y, size: 4 + rand() * 6 });
+    }
+  }
+  
+  // Generate bushes
+  for (let i = 0; i < 18; i++) {
+    const x = rand() * CANVAS_WIDTH;
+    const y = rand() * CANVAS_HEIGHT;
+    if (!isNearPath(x, y, waypoints, 35) && !isNearSlot(x, y, slots, 25)) {
+      bushes.push({ x, y, size: 8 + rand() * 8 });
+    }
+  }
+  
+  mapDecorationsCache[mapId] = { trees, flowers, rocks, bushes };
+  return mapDecorationsCache[mapId];
+}
+
+// ── Theme colors per map ──
+function getMapTheme(mapId: string) {
+  switch (mapId) {
+    case 'forest':
+      return {
+        grassLight: '#2d5a1e', grassDark: '#1f4a14', grassAccent: '#3a6e28',
+        pathMain: '#8b7355', pathBorder: '#6b5340', pathDetail: '#a08868',
+        treeLeaf: '#2a6e1a', treeTrunk: '#5a3a1a', treeShadow: '#1a4a0e',
+        waterColor: null,
+      };
+    case 'volcano':
+      return {
+        grassLight: '#3a2a1a', grassDark: '#2a1a0e', grassAccent: '#4a3020',
+        pathMain: '#5a3020', pathBorder: '#3a1a10', pathDetail: '#7a4a30',
+        treeLeaf: '#4a2a1a', treeTrunk: '#3a1a0a', treeShadow: '#2a0a0a',
+        waterColor: '#ff4400',
+      };
+    default: // plains
+      return {
+        grassLight: '#3a8a2a', grassDark: '#2a6a1a', grassAccent: '#4a9a3a',
+        pathMain: '#c4a46a', pathBorder: '#8a7040', pathDetail: '#dabb80',
+        treeLeaf: '#2a8a1a', treeTrunk: '#6a4a2a', treeShadow: '#1a6a0e',
+        waterColor: null,
+      };
+  }
+}
 
 export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[]): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
+  const mapId = state.currentMapId || 'plains';
+  const theme = getMapTheme(mapId);
 
-  ctx.fillStyle = '#0f1923';
-  ctx.fillRect(0, 0, w, h);
+  // ── Background: tiled grass ──
+  drawGrassBackground(ctx, w, h, theme);
 
-  ctx.fillStyle = '#1a2a3a';
-  for (let x = 0; x < w; x += 40) {
-    for (let y = 0; y < h; y += 40) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
+  // ── Path ──
+  drawPath(ctx, waypoints, theme);
 
-  drawPath(ctx, waypoints);
+  // ── Decorations ──
+  const mapDef = ALL_MAPS.find(m => m.id === mapId);
+  const decos = getDecorations(mapId, waypoints, mapDef?.slots || state.slots);
+  drawDecorations(ctx, decos, theme, mapId);
+
+  // ── Slots ──
   drawSlots(ctx, state.slots, state.selectedSlotIndex);
+
+  // ── Game entities ──
   drawEnemies(ctx, state.enemies);
   drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
   drawProjectiles(ctx, state.projectiles);
   drawBase(ctx, waypoints);
 }
 
-function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
+function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number, theme: ReturnType<typeof getMapTheme>): void {
+  // Base grass
+  ctx.fillStyle = theme.grassDark;
+  ctx.fillRect(0, 0, w, h);
+
+  // Grass tile pattern (8x8 pixel tiles like Pokémon)
+  const tileSize = 16;
+  const rand = seededRandom(42);
+  for (let tx = 0; tx < w; tx += tileSize) {
+    for (let ty = 0; ty < h; ty += tileSize) {
+      const r = rand();
+      if (r > 0.6) {
+        ctx.fillStyle = theme.grassLight;
+        ctx.fillRect(tx, ty, tileSize, tileSize);
+      } else if (r > 0.4) {
+        ctx.fillStyle = theme.grassAccent;
+        // Small grass tufts
+        ctx.fillRect(tx + 4, ty + 2, 2, 3);
+        ctx.fillRect(tx + 8, ty + 6, 2, 3);
+        ctx.fillRect(tx + 2, ty + 10, 2, 3);
+      }
+      // Pixel-style grass blades
+      if (rand() > 0.85) {
+        ctx.fillStyle = theme.grassAccent;
+        ctx.fillRect(tx + 6, ty, 1, 2);
+        ctx.fillRect(tx + 7, ty + 1, 1, 2);
+        ctx.fillRect(tx + 10, ty + 4, 1, 2);
+      }
+    }
+  }
+}
+
+function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: ReturnType<typeof getMapTheme>): void {
   if (waypoints.length < 2) return;
-  ctx.strokeStyle = '#2a3a4a';
-  ctx.lineWidth = 30;
+
+  // Outer border (darker)
+  ctx.strokeStyle = theme.pathBorder;
+  ctx.lineWidth = 36;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
@@ -39,14 +189,164 @@ function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
   for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
   ctx.stroke();
 
-  ctx.strokeStyle = '#3a4a5a';
-  ctx.lineWidth = 32;
-  ctx.globalAlpha = 0.3;
+  // Main path (lighter dirt)
+  ctx.strokeStyle = theme.pathMain;
+  ctx.lineWidth = 28;
   ctx.beginPath();
   ctx.moveTo(waypoints[0].x, waypoints[0].y);
   for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
   ctx.stroke();
+
+  // Center detail line (lighter)
+  ctx.strokeStyle = theme.pathDetail;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.3;
+  ctx.setLineDash([6, 8]);
+  ctx.beginPath();
+  ctx.moveTo(waypoints[0].x, waypoints[0].y);
+  for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
+  ctx.stroke();
+  ctx.setLineDash([]);
   ctx.globalAlpha = 1;
+
+  // Pixel dirt texture on path
+  const rand = seededRandom(777);
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const ax = waypoints[i].x, ay = waypoints[i].y;
+    const bx = waypoints[i+1].x, by = waypoints[i+1].y;
+    const len = Math.sqrt((bx-ax)**2 + (by-ay)**2);
+    const steps = Math.floor(len / 8);
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps;
+      const px = ax + (bx-ax)*t + (rand()-0.5)*20;
+      const py = ay + (by-ay)*t + (rand()-0.5)*20;
+      if (rand() > 0.6) {
+        ctx.fillStyle = theme.pathDetail;
+        ctx.globalAlpha = 0.15;
+        ctx.fillRect(Math.floor(px), Math.floor(py), 2, 2);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof getDecorations>, theme: ReturnType<typeof getMapTheme>, mapId: string): void {
+  // Rocks
+  for (const rock of decos.rocks) {
+    ctx.fillStyle = mapId === 'volcano' ? '#4a3020' : '#888888';
+    ctx.beginPath();
+    ctx.ellipse(rock.x, rock.y, rock.size, rock.size * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = mapId === 'volcano' ? '#5a4030' : '#aaaaaa';
+    ctx.beginPath();
+    ctx.ellipse(rock.x - 1, rock.y - 1, rock.size * 0.6, rock.size * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bushes
+  for (const bush of decos.bushes) {
+    const s = bush.size;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(bush.x + 2, bush.y + s * 0.4, s, s * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Bush body
+    ctx.fillStyle = theme.treeLeaf;
+    ctx.beginPath();
+    ctx.arc(bush.x, bush.y, s * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bush.x - s*0.3, bush.y + 2, s * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bush.x + s*0.3, bush.y + 2, s * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.fillStyle = theme.grassAccent;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.arc(bush.x, bush.y - 2, s * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Trees (Pokémon-style round trees)
+  for (const tree of decos.trees) {
+    const s = tree.size;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(tree.x + 2, tree.y + s * 0.7, s * 0.6, s * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trunk
+    ctx.fillStyle = theme.treeTrunk;
+    ctx.fillRect(tree.x - 3, tree.y - 2, 6, s * 0.5);
+    // Trunk highlight
+    ctx.fillStyle = mapId === 'volcano' ? '#4a2a1a' : '#8a6a3a';
+    ctx.fillRect(tree.x - 1, tree.y - 2, 2, s * 0.5);
+
+    // Canopy (layered circles like Pokémon trees)
+    const leafColor = mapId === 'volcano' ? '#6a2a0a' : theme.treeLeaf;
+    const leafHighlight = mapId === 'volcano' ? '#8a3a1a' : theme.grassAccent;
+    
+    // Back layer
+    ctx.fillStyle = theme.treeShadow;
+    ctx.beginPath();
+    ctx.arc(tree.x, tree.y - s * 0.3, s * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Main canopy
+    ctx.fillStyle = leafColor;
+    ctx.beginPath();
+    ctx.arc(tree.x, tree.y - s * 0.4, s * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tree.x - s*0.2, tree.y - s * 0.25, s * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tree.x + s*0.2, tree.y - s * 0.25, s * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Top highlight
+    ctx.fillStyle = leafHighlight;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.arc(tree.x - 2, tree.y - s * 0.5, s * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Lava glow for volcano trees
+    if (mapId === 'volcano') {
+      ctx.fillStyle = 'rgba(255, 80, 0, 0.15)';
+      ctx.beginPath();
+      ctx.arc(tree.x, tree.y - s * 0.3, s * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Flowers
+  for (const flower of decos.flowers) {
+    if (mapId === 'volcano') {
+      // Embers instead of flowers
+      ctx.fillStyle = '#ff6600';
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(flower.x, flower.y, 2, 2);
+      ctx.globalAlpha = 1;
+    } else {
+      // Stem
+      ctx.fillStyle = '#2a6a1a';
+      ctx.fillRect(flower.x, flower.y + 2, 1, 3);
+      // Petals
+      ctx.fillStyle = flower.color;
+      ctx.fillRect(flower.x - 1, flower.y, 3, 1);
+      ctx.fillRect(flower.x, flower.y - 1, 1, 3);
+      // Center
+      ctx.fillStyle = '#ffee44';
+      ctx.fillRect(flower.x, flower.y, 1, 1);
+    }
+  }
 }
 
 function drawSlots(ctx: CanvasRenderingContext2D, slots: Slot[], selectedIndex: number | null): void {
@@ -55,23 +355,43 @@ function drawSlots(ctx: CanvasRenderingContext2D, slots: Slot[], selectedIndex: 
     if (slot.unitId !== null) continue;
     const isSelected = selectedIndex === i;
 
+    // Platform base (stone circle)
+    ctx.fillStyle = '#555555';
     ctx.beginPath();
-    ctx.arc(slot.x, slot.y, 18, 0, Math.PI * 2);
-    ctx.fillStyle = isSelected ? 'rgba(68, 136, 255, 0.3)' : 'rgba(68, 136, 255, 0.1)';
+    ctx.ellipse(slot.x, slot.y + 4, 20, 8, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = isSelected ? '#4488ff' : '#335588';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.stroke();
-    ctx.setLineDash([]);
 
-    ctx.strokeStyle = isSelected ? '#4488ff' : '#335588';
+    ctx.fillStyle = isSelected ? '#7799bb' : '#666666';
+    ctx.beginPath();
+    ctx.ellipse(slot.x, slot.y + 2, 18, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = isSelected ? '#99bbdd' : '#888888';
+    ctx.beginPath();
+    ctx.ellipse(slot.x, slot.y, 16, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Selection glow
+    if (isSelected) {
+      ctx.strokeStyle = '#44aaff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(slot.x, slot.y, 20, 8, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(68, 170, 255, 0.1)';
+      ctx.beginPath();
+      ctx.arc(slot.x, slot.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Plus icon
+    ctx.strokeStyle = isSelected ? '#aaddff' : '#aaaaaa';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(slot.x - 6, slot.y);
-    ctx.lineTo(slot.x + 6, slot.y);
-    ctx.moveTo(slot.x, slot.y - 6);
-    ctx.lineTo(slot.x, slot.y + 6);
+    ctx.moveTo(slot.x - 5, slot.y);
+    ctx.lineTo(slot.x + 5, slot.y);
+    ctx.moveTo(slot.x, slot.y - 5);
+    ctx.lineTo(slot.x, slot.y + 5);
     ctx.stroke();
   }
 }
@@ -135,7 +455,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       ctx.stroke();
     }
 
-    if (unit.targetId !== null && (unit.config.attackPattern === 'rapid' || unit.config.attackPattern === 'slow')) {
+    if (unit.targetId !== null && (unit.config.attackPattern === 'rapid' || unit.config.attackPattern === 'slow') ) {
       const target = enemies.find(e => e.id === unit.targetId && e.alive);
       if (target && unit.isAttacking) {
         ctx.strokeStyle = `${unit.config.weaponColor}66`;
@@ -207,16 +527,44 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
 
 function drawBase(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
   const last = waypoints[waypoints.length - 1];
-  ctx.fillStyle = '#44aaff';
+
+  // Stone platform
+  ctx.fillStyle = '#666666';
   ctx.beginPath();
-  ctx.moveTo(last.x, last.y - 15);
-  ctx.lineTo(last.x + 12, last.y + 10);
-  ctx.lineTo(last.x - 12, last.y + 10);
-  ctx.closePath();
+  ctx.ellipse(last.x, last.y + 8, 20, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#888888';
+  ctx.beginPath();
+  ctx.ellipse(last.x, last.y + 6, 18, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Castle/tower base
+  ctx.fillStyle = '#4477aa';
+  ctx.fillRect(last.x - 10, last.y - 16, 20, 22);
+  // Battlements
+  ctx.fillStyle = '#5588bb';
+  ctx.fillRect(last.x - 12, last.y - 20, 6, 6);
+  ctx.fillRect(last.x - 2, last.y - 22, 4, 8);
+  ctx.fillRect(last.x + 6, last.y - 20, 6, 6);
+  // Door
+  ctx.fillStyle = '#2a4a6a';
+  ctx.fillRect(last.x - 4, last.y - 2, 8, 8);
+  // Flag
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(last.x, last.y - 22);
+  ctx.lineTo(last.x, last.y - 32);
+  ctx.stroke();
+  ctx.fillStyle = '#ff4444';
+  ctx.beginPath();
+  ctx.moveTo(last.x, last.y - 32);
+  ctx.lineTo(last.x + 8, last.y - 29);
+  ctx.lineTo(last.x, last.y - 26);
   ctx.fill();
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 8px monospace';
+  ctx.font = 'bold 7px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('BASE', last.x, last.y + 24);
+  ctx.fillText('BASE', last.x, last.y + 20);
 }
