@@ -4,6 +4,7 @@ import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
 import { ALL_MAPS } from '../../game/data/allMaps';
+import { fishState } from '../../game/GameEngine';
 
 // Seeded random for consistent decorations per map
 function seededRandom(seed: number): () => number {
@@ -137,6 +138,9 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
 
   // ── Slots ──
   drawSlots(ctx, state.slots, state.selectedSlotIndex);
+
+  // ── Pond & fish easter egg ──
+  drawPond(ctx, t);
 
   // ── Game entities ──
   drawEnemies(ctx, state.enemies);
@@ -640,4 +644,226 @@ function drawBase(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
   ctx.font = 'bold 7px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('BASE', last.x, last.y + 20);
+}
+
+// ── Pond & Fish Easter Egg ──
+const POND_X = 120;
+const POND_Y = 460;
+const POND_RX = 55;
+const POND_RY = 25;
+
+function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
+  // Water body
+  ctx.save();
+  
+  // Pond shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(POND_X + 2, POND_Y + 3, POND_RX, POND_RY, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pond base (dark water)
+  ctx.fillStyle = '#0a3355';
+  ctx.beginPath();
+  ctx.ellipse(POND_X, POND_Y, POND_RX, POND_RY, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Animated water surface
+  ctx.fillStyle = '#1a5577';
+  ctx.beginPath();
+  ctx.ellipse(POND_X, POND_Y - 2, POND_RX - 4, POND_RY - 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Water ripples
+  for (let i = 0; i < 3; i++) {
+    const ripplePhase = t * 0.8 + i * 2.1;
+    const rippleSize = (Math.sin(ripplePhase) + 1) * 0.5;
+    const rx = POND_X - 15 + i * 18;
+    const ry = POND_Y - 3 + Math.sin(t + i) * 3;
+    ctx.strokeStyle = 'rgba(100, 200, 255, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(rx, ry, 6 + rippleSize * 8, 2 + rippleSize * 3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Light reflection
+  ctx.fillStyle = 'rgba(150, 220, 255, 0.15)';
+  const reflectX = POND_X - 10 + Math.sin(t * 0.5) * 5;
+  ctx.beginPath();
+  ctx.ellipse(reflectX, POND_Y - 5, 12, 5, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Lily pads
+  const lilyPads = [
+    { x: POND_X + 20, y: POND_Y - 5, r: 7 },
+    { x: POND_X - 25, y: POND_Y + 3, r: 6 },
+    { x: POND_X + 35, y: POND_Y + 5, r: 5 },
+  ];
+  for (const pad of lilyPads) {
+    const bobY = pad.y + Math.sin(t * 0.6 + pad.x) * 1.5;
+    ctx.fillStyle = '#2a7744';
+    ctx.beginPath();
+    ctx.ellipse(pad.x, bobY, pad.r, pad.r * 0.6, 0, 0.2, Math.PI * 2 - 0.2);
+    ctx.fill();
+    ctx.fillStyle = '#3a9955';
+    ctx.beginPath();
+    ctx.ellipse(pad.x - 1, bobY - 1, pad.r * 0.6, pad.r * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Small flower on lily pad
+  const flowerBob = POND_Y - 5 + Math.sin(t * 0.6 + POND_X + 20) * 1.5;
+  ctx.fillStyle = '#ff88aa';
+  ctx.beginPath();
+  ctx.arc(POND_X + 20, flowerBob - 4, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffdd44';
+  ctx.beginPath();
+  ctx.arc(POND_X + 20, flowerBob - 4, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Edge stones
+  const stones = [
+    { x: POND_X - 50, y: POND_Y + 10 },
+    { x: POND_X - 40, y: POND_Y + 18 },
+    { x: POND_X + 45, y: POND_Y + 12 },
+    { x: POND_X + 55, y: POND_Y + 8 },
+    { x: POND_X - 55, y: POND_Y },
+    { x: POND_X + 50, y: POND_Y - 5 },
+  ];
+  for (const stone of stones) {
+    ctx.fillStyle = '#556666';
+    ctx.beginPath();
+    ctx.ellipse(stone.x, stone.y, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#778888';
+    ctx.beginPath();
+    ctx.ellipse(stone.x - 0.5, stone.y - 1, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── Fish ──
+  // Update fish timer
+  const dt = 1 / 60; // approximate
+  if (!fishState.caught) {
+    fishState.timer += dt;
+    if (!fishState.visible) {
+      if (fishState.timer >= fishState.nextAppear) {
+        fishState.visible = true;
+        fishState.timer = 0;
+        fishState.jumpPhase = 0;
+        fishState.x = POND_X - 20 + Math.random() * 40;
+        fishState.y = POND_Y;
+      }
+    } else {
+      fishState.jumpPhase += dt;
+      // Fish is visible for ~1.5 seconds
+      if (fishState.jumpPhase > 1.5) {
+        fishState.visible = false;
+        fishState.timer = 0;
+        fishState.nextAppear = 10 + Math.random() * 20;
+      }
+    }
+  }
+
+  // Draw fish if visible
+  if (fishState.visible && !fishState.caught) {
+    const jp = fishState.jumpPhase;
+    // Arc trajectory: fish jumps out and back
+    const jumpArc = Math.sin(jp / 1.5 * Math.PI);
+    const fishX = fishState.x + jp * 15;
+    const fishY = fishState.y - jumpArc * 30;
+    const rotation = -jumpArc * 0.8 + 0.3;
+
+    // Splash at start
+    if (jp < 0.3) {
+      const splashAlpha = (0.3 - jp) / 0.3;
+      ctx.fillStyle = `rgba(100, 200, 255, ${splashAlpha * 0.5})`;
+      for (let d = 0; d < 5; d++) {
+        const angle = -Math.PI + d * 0.4;
+        const dist = 5 + jp * 30;
+        ctx.beginPath();
+        ctx.arc(fishState.x + Math.cos(angle) * dist, fishState.y + Math.sin(angle) * dist * 0.4 - 3, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Splash on re-entry
+    if (jp > 1.2) {
+      const splashAlpha = (jp - 1.2) / 0.3;
+      ctx.fillStyle = `rgba(100, 200, 255, ${(1 - splashAlpha) * 0.4})`;
+      for (let d = 0; d < 4; d++) {
+        const angle = -Math.PI + d * 0.5;
+        const dist = 3 + (jp - 1.2) * 20;
+        ctx.beginPath();
+        ctx.arc(fishX + Math.cos(angle) * dist, POND_Y + Math.sin(angle) * dist * 0.3 - 2, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Draw the fish
+    ctx.save();
+    ctx.translate(fishX, fishY);
+    ctx.rotate(rotation);
+
+    // Body
+    ctx.fillStyle = '#ff8844';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Scales shimmer
+    ctx.fillStyle = '#ffaa66';
+    ctx.beginPath();
+    ctx.ellipse(-1, -1, 5, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tail
+    ctx.fillStyle = '#ff6622';
+    ctx.beginPath();
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(-13, -5);
+    ctx.lineTo(-13, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eye
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(4, -1, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111111';
+    ctx.beginPath();
+    ctx.arc(4.5, -1, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dorsal fin
+    ctx.fillStyle = '#ff7733';
+    ctx.beginPath();
+    ctx.moveTo(-2, -3);
+    ctx.lineTo(0, -7);
+    ctx.lineTo(3, -3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sparkle (hint it's special)
+    const sparkle = Math.sin(t * 8) > 0.3;
+    if (sparkle) {
+      ctx.fillStyle = '#ffff88';
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(2, -3, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+
+    // Store clickable position for GameCanvas
+    fishState.x = fishX;
+    fishState.y = fishY;
+  }
+
+  ctx.restore();
 }
