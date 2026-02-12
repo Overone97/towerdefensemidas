@@ -165,4 +165,5 @@ export interface GameState {
   stars: number;
   currentMapId: string;
   autoWave: boolean;
+  endlessMode: boolean;
 }

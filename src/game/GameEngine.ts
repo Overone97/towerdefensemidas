@@ -84,6 +84,7 @@ export class GameEngine {
       stars: this.saveData.stars,
       currentMapId: map.id,
       autoWave: false,
+      endlessMode: false,
     };
   }
 
@@ -99,6 +100,9 @@ export class GameEngine {
       this.state.baseHp--;
       if (this.state.baseHp <= 0) {
         this.state.gameOver = true;
+        if (this.state.endlessMode) {
+          this.submitEndlessScore();
+        }
         return;
       }
     }
@@ -319,6 +323,33 @@ export class GameEngine {
     this.restart();
   }
 
+  startEndless(mapId: string): void {
+    this.state.currentMapId = mapId;
+    const map = this.getMap();
+    this.enemyManager.setWaypoints(map.waypoints);
+    this.restart();
+    this.state.endlessMode = true;
+    this.state.totalWaves = Infinity;
+    this.waveManager.endlessMode = true;
+  }
+
+  submitEndlessScore(): void {
+    if (!this.state.endlessMode) return;
+    const entry = {
+      score: this.state.score,
+      wave: this.state.currentWave,
+      date: new Date().toISOString(),
+    };
+    this.saveData.endlessLeaderboard.push(entry);
+    this.saveData.endlessLeaderboard.sort((a, b) => b.score - a.score);
+    this.saveData.endlessLeaderboard = this.saveData.endlessLeaderboard.slice(0, 10);
+    this.persistSave();
+  }
+
+  getEndlessLeaderboard() {
+    return this.saveData.endlessLeaderboard || [];
+  }
+
   restart(): void {
     this.enemyManager.clear();
     this.towerManager.clear();
@@ -328,7 +359,7 @@ export class GameEngine {
     this.enemyManager.setWaypoints(map.waypoints);
     
     const talentBonus = getTalentBonus(this.saveData.talents);
-    const inventory = this.state.inventory; // Keep inventory
+    const inventory = this.state.inventory;
 
     this.state = {
       ...this.createInitialState(),

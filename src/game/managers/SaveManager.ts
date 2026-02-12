@@ -3,6 +3,12 @@ import { ALL_CHARACTERS } from '../data/characterData';
 
 const SAVE_KEY = 'td_save_v1';
 
+export interface LeaderboardEntry {
+  score: number;
+  wave: number;
+  date: string;
+}
+
 export interface SaveData {
   inventory: { configId: string; level: number }[];
   totalSummons: number;
@@ -12,6 +18,8 @@ export interface SaveData {
   mapsCompleted: string[];
   // Achievement tracking
   achievementsUnlocked: string[];
+  // Endless mode leaderboard
+  endlessLeaderboard: LeaderboardEntry[];
   stats: {
     totalKills: number;
     totalGold: number;
@@ -31,6 +39,7 @@ function defaultSave(): SaveData {
     highScore: 0,
     mapsCompleted: [],
     achievementsUnlocked: [],
+    endlessLeaderboard: [],
     stats: {
       totalKills: 0,
       totalGold: 0,
