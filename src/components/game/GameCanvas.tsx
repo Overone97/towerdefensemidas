@@ -78,6 +78,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
       engine.update(dt);
       renderGame(ctx, engine.state, engine.getWaypoints(), timestamp);
+      engine.particleManager.render(ctx);
       onStateChange();
 
       rafRef.current = requestAnimationFrame(gameLoop);
