@@ -1,6 +1,5 @@
-import { PlacedUnit, Projectile, Enemy, Slot, UnitConfig, TargetPriority } from '../types';
-import { getUnitStats } from '../data/unitData';
-import { WAYPOINTS } from '../data/mapData';
+import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect } from '../types';
+import { getCharacterStats } from '../data/characterData';
 
 let nextUnitId = 1;
 let nextProjectileId = 1;
@@ -9,17 +8,21 @@ export class TowerManager {
   units: PlacedUnit[] = [];
   projectiles: Projectile[] = [];
 
-  placeUnit(config: UnitConfig, slot: Slot, slotIndex: number): PlacedUnit {
+  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number): PlacedUnit {
     const unit: PlacedUnit = {
       id: nextUnitId++,
+      characterInstanceId,
       config,
       slotIndex,
       x: slot.x,
       y: slot.y,
-      level: 1,
+      level,
       attackCooldown: 0,
       targetId: null,
       targetPriority: 'closest',
+      animFrame: Math.random() * 100,
+      isAttacking: false,
+      attackAnimTimer: 0,
     };
     this.units.push(unit);
     return unit;
@@ -34,40 +37,138 @@ export class TowerManager {
     if (unit) unit.level++;
   }
 
-  update(dt: number, enemies: Enemy[]): { damages: { enemyId: number; damage: number }[] } {
+  update(dt: number, enemies: Enemy[]): {
+    damages: { enemyId: number; damage: number }[];
+    statusEffects: { enemyId: number; effect: StatusEffect }[];
+  } {
     const damages: { enemyId: number; damage: number }[] = [];
+    const statusEffects: { enemyId: number; effect: StatusEffect }[] = [];
 
-    // Update units - find targets and attack
+    // Update animation
     for (const unit of this.units) {
-      const stats = getUnitStats(unit.config, unit.level);
-      unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
+      unit.animFrame += dt * 60;
+      if (unit.attackAnimTimer > 0) {
+        unit.attackAnimTimer -= dt;
+        if (unit.attackAnimTimer <= 0) {
+          unit.isAttacking = false;
+          unit.attackAnimTimer = 0;
+        }
+      }
+    }
 
+    // Attack logic
+    for (const unit of this.units) {
+      const stats = getCharacterStats(unit.config, unit.level);
+      unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
       if (unit.attackCooldown > 0) continue;
 
-      // Find target
       const target = this.findTarget(unit, enemies, stats.range);
-      if (!target) {
-        unit.targetId = null;
-        continue;
-      }
+      if (!target) { unit.targetId = null; continue; }
 
       unit.targetId = target.id;
+      unit.isAttacking = true;
+      unit.attackAnimTimer = 0.2;
 
-      if (unit.config.attackType === 'instant') {
-        damages.push({ enemyId: target.id, damage: stats.attack });
-      } else {
-        // Spawn projectile
-        this.projectiles.push({
-          id: nextProjectileId++,
-          x: unit.x,
-          y: unit.y,
-          targetX: target.x,
-          targetY: target.y,
-          speed: 400,
-          damage: stats.attack,
-          targetId: target.id,
-          alive: true,
-        });
+      switch (unit.config.attackPattern) {
+        case 'rapid':
+          damages.push({ enemyId: target.id, damage: stats.attack });
+          this.applyOnHitEffects(unit, target.id, statusEffects);
+          break;
+
+        case 'aoe_circle': {
+          const radius = unit.config.aoeRadius || 50;
+          for (const e of enemies) {
+            if (!e.alive) continue;
+            const dx = e.x - target.x;
+            const dy = e.y - target.y;
+            if (Math.sqrt(dx * dx + dy * dy) <= radius) {
+              damages.push({ enemyId: e.id, damage: stats.attack });
+              this.applyOnHitEffects(unit, e.id, statusEffects);
+            }
+          }
+          break;
+        }
+
+        case 'line': {
+          const tdx = target.x - unit.x;
+          const tdy = target.y - unit.y;
+          const tdist = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
+          this.projectiles.push({
+            id: nextProjectileId++, x: unit.x, y: unit.y,
+            targetX: unit.x + (tdx / tdist) * 800,
+            targetY: unit.y + (tdy / tdist) * 800,
+            speed: 350, damage: stats.attack, targetId: target.id, alive: true,
+            pierce: true, hitEnemies: [],
+            appliesPoison: unit.config.dotDamage ? { damage: unit.config.dotDamage, duration: unit.config.dotDuration || 2 } : undefined,
+            appliesSlow: unit.config.slowFactor ? { factor: unit.config.slowFactor, duration: unit.config.slowDuration || 2 } : undefined,
+          });
+          break;
+        }
+
+        case 'poison':
+          this.projectiles.push({
+            id: nextProjectileId++, x: unit.x, y: unit.y,
+            targetX: target.x, targetY: target.y,
+            speed: 300, damage: stats.attack, targetId: target.id, alive: true,
+            appliesPoison: { damage: unit.config.dotDamage || 5, duration: unit.config.dotDuration || 3 },
+          });
+          break;
+
+        case 'slow':
+          damages.push({ enemyId: target.id, damage: stats.attack });
+          statusEffects.push({ enemyId: target.id, effect: { type: 'slow', damagePerSecond: 0, duration: unit.config.slowDuration || 2, slowFactor: unit.config.slowFactor || 0.5 } });
+          if (unit.config.aoeRadius) {
+            for (const e of enemies) {
+              if (!e.alive || e.id === target.id) continue;
+              const dx = e.x - target.x; const dy = e.y - target.y;
+              if (Math.sqrt(dx * dx + dy * dy) <= unit.config.aoeRadius) {
+                damages.push({ enemyId: e.id, damage: Math.floor(stats.attack * 0.5) });
+                statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: unit.config.slowDuration || 2, slowFactor: unit.config.slowFactor || 0.5 } });
+              }
+            }
+          }
+          break;
+
+        case 'chain': {
+          const chainCount = unit.config.chainCount || 3;
+          const hitIds: number[] = [target.id];
+          damages.push({ enemyId: target.id, damage: stats.attack });
+          this.applyOnHitEffects(unit, target.id, statusEffects);
+          let lastTarget = target;
+          for (let c = 1; c < chainCount; c++) {
+            const next = this.findChainTarget(lastTarget, enemies, 100, hitIds);
+            if (!next) break;
+            hitIds.push(next.id);
+            damages.push({ enemyId: next.id, damage: Math.floor(stats.attack * (1 - c * 0.15)) });
+            this.applyOnHitEffects(unit, next.id, statusEffects);
+            lastTarget = next;
+          }
+          break;
+        }
+
+        case 'burst': {
+          const burstCount = unit.config.burstCount || 3;
+          for (let b = 0; b < burstCount; b++) {
+            const angle = (Math.PI * 2 * b) / burstCount;
+            this.projectiles.push({
+              id: nextProjectileId++, x: unit.x, y: unit.y,
+              targetX: target.x + Math.cos(angle) * 20,
+              targetY: target.y + Math.sin(angle) * 20,
+              speed: 350, damage: stats.attack, targetId: target.id, alive: true,
+              aoeRadius: unit.config.aoeRadius || 30,
+            });
+          }
+          break;
+        }
+
+        case 'single':
+        default:
+          this.projectiles.push({
+            id: nextProjectileId++, x: unit.x, y: unit.y,
+            targetX: target.x, targetY: target.y,
+            speed: 400, damage: stats.attack, targetId: target.id, alive: true,
+          });
+          break;
       }
 
       unit.attackCooldown = 1 / stats.attackSpeed;
@@ -77,64 +178,100 @@ export class TowerManager {
     for (const proj of this.projectiles) {
       if (!proj.alive) continue;
 
-      // Track target position
-      const target = enemies.find(e => e.id === proj.targetId && e.alive);
-      if (target) {
-        proj.targetX = target.x;
-        proj.targetY = target.y;
+      if (!proj.pierce) {
+        const target = enemies.find(e => e.id === proj.targetId && e.alive);
+        if (target) { proj.targetX = target.x; proj.targetY = target.y; }
       }
 
       const dx = proj.targetX - proj.x;
       const dy = proj.targetY - proj.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 8) {
-        proj.alive = false;
-        damages.push({ enemyId: proj.targetId, damage: proj.damage });
-        continue;
-      }
+      if (dist < 1) { proj.alive = false; continue; }
 
       const move = proj.speed * dt;
       proj.x += (dx / dist) * move;
       proj.y += (dy / dist) * move;
+
+      if (proj.pierce) {
+        if (!proj.hitEnemies) proj.hitEnemies = [];
+        for (const e of enemies) {
+          if (!e.alive || proj.hitEnemies.includes(e.id)) continue;
+          const edx = e.x - proj.x; const edy = e.y - proj.y;
+          if (Math.sqrt(edx * edx + edy * edy) < 15) {
+            proj.hitEnemies.push(e.id);
+            damages.push({ enemyId: e.id, damage: proj.damage });
+            if (proj.appliesPoison) statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: proj.appliesPoison.damage, duration: proj.appliesPoison.duration, slowFactor: 1 } });
+            if (proj.appliesSlow) statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: proj.appliesSlow.duration, slowFactor: proj.appliesSlow.factor } });
+          }
+        }
+      } else if (dist < 8) {
+        proj.alive = false;
+        damages.push({ enemyId: proj.targetId, damage: proj.damage });
+        if (proj.aoeRadius) {
+          for (const e of enemies) {
+            if (!e.alive || e.id === proj.targetId) continue;
+            const edx = e.x - proj.x; const edy = e.y - proj.y;
+            if (Math.sqrt(edx * edx + edy * edy) <= proj.aoeRadius) {
+              damages.push({ enemyId: e.id, damage: Math.floor(proj.damage * 0.6) });
+            }
+          }
+        }
+        if (proj.appliesPoison) statusEffects.push({ enemyId: proj.targetId, effect: { type: 'poison', damagePerSecond: proj.appliesPoison.damage, duration: proj.appliesPoison.duration, slowFactor: 1 } });
+        if (proj.appliesSlow) statusEffects.push({ enemyId: proj.targetId, effect: { type: 'slow', damagePerSecond: 0, duration: proj.appliesSlow.duration, slowFactor: proj.appliesSlow.factor } });
+      }
     }
 
-    this.projectiles = this.projectiles.filter(p => p.alive);
-    return { damages };
+    this.projectiles = this.projectiles.filter(p => {
+      if (!p.alive) return false;
+      if (p.x < -50 || p.x > 900 || p.y < -50 || p.y > 600) return false;
+      return true;
+    });
+
+    return { damages, statusEffects };
+  }
+
+  private applyOnHitEffects(unit: PlacedUnit, enemyId: number, effects: { enemyId: number; effect: StatusEffect }[]): void {
+    if (unit.config.dotDamage) {
+      effects.push({ enemyId, effect: { type: unit.config.attackPattern === 'aoe_circle' ? 'burn' : 'poison', damagePerSecond: unit.config.dotDamage, duration: unit.config.dotDuration || 2, slowFactor: 1 } });
+    }
+    if (unit.config.slowFactor && unit.config.attackPattern !== 'slow') {
+      effects.push({ enemyId, effect: { type: 'slow', damagePerSecond: 0, duration: unit.config.slowDuration || 2, slowFactor: unit.config.slowFactor } });
+    }
   }
 
   private findTarget(unit: PlacedUnit, enemies: Enemy[], range: number): Enemy | null {
     const inRange = enemies.filter(e => {
       if (!e.alive) return false;
-      const dx = e.x - unit.x;
-      const dy = e.y - unit.y;
+      const dx = e.x - unit.x; const dy = e.y - unit.y;
       return Math.sqrt(dx * dx + dy * dy) <= range;
     });
-
     if (inRange.length === 0) return null;
 
     switch (unit.targetPriority) {
-      case 'weakest':
-        return inRange.reduce((min, e) => (e.hp < min.hp ? e : min));
-      case 'most_advanced':
-        return inRange.reduce((max, e) => {
-          const progress = e.waypointIndex + e.progress;
-          const maxProgress = max.waypointIndex + max.progress;
-          return progress > maxProgress ? e : max;
-        });
+      case 'weakest': return inRange.reduce((min, e) => (e.hp < min.hp ? e : min));
+      case 'most_advanced': return inRange.reduce((max, e) => {
+        const p = e.waypointIndex + e.progress;
+        const mp = max.waypointIndex + max.progress;
+        return p > mp ? e : max;
+      });
       case 'closest':
-      default: {
-        return inRange.reduce((closest, e) => {
-          const dx = e.x - unit.x;
-          const dy = e.y - unit.y;
-          const d = dx * dx + dy * dy;
-          const cdx = closest.x - unit.x;
-          const cdy = closest.y - unit.y;
-          const cd = cdx * cdx + cdy * cdy;
-          return d < cd ? e : closest;
-        });
-      }
+      default: return inRange.reduce((closest, e) => {
+        const d = (e.x - unit.x) ** 2 + (e.y - unit.y) ** 2;
+        const cd = (closest.x - unit.x) ** 2 + (closest.y - unit.y) ** 2;
+        return d < cd ? e : closest;
+      });
     }
+  }
+
+  private findChainTarget(from: Enemy, enemies: Enemy[], range: number, excludeIds: number[]): Enemy | null {
+    let closest: Enemy | null = null;
+    let closestDist = range;
+    for (const e of enemies) {
+      if (!e.alive || excludeIds.includes(e.id)) continue;
+      const d = Math.sqrt((e.x - from.x) ** 2 + (e.y - from.y) ** 2);
+      if (d < closestDist) { closest = e; closestDist = d; }
+    }
+    return closest;
   }
 
   clear(): void {

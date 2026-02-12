@@ -1,4 +1,4 @@
-import { Enemy, EnemyConfig, Point } from '../types';
+import { Enemy, EnemyConfig, StatusEffect } from '../types';
 import { WAYPOINTS } from '../data/mapData';
 
 let nextEnemyId = 1;
@@ -8,18 +8,21 @@ export class EnemyManager {
 
   spawnEnemy(config: EnemyConfig, hpMult: number, speedMult: number, rewardMult: number): void {
     const start = WAYPOINTS[0];
+    const baseSpeed = config.speed * speedMult;
     this.enemies.push({
       id: nextEnemyId++,
       x: start.x,
       y: start.y,
       hp: Math.floor(config.hp * hpMult),
       maxHp: Math.floor(config.hp * hpMult),
-      speed: config.speed * speedMult,
+      speed: baseSpeed,
+      baseSpeed,
       reward: Math.floor(config.reward * rewardMult),
       size: config.size,
       waypointIndex: 0,
       progress: 0,
       alive: true,
+      statusEffects: [],
     });
   }
 
@@ -27,6 +30,9 @@ export class EnemyManager {
     const reachedEnd: Enemy[] = [];
 
     for (const enemy of this.enemies) {
+      if (!enemy.alive) continue;
+
+      this.processStatusEffects(enemy, dt);
       if (!enemy.alive) continue;
 
       const nextIdx = enemy.waypointIndex + 1;
@@ -41,7 +47,7 @@ export class EnemyManager {
       const dx = next.x - current.x;
       const dy = next.y - current.y;
       const segLen = Math.sqrt(dx * dx + dy * dy);
-      
+
       enemy.progress += (enemy.speed * dt) / segLen;
 
       if (enemy.progress >= 1) {
@@ -54,7 +60,6 @@ export class EnemyManager {
         }
       }
 
-      // Interpolate position
       const ci = enemy.waypointIndex;
       const ni = ci + 1;
       if (ni < WAYPOINTS.length) {
@@ -65,9 +70,50 @@ export class EnemyManager {
       }
     }
 
-    // Remove dead enemies
     this.enemies = this.enemies.filter(e => e.alive);
     return { reachedEnd };
+  }
+
+  private processStatusEffects(enemy: Enemy, dt: number): void {
+    let slowFactor = 1;
+
+    for (let i = enemy.statusEffects.length - 1; i >= 0; i--) {
+      const effect = enemy.statusEffects[i];
+      effect.duration -= dt;
+
+      if (effect.type === 'poison' || effect.type === 'burn') {
+        enemy.hp -= effect.damagePerSecond * dt;
+        if (enemy.hp <= 0) {
+          enemy.alive = false;
+        }
+      }
+
+      if (effect.type === 'slow') {
+        slowFactor = Math.min(slowFactor, effect.slowFactor);
+      }
+
+      if (effect.duration <= 0) {
+        enemy.statusEffects.splice(i, 1);
+      }
+    }
+
+    enemy.speed = enemy.baseSpeed * slowFactor;
+  }
+
+  applyStatusEffect(enemyId: number, effect: StatusEffect): void {
+    const enemy = this.enemies.find(e => e.id === enemyId && e.alive);
+    if (!enemy) return;
+
+    const existing = enemy.statusEffects.find(e => e.type === effect.type);
+    if (existing) {
+      existing.duration = Math.max(existing.duration, effect.duration);
+      existing.damagePerSecond = Math.max(existing.damagePerSecond, effect.damagePerSecond);
+      if (effect.type === 'slow') {
+        existing.slowFactor = Math.min(existing.slowFactor, effect.slowFactor);
+      }
+    } else {
+      enemy.statusEffects.push({ ...effect });
+    }
   }
 
   damageEnemy(id: number, damage: number): { killed: boolean; reward: number } {
