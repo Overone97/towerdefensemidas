@@ -145,35 +145,68 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
 }
 
 function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number, theme: ReturnType<typeof getMapTheme>): void {
-  // Base grass
-  ctx.fillStyle = theme.grassDark;
+  // Base gradient (subtle top-to-bottom light shift for pseudo-3D)
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, theme.grassDark);
+  grad.addColorStop(0.5, theme.grassLight);
+  grad.addColorStop(1, theme.grassDark);
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // Grass tile pattern (8x8 pixel tiles like Pokémon)
-  const tileSize = 16;
   const rand = seededRandom(42);
-  for (let tx = 0; tx < w; tx += tileSize) {
-    for (let ty = 0; ty < h; ty += tileSize) {
-      const r = rand();
-      if (r > 0.6) {
-        ctx.fillStyle = theme.grassLight;
-        ctx.fillRect(tx, ty, tileSize, tileSize);
-      } else if (r > 0.4) {
-        ctx.fillStyle = theme.grassAccent;
-        // Small grass tufts
-        ctx.fillRect(tx + 4, ty + 2, 2, 3);
-        ctx.fillRect(tx + 8, ty + 6, 2, 3);
-        ctx.fillRect(tx + 2, ty + 10, 2, 3);
-      }
-      // Pixel-style grass blades
-      if (rand() > 0.85) {
-        ctx.fillStyle = theme.grassAccent;
-        ctx.fillRect(tx + 6, ty, 1, 2);
-        ctx.fillRect(tx + 7, ty + 1, 1, 2);
-        ctx.fillRect(tx + 10, ty + 4, 1, 2);
-      }
-    }
+
+  // Layer 1: Soft rolling hills (large ellipses for terrain depth)
+  for (let i = 0; i < 18; i++) {
+    const hx = rand() * w;
+    const hy = rand() * h;
+    const rx = 60 + rand() * 100;
+    const ry = 20 + rand() * 30;
+    ctx.fillStyle = rand() > 0.5 ? theme.grassAccent : theme.grassLight;
+    ctx.globalAlpha = 0.12 + rand() * 0.1;
+    ctx.beginPath();
+    ctx.ellipse(hx, hy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
+  ctx.globalAlpha = 1;
+
+  // Layer 2: Grass tufts (organic curved blades, not rectangles)
+  for (let i = 0; i < 350; i++) {
+    const bx = rand() * w;
+    const by = rand() * h;
+    const bladeH = 3 + rand() * 6;
+    const lean = (rand() - 0.5) * 3;
+    
+    // Shadow blade
+    ctx.strokeStyle = theme.grassDark;
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(bx + 1, by + 1);
+    ctx.quadraticCurveTo(bx + lean + 1, by - bladeH * 0.5 + 1, bx + lean * 1.5 + 1, by - bladeH + 1);
+    ctx.stroke();
+
+    // Main blade
+    ctx.strokeStyle = rand() > 0.4 ? theme.grassAccent : theme.grassLight;
+    ctx.globalAlpha = 0.5 + rand() * 0.4;
+    ctx.lineWidth = 1 + rand() * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.quadraticCurveTo(bx + lean, by - bladeH * 0.5, bx + lean * 1.5, by - bladeH);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Layer 3: Tiny highlights (dew / light dots for sparkle)
+  for (let i = 0; i < 80; i++) {
+    const dx = rand() * w;
+    const dy = rand() * h;
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.04 + rand() * 0.06;
+    ctx.beginPath();
+    ctx.arc(dx, dy, 1 + rand() * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: ReturnType<typeof getMapTheme>): void {
