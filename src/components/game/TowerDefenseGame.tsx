@@ -10,8 +10,9 @@ import GachaReveal from './GachaReveal';
 import SynergyPanel from './SynergyPanel';
 import TalentTree from './TalentTree';
 import MapSelect from './MapSelect';
+import WikiScreen from './WikiScreen';
 
-type Screen = 'game' | 'talents' | 'maps';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
@@ -120,6 +121,15 @@ const TowerDefenseGame: React.FC = () => {
     );
   }
 
+  if (screen === 'wiki') {
+    return (
+      <WikiScreen
+        inventory={state.inventory}
+        onBack={() => setScreen('game')}
+      />
+    );
+  }
+
   const selectedUnit = state.selectedUnitId
     ? state.placedUnits.find(u => u.id === state.selectedUnitId) ?? null
     : null;
@@ -129,7 +139,7 @@ const TowerDefenseGame: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} />
+      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
         <GameCanvas engine={engine} onStateChange={onStateChange} />
         {state.activeSynergies.length > 0 && (

@@ -1,0 +1,471 @@
+import React, { useState } from 'react';
+import { ALL_CHARACTERS } from '../../game/data/characterData';
+import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
+import { CHARACTER_ELEMENTS, ELEMENT_COLORS, ELEMENT_LABELS, PAIR_SYNERGIES, ELEMENT_SYNERGIES } from '../../game/data/synergyData';
+import { OwnedCharacter, Rarity } from '../../game/types';
+import { Button } from '../ui/button';
+
+interface WikiScreenProps {
+  inventory: OwnedCharacter[];
+  onBack: () => void;
+}
+
+const ATTACK_PATTERN_LABELS: Record<string, { icon: string; label: string }> = {
+  single: { icon: '🎯', label: 'Single Target' },
+  rapid: { icon: '⚡', label: 'Rapid Fire' },
+  aoe_circle: { icon: '💥', label: 'Area of Effect' },
+  line: { icon: '➡️', label: 'Piercing Line' },
+  poison: { icon: '☠️', label: 'Poison' },
+  slow: { icon: '🧊', label: 'Slow' },
+  chain: { icon: '⛓️', label: 'Chain Lightning' },
+  burst: { icon: '💣', label: 'Burst' },
+};
+
+const RARITY_ORDER: Rarity[] = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+
+type Tab = 'units' | 'synergies';
+
+const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
+  const [tab, setTab] = useState<Tab>('units');
+  const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
+
+  const ownedIds = new Set(inventory.map(c => c.config.id));
+  const sortedChars = [...ALL_CHARACTERS].sort((a, b) => {
+    const ri = RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
+    if (ri !== 0) return ri;
+    return a.name.localeCompare(b.name);
+  });
+
+  const selectedChar = selectedCharId ? ALL_CHARACTERS.find(c => c.id === selectedCharId) : null;
+  const isOwned = selectedCharId ? ownedIds.has(selectedCharId) : false;
+  const ownedData = selectedCharId ? inventory.find(c => c.config.id === selectedCharId) : null;
+
+  // Find synergies for selected char
+  const charPairSynergies = selectedCharId
+    ? PAIR_SYNERGIES.filter(p => p.char1Id === selectedCharId || p.char2Id === selectedCharId)
+    : [];
+
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
+        <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTab('units')}
+            className={`px-4 py-1.5 rounded text-sm font-mono font-bold transition-colors ${
+              tab === 'units' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            📖 Units ({ownedIds.size}/{ALL_CHARACTERS.length})
+          </button>
+          <button
+            onClick={() => setTab('synergies')}
+            className={`px-4 py-1.5 rounded text-sm font-mono font-bold transition-colors ${
+              tab === 'synergies' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            🔗 Synergies
+          </button>
+        </div>
+        <div className="w-16" />
+      </div>
+
+      {tab === 'units' ? (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Unit grid */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+              {sortedChars.map(char => {
+                const owned = ownedIds.has(char.id);
+                const element = CHARACTER_ELEMENTS[char.id];
+                const isSelected = selectedCharId === char.id;
+
+                return (
+                  <button
+                    key={char.id}
+                    onClick={() => setSelectedCharId(isSelected ? null : char.id)}
+                    className={`relative flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                      isSelected
+                        ? 'ring-2 ring-primary scale-105'
+                        : owned
+                        ? 'hover:scale-105'
+                        : 'opacity-40 grayscale hover:opacity-60 hover:grayscale-0'
+                    }`}
+                    style={{
+                      borderColor: RARITY_COLORS[char.rarity],
+                      backgroundColor: isSelected ? `${RARITY_COLORS[char.rarity]}15` : 'transparent',
+                    }}
+                  >
+                    {/* Character sprite */}
+                    <div className="relative">
+                      <div
+                        className="w-10 h-10 rounded-md"
+                        style={{ backgroundColor: owned ? char.bodyColor : '#444' }}
+                      >
+                        {owned && (
+                          <>
+                            <div
+                              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-1.5 rounded-sm"
+                              style={{ backgroundColor: char.detailColor }}
+                            />
+                            <div
+                              className="absolute top-1/2 right-0 w-1.5 h-3 -translate-y-1/2 rounded-sm"
+                              style={{ backgroundColor: char.weaponColor }}
+                            />
+                          </>
+                        )}
+                        {!owned && (
+                          <div className="absolute inset-0 flex items-center justify-center text-lg">❓</div>
+                        )}
+                      </div>
+                      {/* Element badge */}
+                      {element && (
+                        <div
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
+                          style={{ backgroundColor: ELEMENT_COLORS[element] + '33', border: `1px solid ${ELEMENT_COLORS[element]}` }}
+                        >
+                          {ELEMENT_LABELS[element].charAt(0)}
+                        </div>
+                      )}
+                    </div>
+
+                    <span className="text-[10px] text-foreground font-mono font-bold text-center leading-tight truncate w-full">
+                      {owned ? char.name : '???'}
+                    </span>
+                    <span
+                      className="text-[9px] font-mono font-bold"
+                      style={{ color: RARITY_COLORS[char.rarity] }}
+                    >
+                      {RARITY_LABELS[char.rarity]}
+                    </span>
+
+                    {owned && ownedIds.has(char.id) && (
+                      <div className="absolute top-1 left-1 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
+                        <span className="text-[7px] text-white font-bold">✓</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Detail panel */}
+          {selectedChar && (
+            <div
+              className="w-72 border-l border-border bg-card overflow-y-auto p-4 shrink-0"
+            >
+              {/* Character header */}
+              <div className="flex flex-col items-center gap-2 mb-4">
+                <div
+                  className="w-16 h-16 rounded-lg relative"
+                  style={{
+                    backgroundColor: isOwned ? selectedChar.bodyColor : '#444',
+                    boxShadow: `0 0 20px ${RARITY_COLORS[selectedChar.rarity]}44`,
+                    border: `2px solid ${RARITY_COLORS[selectedChar.rarity]}`,
+                  }}
+                >
+                  {isOwned && (
+                    <>
+                      <div
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-2 rounded-sm"
+                        style={{ backgroundColor: selectedChar.detailColor }}
+                      />
+                      <div
+                        className="absolute top-1/2 right-0 w-2 h-5 -translate-y-1/2 rounded-sm"
+                        style={{ backgroundColor: selectedChar.weaponColor }}
+                      />
+                    </>
+                  )}
+                </div>
+                <h3 className="text-foreground font-bold text-lg font-mono">
+                  {isOwned ? selectedChar.name : '???'}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-sm font-bold font-mono px-2 py-0.5 rounded"
+                    style={{
+                      color: RARITY_COLORS[selectedChar.rarity],
+                      backgroundColor: `${RARITY_COLORS[selectedChar.rarity]}15`,
+                    }}
+                  >
+                    ★ {RARITY_LABELS[selectedChar.rarity]}
+                  </span>
+                  {CHARACTER_ELEMENTS[selectedChar.id] && (
+                    <span
+                      className="text-sm font-mono px-2 py-0.5 rounded"
+                      style={{
+                        color: ELEMENT_COLORS[CHARACTER_ELEMENTS[selectedChar.id]],
+                        backgroundColor: `${ELEMENT_COLORS[CHARACTER_ELEMENTS[selectedChar.id]]}15`,
+                      }}
+                    >
+                      {ELEMENT_LABELS[CHARACTER_ELEMENTS[selectedChar.id]]}
+                    </span>
+                  )}
+                </div>
+                {ownedData && (
+                  <span className="text-muted-foreground text-xs font-mono">Level {ownedData.level}</span>
+                )}
+                {!isOwned && (
+                  <span className="text-muted-foreground text-xs font-mono italic">Not yet obtained</span>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="space-y-2 mb-4">
+                <h4 className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Stats</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <StatBar label="ATK" value={selectedChar.attack} max={35} color="#ff6644" />
+                  <StatBar label="SPD" value={selectedChar.attackSpeed} max={2.5} color="#44aaff" />
+                  <StatBar label="RNG" value={selectedChar.range} max={220} color="#44dd44" />
+                  {selectedChar.aoeRadius && <StatBar label="AOE" value={selectedChar.aoeRadius} max={70} color="#ffaa44" />}
+                </div>
+              </div>
+
+              {/* Attack pattern */}
+              <div className="mb-4">
+                <h4 className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-1">Attack Type</h4>
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                  <span className="text-lg">{ATTACK_PATTERN_LABELS[selectedChar.attackPattern]?.icon}</span>
+                  <span className="text-foreground text-sm font-mono font-bold">
+                    {ATTACK_PATTERN_LABELS[selectedChar.attackPattern]?.label}
+                  </span>
+                </div>
+                {selectedChar.dotDamage && (
+                  <div className="text-xs text-green-400 font-mono mt-1">
+                    DoT: {selectedChar.dotDamage}/s for {selectedChar.dotDuration}s
+                  </div>
+                )}
+                {selectedChar.slowFactor && (
+                  <div className="text-xs font-mono mt-1" style={{ color: '#66ccff' }}>
+                    Slow: {Math.round((1 - selectedChar.slowFactor) * 100)}% for {selectedChar.slowDuration}s
+                  </div>
+                )}
+                {selectedChar.chainCount && (
+                  <div className="text-xs font-mono mt-1" style={{ color: '#ffaa44' }}>
+                    Chains: {selectedChar.chainCount} targets
+                  </div>
+                )}
+              </div>
+
+              {/* Pair synergies */}
+              {charPairSynergies.length > 0 && (
+                <div>
+                  <h4 className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-2">Pair Synergies</h4>
+                  <div className="space-y-2">
+                    {charPairSynergies.map(syn => {
+                      const partnerId = syn.char1Id === selectedChar.id ? syn.char2Id : syn.char1Id;
+                      const partner = ALL_CHARACTERS.find(c => c.id === partnerId);
+                      const partnerOwned = ownedIds.has(partnerId);
+                      return (
+                        <button
+                          key={syn.id}
+                          onClick={() => setSelectedCharId(partnerId)}
+                          className="w-full flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div
+                            className="w-7 h-7 rounded-md shrink-0"
+                            style={{
+                              backgroundColor: partnerOwned && partner ? partner.bodyColor : '#444',
+                              border: partner ? `1px solid ${RARITY_COLORS[partner.rarity]}` : '1px solid #444',
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-foreground text-xs font-mono font-bold">{syn.name}</div>
+                            <div className="text-muted-foreground text-[10px] font-mono">
+                              + {partnerOwned && partner ? partner.name : '???'}
+                            </div>
+                          </div>
+                          <span className="text-green-400 text-xs font-mono font-bold shrink-0">{syn.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Synergies tab */
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Pair Synergies */}
+          <div>
+            <h3 className="text-foreground font-bold text-lg font-mono mb-3 flex items-center gap-2">
+              🤝 Pair Synergies
+              <span className="text-muted-foreground text-xs font-normal">Deploy both characters to activate</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {PAIR_SYNERGIES.map(syn => {
+                const char1 = ALL_CHARACTERS.find(c => c.id === syn.char1Id);
+                const char2 = ALL_CHARACTERS.find(c => c.id === syn.char2Id);
+                const owned1 = ownedIds.has(syn.char1Id);
+                const owned2 = ownedIds.has(syn.char2Id);
+                const bothOwned = owned1 && owned2;
+
+                return (
+                  <div
+                    key={syn.id}
+                    className={`relative rounded-xl border-2 p-4 transition-all ${
+                      bothOwned
+                        ? 'border-green-500/40 bg-green-500/5'
+                        : 'border-border bg-card/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-foreground font-bold font-mono text-sm">{syn.name}</span>
+                      <span className="text-green-400 font-mono text-xs font-bold">{syn.description}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-3">
+                      <CharMiniCard char={char1!} owned={owned1} />
+                      <span className="text-muted-foreground text-lg">+</span>
+                      <CharMiniCard char={char2!} owned={owned2} />
+                    </div>
+                    {bothOwned && (
+                      <div className="absolute top-2 right-2 text-green-400 text-xs font-mono font-bold">✓ Ready</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Element Synergies */}
+          <div>
+            <h3 className="text-foreground font-bold text-lg font-mono mb-3 flex items-center gap-2">
+              🔮 Element Synergies
+              <span className="text-muted-foreground text-xs font-normal">Stack units of the same element</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ELEMENT_SYNERGIES.map(elSyn => {
+                const elChars = ALL_CHARACTERS.filter(c => CHARACTER_ELEMENTS[c.id] === elSyn.element);
+                const ownedCount = elChars.filter(c => ownedIds.has(c.id)).length;
+
+                return (
+                  <div
+                    key={elSyn.element}
+                    className="rounded-xl border-2 p-4"
+                    style={{
+                      borderColor: `${ELEMENT_COLORS[elSyn.element]}44`,
+                      backgroundColor: `${ELEMENT_COLORS[elSyn.element]}08`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className="font-bold font-mono text-base"
+                        style={{ color: ELEMENT_COLORS[elSyn.element] }}
+                      >
+                        {ELEMENT_LABELS[elSyn.element]}
+                      </span>
+                      <span className="text-muted-foreground text-xs font-mono">
+                        {ownedCount}/{elChars.length} owned
+                      </span>
+                    </div>
+
+                    {/* Thresholds */}
+                    <div className="space-y-2 mb-3">
+                      {elSyn.thresholds.map(t => {
+                        const active = ownedCount >= t.count;
+                        return (
+                          <div
+                            key={t.count}
+                            className={`flex items-center justify-between rounded-lg px-3 py-1.5 ${
+                              active ? 'bg-green-500/10' : 'bg-muted/30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                {Array.from({ length: t.count }).map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className="w-2.5 h-2.5 rounded-full"
+                                    style={{
+                                      backgroundColor: i < ownedCount
+                                        ? ELEMENT_COLORS[elSyn.element]
+                                        : '#333',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-foreground text-xs font-mono font-bold">{t.name}</span>
+                            </div>
+                            <span
+                              className="text-xs font-mono font-bold"
+                              style={{ color: active ? '#4ade80' : '#666' }}
+                            >
+                              {t.description}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Element characters */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {elChars.map(c => (
+                        <div
+                          key={c.id}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono ${
+                            ownedIds.has(c.id) ? 'bg-muted/50' : 'bg-muted/20 opacity-50'
+                          }`}
+                          style={{ borderLeft: `2px solid ${RARITY_COLORS[c.rarity]}` }}
+                        >
+                          <div
+                            className="w-3 h-3 rounded-sm"
+                            style={{ backgroundColor: ownedIds.has(c.id) ? c.bodyColor : '#444' }}
+                          />
+                          <span className="text-foreground">{ownedIds.has(c.id) ? c.name : '???'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const ratio = Math.min(1, value / max);
+  return (
+    <div>
+      <div className="flex justify-between text-[10px] font-mono mb-0.5">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="text-foreground font-bold">{typeof value === 'number' && value % 1 !== 0 ? value.toFixed(1) : value}</span>
+      </div>
+      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${ratio * 100}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CharMiniCard({ char, owned }: { char: import('../../game/types').CharacterConfig; owned: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div
+        className={`w-10 h-10 rounded-md ${!owned ? 'grayscale opacity-50' : ''}`}
+        style={{
+          backgroundColor: owned ? char.bodyColor : '#444',
+          border: `2px solid ${RARITY_COLORS[char.rarity]}`,
+        }}
+      />
+      <span className="text-foreground text-[10px] font-mono font-bold text-center">
+        {owned ? char.name : '???'}
+      </span>
+      <span className="text-[9px] font-mono" style={{ color: RARITY_COLORS[char.rarity] }}>
+        {RARITY_LABELS[char.rarity]}
+      </span>
+    </div>
+  );
+}
+
+export default WikiScreen;
