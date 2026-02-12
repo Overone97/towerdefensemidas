@@ -4,6 +4,7 @@ import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
 import { RARITY_RATES } from '../../game/data/gachaData';
 import { Rarity } from '../../game/types';
 import { Button } from '../ui/button';
+import CharacterSprite from './CharacterSprite';
 
 interface UnitBarProps {
   state: GameState;
@@ -43,10 +44,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                   `}
                   style={{ borderColor: RARITY_COLORS[char.config.rarity] }}
                 >
-                  <div
-                    className="w-6 h-6 rounded-sm"
-                    style={{ backgroundColor: char.config.bodyColor }}
-                  />
+                  <CharacterSprite config={char.config} size={32} owned />
                   <span className="text-xs text-foreground font-mono">{char.config.name}</span>
                   <span className="text-xs font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
                     Lv.{char.level}
@@ -103,7 +101,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 animate-fade-in"
                 style={{ borderColor: RARITY_COLORS[lastSummon.config.rarity] }}
               >
-                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: lastSummon.config.bodyColor }} />
+                <CharacterSprite config={lastSummon.config} size={20} owned />
                 <span className="text-sm text-foreground font-bold">{lastSummon.config.name}</span>
                 <span className="text-xs font-bold" style={{ color: RARITY_COLORS[lastSummon.config.rarity] }}>
                   {RARITY_LABELS[lastSummon.config.rarity]}
