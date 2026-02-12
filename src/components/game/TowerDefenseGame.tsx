@@ -90,6 +90,11 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleActivateAbility = useCallback((unitId: number) => {
+    engine.activateAbility(unitId);
+    onStateChange();
+  }, [engine, onStateChange]);
+
   const handleSetTab = useCallback((tab: 'game' | 'gacha') => {
     engine.setActiveTab(tab);
     onStateChange();
@@ -193,6 +198,7 @@ const TowerDefenseGame: React.FC = () => {
             onUpgrade={handleUpgrade}
             onRemove={handleRemove}
             onSetPriority={handleSetPriority}
+            onActivateAbility={handleActivateAbility}
           />
         )}
         {(state.gameOver || state.victory) && (

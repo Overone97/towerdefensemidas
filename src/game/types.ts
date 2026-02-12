@@ -114,6 +114,9 @@ export interface PlacedUnit {
   animFrame: number;
   isAttacking: boolean;
   attackAnimTimer: number;
+  abilityCooldown: number;
+  abilityActive: boolean;
+  abilityTimer: number;
 }
 
 export interface Projectile {

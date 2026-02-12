@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlacedUnit, TargetPriority } from '../../game/types';
 import { getCharacterStats, getCharacterUpgradeCost, RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
+import { ABILITIES } from '../../game/data/abilityData';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
 
@@ -10,6 +11,7 @@ interface UnitInfoPanelProps {
   onUpgrade: (unitId: number) => void;
   onRemove: (unitId: number) => void;
   onSetPriority: (unitId: number, priority: TargetPriority) => void;
+  onActivateAbility: (unitId: number) => void;
 }
 
 const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
@@ -23,7 +25,7 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
   burst: { label: 'Burst', icon: '💣', desc: 'Fires multiple projectiles in a spread' },
 };
 
-const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority }) => {
+const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority, onActivateAbility }) => {
   const stats = getCharacterStats(unit.config, unit.level);
   const nextStats = getCharacterStats(unit.config, unit.level + 1);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
@@ -137,6 +139,45 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
           ))}
         </div>
       </div>
+
+      {/* Active Ability */}
+      {(() => {
+        const ability = ABILITIES[unit.config.attackPattern];
+        if (!ability) return null;
+        const onCooldown = unit.abilityCooldown > 0;
+        const isActive = unit.abilityActive;
+        const cdPercent = onCooldown ? (unit.abilityCooldown / ability.cooldown) * 100 : 0;
+        return (
+          <div className="mb-3">
+            <span className="text-xs text-muted-foreground">Active Ability</span>
+            <button
+              onClick={() => onActivateAbility(unit.id)}
+              disabled={onCooldown}
+              className={`w-full mt-1 relative overflow-hidden rounded px-3 py-2 text-sm font-bold transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/50'
+                  : onCooldown
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'bg-accent text-accent-foreground hover:bg-primary hover:text-primary-foreground'
+              }`}
+            >
+              {onCooldown && (
+                <div
+                  className="absolute inset-0 bg-muted-foreground/20"
+                  style={{ width: `${cdPercent}%` }}
+                />
+              )}
+              <span className="relative z-10 flex items-center justify-center gap-1.5">
+                <span>{ability.icon}</span>
+                <span>{ability.name}</span>
+                {onCooldown && <span className="text-xs">({Math.ceil(unit.abilityCooldown)}s)</span>}
+                {isActive && <span className="text-xs">(Active!)</span>}
+              </span>
+            </button>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{ability.description}</p>
+          </div>
+        );
+      })()}
 
       {/* Actions */}
       <div className="flex gap-2">
