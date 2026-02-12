@@ -1,14 +1,15 @@
-import React, { useRef, useEffect, useCallback } from 'react';
-import { GameEngine } from '../../game/GameEngine';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { GameEngine, fishState } from '../../game/GameEngine';
 import { renderGame } from './GameRenderer';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 
 interface GameCanvasProps {
   engine: GameEngine;
   onStateChange: () => void;
+  onFishCaught?: () => void;
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCaught }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
@@ -22,6 +23,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
     const scaleY = CANVAS_HEIGHT / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
+
+    // Check fish click first
+    if (fishState.visible && !fishState.caught) {
+      const fdx = x - fishState.x;
+      const fdy = y - fishState.y;
+      if (fdx * fdx + fdy * fdy < 400) {
+        const caught = engine.tryCatchFish();
+        if (caught) {
+          onFishCaught?.();
+          onStateChange();
+          return;
+        }
+      }
+    }
 
     for (const unit of engine.state.placedUnits) {
       const dx = x - unit.x;

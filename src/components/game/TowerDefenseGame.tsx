@@ -99,6 +99,12 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleFishCaught = useCallback(() => {
+    const leviathan = state.inventory.find(c => c.config.id === 'leviathan');
+    if (leviathan) {
+      setRevealChar(leviathan);
+    }
+  }, [state.inventory]);
   if (screen === 'talents') {
     return (
       <TalentTree
@@ -141,7 +147,7 @@ const TowerDefenseGame: React.FC = () => {
     <div className="flex flex-col h-screen bg-background">
       <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
-        <GameCanvas engine={engine} onStateChange={onStateChange} />
+        <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
         {state.activeSynergies.length > 0 && (
           <SynergyPanel synergies={state.activeSynergies} />
         )}

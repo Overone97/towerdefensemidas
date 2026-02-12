@@ -50,6 +50,8 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'phoenix', name: 'Phoenix', rarity: 'legendary', attack: 25, attackSpeed: 0.8, range: 140, attackPattern: 'aoe_circle', aoeRadius: 70, dotDamage: 12, dotDuration: 3, bodyColor: '#ff6600', detailColor: '#dd4400', weaponColor: '#ffdd00' },
   { id: 'void_walker', name: 'Void Walker', rarity: 'legendary', attack: 30, attackSpeed: 0.6, range: 160, attackPattern: 'line', slowFactor: 0.3, slowDuration: 4, bodyColor: '#220044', detailColor: '#110033', weaponColor: '#8800ff' },
   { id: 'celestial', name: 'Celestial', rarity: 'legendary', attack: 20, attackSpeed: 1.2, range: 170, attackPattern: 'chain', chainCount: 5, bodyColor: '#ffdd88', detailColor: '#ddbb66', weaponColor: '#ffffff' },
+  // SECRET LEGENDARY (easter egg)
+  { id: 'leviathan', name: 'Leviathan', rarity: 'legendary', attack: 28, attackSpeed: 1.0, range: 180, attackPattern: 'chain', chainCount: 6, slowFactor: 0.3, slowDuration: 3, bodyColor: '#1a6688', detailColor: '#0e4466', weaponColor: '#44ddff' },
 ];
 
 export function getCharacterStats(config: CharacterConfig, level: number) {

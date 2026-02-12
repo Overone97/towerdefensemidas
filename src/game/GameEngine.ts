@@ -13,6 +13,17 @@ import { TALENTS } from './data/talentData';
 
 let nextInstanceId = 1;
 
+// Fish easter egg state (shared across renders)
+export const fishState = {
+  visible: false,
+  x: 0,
+  y: 0,
+  timer: 0,
+  nextAppear: 8 + Math.random() * 15,
+  jumpPhase: 0,
+  caught: false,
+};
+
 export class GameEngine {
   enemyManager = new EnemyManager();
   towerManager = new TowerManager();
@@ -148,7 +159,7 @@ export class GameEngine {
     if (this.state.gold < cost) return null;
 
     const ownedIds = new Set(this.state.inventory.map(c => c.config.id));
-    const available = ALL_CHARACTERS.filter(c => !ownedIds.has(c.id));
+    const available = ALL_CHARACTERS.filter(c => !ownedIds.has(c.id) && c.id !== 'leviathan');
     if (available.length === 0) return null;
 
     this.state.gold -= cost;
@@ -278,6 +289,28 @@ export class GameEngine {
       inventory,
       currentMapId: map.id,
     };
+  }
+
+  tryCatchFish(): OwnedCharacter | null {
+    if (!fishState.visible || fishState.caught) return null;
+    // Check if leviathan already owned
+    const alreadyOwned = this.state.inventory.some(c => c.config.id === 'leviathan');
+    if (alreadyOwned) return null;
+
+    const leviathan = ALL_CHARACTERS.find(c => c.id === 'leviathan');
+    if (!leviathan) return null;
+
+    fishState.caught = true;
+    fishState.visible = false;
+
+    const character: OwnedCharacter = {
+      instanceId: nextInstanceId++,
+      config: leviathan,
+      level: 1,
+    };
+    this.state.inventory.push(character);
+    this.persistSave();
+    return character;
   }
 
   private persistSave(): void {

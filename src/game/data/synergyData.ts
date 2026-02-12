@@ -23,6 +23,7 @@ export const CHARACTER_ELEMENTS: Record<string, Element> = {
   phoenix: 'fire',
   void_walker: 'shadow',
   celestial: 'light',
+  leviathan: 'ice',
 };
 
 export const ELEMENT_COLORS: Record<Element, string> = {
@@ -66,6 +67,7 @@ export const PAIR_SYNERGIES: PairSynergyDef[] = [
   { id: 'eagle_eye', name: 'Eagle Eye', char1Id: 'archer', char2Id: 'sniper', description: '+20% Range', bonus: { rangeMult: 1.2 } },
   { id: 'iron_wall', name: 'Iron Wall', char1Id: 'warrior', char2Id: 'guardian', description: '+3 Base HP', bonus: { extraHp: 3 } },
   { id: 'toxic_shadow', name: 'Toxic Shadow', char1Id: 'alchemist', char2Id: 'shadow_assassin', description: '+30% DoT', bonus: { dotMult: 1.3 } },
+  { id: 'tidal_convergence', name: '🐟 Tidal Convergence', char1Id: 'leviathan', char2Id: 'void_walker', description: '+40% ATK & +30% Slow', bonus: { attackMult: 1.4, slowMult: 1.3 } },
 ];
 
 export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
