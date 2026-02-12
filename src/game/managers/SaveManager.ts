@@ -10,6 +10,16 @@ export interface SaveData {
   stars: number;
   highScore: number;
   mapsCompleted: string[];
+  // Achievement tracking
+  achievementsUnlocked: string[];
+  stats: {
+    totalKills: number;
+    totalGold: number;
+    bossKills: number;
+    perfectMaps: number;
+    maxWaveReached: number;
+    fishCaught: boolean;
+  };
 }
 
 function defaultSave(): SaveData {
@@ -20,6 +30,15 @@ function defaultSave(): SaveData {
     stars: 0,
     highScore: 0,
     mapsCompleted: [],
+    achievementsUnlocked: [],
+    stats: {
+      totalKills: 0,
+      totalGold: 0,
+      bossKills: 0,
+      perfectMaps: 0,
+      maxWaveReached: 0,
+      fishCaught: false,
+    },
   };
 }
 
