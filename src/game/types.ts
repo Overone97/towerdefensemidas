@@ -164,4 +164,5 @@ export interface GameState {
   activeSynergies: ActiveSynergy[];
   stars: number;
   currentMapId: string;
+  autoWave: boolean;
 }

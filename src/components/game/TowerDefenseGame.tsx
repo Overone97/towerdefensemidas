@@ -52,6 +52,14 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleToggleAutoWave = useCallback(() => {
+    engine.state.autoWave = !engine.state.autoWave;
+    if (engine.state.autoWave && !engine.state.waveActive) {
+      engine.startWave();
+    }
+    onStateChange();
+  }, [engine, onStateChange]);
+
   const handleUpgrade = useCallback((unitId: number) => {
     engine.upgradeUnit(unitId);
     onStateChange();
@@ -156,6 +164,7 @@ const TowerDefenseGame: React.FC = () => {
         onPlaceUnit={handlePlaceUnit}
         onSummon={handleSummon}
         onStartWave={handleStartWave}
+        onToggleAutoWave={handleToggleAutoWave}
       />
     </div>
   );

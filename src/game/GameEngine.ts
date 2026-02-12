@@ -69,6 +69,7 @@ export class GameEngine {
       activeSynergies: [],
       stars: this.saveData.stars,
       currentMapId: map.id,
+      autoWave: false,
     };
   }
 
@@ -115,6 +116,11 @@ export class GameEngine {
     this.state.projectiles = this.towerManager.projectiles;
     this.state.currentWave = this.waveManager.currentWave;
     this.state.waveActive = this.waveManager.waveActive;
+
+    // Auto-wave: start next wave when current ends
+    if (!this.state.waveActive && this.state.autoWave && this.waveManager.currentWave < this.waveManager.totalWaves) {
+      this.startWave();
+    }
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
