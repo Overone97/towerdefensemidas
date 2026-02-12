@@ -4,6 +4,7 @@ import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
 import { CHARACTER_ELEMENTS, ELEMENT_COLORS, ELEMENT_LABELS, PAIR_SYNERGIES, ELEMENT_SYNERGIES } from '../../game/data/synergyData';
 import { OwnedCharacter, Rarity } from '../../game/types';
 import { Button } from '../ui/button';
+import CharacterSprite from './CharacterSprite';
 
 interface WikiScreenProps {
   inventory: OwnedCharacter[];
@@ -40,7 +41,6 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
   const isOwned = selectedCharId ? ownedIds.has(selectedCharId) : false;
   const ownedData = selectedCharId ? inventory.find(c => c.config.id === selectedCharId) : null;
 
-  // Find synergies for selected char
   const charPairSynergies = selectedCharId
     ? PAIR_SYNERGIES.filter(p => p.char1Id === selectedCharId || p.char2Id === selectedCharId)
     : [];
@@ -85,41 +85,20 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                   <button
                     key={char.id}
                     onClick={() => setSelectedCharId(isSelected ? null : char.id)}
-                    className={`relative flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                    className={`relative flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
                       isSelected
                         ? 'ring-2 ring-primary scale-105'
                         : owned
                         ? 'hover:scale-105'
-                        : 'opacity-40 grayscale hover:opacity-60 hover:grayscale-0'
+                        : 'opacity-50 hover:opacity-70'
                     }`}
                     style={{
                       borderColor: RARITY_COLORS[char.rarity],
                       backgroundColor: isSelected ? `${RARITY_COLORS[char.rarity]}15` : 'transparent',
                     }}
                   >
-                    {/* Character sprite */}
                     <div className="relative">
-                      <div
-                        className="w-10 h-10 rounded-md"
-                        style={{ backgroundColor: owned ? char.bodyColor : '#444' }}
-                      >
-                        {owned && (
-                          <>
-                            <div
-                              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-1.5 rounded-sm"
-                              style={{ backgroundColor: char.detailColor }}
-                            />
-                            <div
-                              className="absolute top-1/2 right-0 w-1.5 h-3 -translate-y-1/2 rounded-sm"
-                              style={{ backgroundColor: char.weaponColor }}
-                            />
-                          </>
-                        )}
-                        {!owned && (
-                          <div className="absolute inset-0 flex items-center justify-center text-lg">❓</div>
-                        )}
-                      </div>
-                      {/* Element badge */}
+                      <CharacterSprite config={char} size={48} owned={owned} />
                       {element && (
                         <div
                           className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
@@ -140,9 +119,9 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                       {RARITY_LABELS[char.rarity]}
                     </span>
 
-                    {owned && ownedIds.has(char.id) && (
+                    {owned && (
                       <div className="absolute top-1 left-1 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                        <span className="text-[7px] text-white font-bold">✓</span>
+                        <span className="text-[7px] font-bold" style={{ color: '#fff' }}>✓</span>
                       </div>
                     )}
                   </button>
@@ -153,31 +132,16 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
 
           {/* Detail panel */}
           {selectedChar && (
-            <div
-              className="w-72 border-l border-border bg-card overflow-y-auto p-4 shrink-0"
-            >
-              {/* Character header */}
+            <div className="w-72 border-l border-border bg-card overflow-y-auto p-4 shrink-0">
               <div className="flex flex-col items-center gap-2 mb-4">
                 <div
-                  className="w-16 h-16 rounded-lg relative"
+                  className="rounded-lg overflow-hidden"
                   style={{
-                    backgroundColor: isOwned ? selectedChar.bodyColor : '#444',
                     boxShadow: `0 0 20px ${RARITY_COLORS[selectedChar.rarity]}44`,
                     border: `2px solid ${RARITY_COLORS[selectedChar.rarity]}`,
                   }}
                 >
-                  {isOwned && (
-                    <>
-                      <div
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-2 rounded-sm"
-                        style={{ backgroundColor: selectedChar.detailColor }}
-                      />
-                      <div
-                        className="absolute top-1/2 right-0 w-2 h-5 -translate-y-1/2 rounded-sm"
-                        style={{ backgroundColor: selectedChar.weaponColor }}
-                      />
-                    </>
-                  )}
+                  <CharacterSprite config={selectedChar} size={80} owned={isOwned} animate={isOwned} />
                 </div>
                 <h3 className="text-foreground font-bold text-lg font-mono">
                   {isOwned ? selectedChar.name : '???'}
@@ -233,7 +197,7 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                   </span>
                 </div>
                 {selectedChar.dotDamage && (
-                  <div className="text-xs text-green-400 font-mono mt-1">
+                  <div className="text-xs font-mono mt-1" style={{ color: '#4ade80' }}>
                     DoT: {selectedChar.dotDamage}/s for {selectedChar.dotDuration}s
                   </div>
                 )}
@@ -264,20 +228,16 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                           onClick={() => setSelectedCharId(partnerId)}
                           className="w-full flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors text-left"
                         >
-                          <div
-                            className="w-7 h-7 rounded-md shrink-0"
-                            style={{
-                              backgroundColor: partnerOwned && partner ? partner.bodyColor : '#444',
-                              border: partner ? `1px solid ${RARITY_COLORS[partner.rarity]}` : '1px solid #444',
-                            }}
-                          />
+                          {partner && (
+                            <CharacterSprite config={partner} size={28} owned={partnerOwned} />
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="text-foreground text-xs font-mono font-bold">{syn.name}</div>
                             <div className="text-muted-foreground text-[10px] font-mono">
                               + {partnerOwned && partner ? partner.name : '???'}
                             </div>
                           </div>
-                          <span className="text-green-400 text-xs font-mono font-bold shrink-0">{syn.description}</span>
+                          <span className="text-xs font-mono font-bold shrink-0" style={{ color: '#4ade80' }}>{syn.description}</span>
                         </button>
                       );
                     })}
@@ -315,7 +275,7 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-foreground font-bold font-mono text-sm">{syn.name}</span>
-                      <span className="text-green-400 font-mono text-xs font-bold">{syn.description}</span>
+                      <span className="font-mono text-xs font-bold" style={{ color: '#4ade80' }}>{syn.description}</span>
                     </div>
                     <div className="flex items-center justify-center gap-3">
                       <CharMiniCard char={char1!} owned={owned1} />
@@ -323,7 +283,7 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                       <CharMiniCard char={char2!} owned={owned2} />
                     </div>
                     {bothOwned && (
-                      <div className="absolute top-2 right-2 text-green-400 text-xs font-mono font-bold">✓ Ready</div>
+                      <div className="absolute top-2 right-2 text-xs font-mono font-bold" style={{ color: '#4ade80' }}>✓ Ready</div>
                     )}
                   </div>
                 );
@@ -363,7 +323,6 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                       </span>
                     </div>
 
-                    {/* Thresholds */}
                     <div className="space-y-2 mb-3">
                       {elSyn.thresholds.map(t => {
                         const active = ownedCount >= t.count;
@@ -401,20 +360,17 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
                       })}
                     </div>
 
-                    {/* Element characters */}
-                    <div className="flex flex-wrap gap-1.5">
+                    {/* Element characters with sprites */}
+                    <div className="flex flex-wrap gap-2">
                       {elChars.map(c => (
                         <div
                           key={c.id}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono ${
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono ${
                             ownedIds.has(c.id) ? 'bg-muted/50' : 'bg-muted/20 opacity-50'
                           }`}
                           style={{ borderLeft: `2px solid ${RARITY_COLORS[c.rarity]}` }}
                         >
-                          <div
-                            className="w-3 h-3 rounded-sm"
-                            style={{ backgroundColor: ownedIds.has(c.id) ? c.bodyColor : '#444' }}
-                          />
+                          <CharacterSprite config={c} size={18} owned={ownedIds.has(c.id)} />
                           <span className="text-foreground">{ownedIds.has(c.id) ? c.name : '???'}</span>
                         </div>
                       ))}
@@ -451,13 +407,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 function CharMiniCard({ char, owned }: { char: import('../../game/types').CharacterConfig; owned: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div
-        className={`w-10 h-10 rounded-md ${!owned ? 'grayscale opacity-50' : ''}`}
-        style={{
-          backgroundColor: owned ? char.bodyColor : '#444',
-          border: `2px solid ${RARITY_COLORS[char.rarity]}`,
-        }}
-      />
+      <CharacterSprite config={char} size={44} owned={owned} />
       <span className="text-foreground text-[10px] font-mono font-bold text-center">
         {owned ? char.name : '???'}
       </span>
