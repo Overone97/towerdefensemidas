@@ -166,4 +166,7 @@ export interface GameState {
   currentMapId: string;
   autoWave: boolean;
   endlessMode: boolean;
+  waveEnemiesSpawned: number;
+  waveEnemiesTotal: number;
+  waveEnemiesKilledThisWave: number;
 }

@@ -85,6 +85,9 @@ export class GameEngine {
       currentMapId: map.id,
       autoWave: false,
       endlessMode: false,
+      waveEnemiesSpawned: 0,
+      waveEnemiesTotal: 0,
+      waveEnemiesKilledThisWave: 0,
     };
   }
 
@@ -128,6 +131,7 @@ export class GameEngine {
         this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
+        this.state.waveEnemiesKilledThisWave++;
         // Track stats
         this.saveData.stats.totalKills++;
         this.saveData.stats.totalGold += goldEarned;
@@ -164,6 +168,8 @@ export class GameEngine {
     this.state.projectiles = this.towerManager.projectiles;
     this.state.currentWave = this.waveManager.currentWave;
     this.state.waveActive = this.waveManager.waveActive;
+    this.state.waveEnemiesSpawned = this.waveManager.spawned;
+    this.state.waveEnemiesTotal = this.waveManager.enemyCount;
 
     // Track max wave
     if (this.state.currentWave > this.saveData.stats.maxWaveReached) {
@@ -200,6 +206,7 @@ export class GameEngine {
     const config = this.waveManager.startWave();
     if (!config) return false;
     this.state.waveActive = true;
+    this.state.waveEnemiesKilledThisWave = 0;
     return true;
   }
 

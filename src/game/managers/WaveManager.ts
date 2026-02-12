@@ -10,7 +10,8 @@ export class WaveManager {
   
   private waveConfig: WaveConfig | null = null;
   private spawnTimer: number = 0;
-  private spawned: number = 0;
+  spawned: number = 0;
+  enemyCount: number = 0;
   private bossSpawned: boolean = false;
   private enemyPool: WaveEnemyPool[] = [];
   private totalWeight: number = 0;
@@ -22,6 +23,7 @@ export class WaveManager {
     this.waveActive = true;
     this.spawnTimer = 0;
     this.spawned = 0;
+    this.enemyCount = this.waveConfig.enemyCount;
     this.bossSpawned = false;
     this.enemyPool = getWaveEnemyPool(this.currentWave);
     this.totalWeight = this.enemyPool.reduce((sum, e) => sum + e.weight, 0);

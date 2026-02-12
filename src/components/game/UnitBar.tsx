@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameState, OwnedCharacter } from '../../game/types';
-import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
+import { RARITY_COLORS, RARITY_LABELS, getCharacterStats } from '../../game/data/characterData';
 import { RARITY_RATES } from '../../game/data/gachaData';
 import { Rarity } from '../../game/types';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
+
+const ATTACK_PATTERN_ICONS: Record<string, string> = {
+  single: '🎯',
+  rapid: '⚡',
+  aoe_circle: '💥',
+  line: '➡️',
+  poison: '☠️',
+  slow: '❄️',
+  chain: '⚡',
+  burst: '💣',
+};
+
+const ATTACK_PATTERN_LABELS: Record<string, string> = {
+  single: 'Single',
+  rapid: 'Rapid',
+  aoe_circle: 'AoE',
+  line: 'Pierce',
+  poison: 'Poison',
+  slow: 'Slow',
+  chain: 'Chain',
+  burst: 'Burst',
+};
 
 interface UnitBarProps {
   state: GameState;
@@ -17,6 +39,7 @@ interface UnitBarProps {
 }
 
 const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave }) => {
+  const [hoveredChar, setHoveredChar] = useState<number | null>(null);
   const canStartWave = !state.waveActive && !state.gameOver && !state.victory;
   const slotSelected = state.selectedSlotIndex !== null;
   const isGameTab = state.activeTab === 'game';
@@ -31,26 +54,79 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 {state.inventory.length === 0 ? 'No characters yet. Use Summon tab!' : 'All characters deployed!'}
               </span>
             ) : (
-              unplacedCharacters.map(char => (
-                <button
-                  key={char.instanceId}
-                  onClick={() => onPlaceUnit(char.instanceId)}
-                  disabled={!slotSelected}
-                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-all shrink-0
-                    ${slotSelected
-                      ? 'hover:bg-accent cursor-pointer'
-                      : 'opacity-50 cursor-not-allowed'
-                    }
-                  `}
-                  style={{ borderColor: RARITY_COLORS[char.config.rarity] }}
-                >
-                  <CharacterSprite config={char.config} size={32} owned />
-                  <span className="text-xs text-foreground font-mono">{char.config.name}</span>
-                  <span className="text-xs font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
-                    Lv.{char.level}
-                  </span>
-                </button>
-              ))
+              unplacedCharacters.map(char => {
+                const stats = getCharacterStats(char.config, char.level);
+                const dps = (stats.attack * stats.attackSpeed).toFixed(1);
+                const isHovered = hoveredChar === char.instanceId;
+
+                return (
+                  <div key={char.instanceId} className="relative shrink-0">
+                    <button
+                      onClick={() => onPlaceUnit(char.instanceId)}
+                      onMouseEnter={() => setHoveredChar(char.instanceId)}
+                      onMouseLeave={() => setHoveredChar(null)}
+                      disabled={!slotSelected}
+                      className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg border-2 transition-all
+                        ${slotSelected
+                          ? 'hover:bg-accent cursor-pointer hover:scale-105'
+                          : 'opacity-50 cursor-not-allowed'
+                        }
+                      `}
+                      style={{ borderColor: RARITY_COLORS[char.config.rarity] }}
+                    >
+                      <CharacterSprite config={char.config} size={32} owned />
+                      <span className="text-xs text-foreground font-mono font-semibold">{char.config.name}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
+                          Lv.{char.level}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {ATTACK_PATTERN_ICONS[char.config.attackPattern]}
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Tooltip */}
+                    {isHovered && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+                        <div className="bg-popover border border-border rounded-lg shadow-lg p-3 min-w-[160px]">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="font-bold text-sm text-foreground">{char.config.name}</span>
+                            <span className="text-xs font-mono font-bold" style={{ color: RARITY_COLORS[char.config.rarity] }}>
+                              {RARITY_LABELS[char.config.rarity]}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {ATTACK_PATTERN_LABELS[char.config.attackPattern]}
+                          </div>
+                          <div className="space-y-0.5 text-xs font-mono">
+                            <div className="flex justify-between"><span className="text-muted-foreground">ATK</span><span className="text-foreground">{stats.attack}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">SPD</span><span className="text-foreground">{stats.attackSpeed.toFixed(1)}/s</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">RNG</span><span className="text-foreground">{stats.range}</span></div>
+                            <div className="flex justify-between border-t border-border pt-0.5 mt-0.5">
+                              <span className="text-muted-foreground">DPS</span>
+                              <span className="text-primary font-bold">{dps}</span>
+                            </div>
+                          </div>
+                          {(char.config.dotDamage || char.config.slowFactor || char.config.aoeRadius) && (
+                            <div className="mt-1.5 pt-1.5 border-t border-border space-y-0.5 text-[10px]">
+                              {char.config.dotDamage && (
+                                <div className="text-green-400">☠️ {char.config.dotDamage}/s for {char.config.dotDuration || 2}s</div>
+                              )}
+                              {char.config.slowFactor && (
+                                <div className="text-blue-400">❄️ {Math.round((1 - char.config.slowFactor) * 100)}% slow for {char.config.slowDuration || 2}s</div>
+                              )}
+                              {char.config.aoeRadius && (
+                                <div className="text-orange-400">💥 AoE radius: {char.config.aoeRadius}</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
