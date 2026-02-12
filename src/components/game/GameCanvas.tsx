@@ -28,7 +28,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     if (fishState.visible && !fishState.caught) {
       const fdx = x - fishState.x;
       const fdy = y - fishState.y;
-      if (fdx * fdx + fdy * fdy < 400) {
+      if (fdx * fdx + fdy * fdy < 900) {
         const caught = engine.tryCatchFish();
         if (caught) {
           onFishCaught?.();

@@ -743,7 +743,16 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
     ctx.fill();
   }
 
-  // ── Fish ──
+  // ── Fish Easter Egg ──
+  // Phases: 0=jump out (0.5s), 1=on grass wiggling (3.5s), 2=jump back in (0.5s)
+  const JUMP_OUT_DUR = 0.5;
+  const ON_GRASS_DUR = 3.5;
+  const JUMP_BACK_DUR = 0.5;
+  const TOTAL_FISH_DUR = JUMP_OUT_DUR + ON_GRASS_DUR + JUMP_BACK_DUR;
+  // Landing spot on grass next to pond
+  const LAND_X = POND_X + POND_RX + 20;
+  const LAND_Y = POND_Y - 5;
+
   const dt = 1 / 60;
   if (!fishState.caught) {
     fishState.timer += dt;
@@ -752,45 +761,65 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
         fishState.visible = true;
         fishState.timer = 0;
         fishState.jumpPhase = 0;
-        // Start from a random spot inside the pond
-        fishState.x = POND_X - 15 + Math.random() * 30;
+        fishState.x = POND_X + 15;
         fishState.y = POND_Y;
       }
     } else {
       fishState.jumpPhase += dt;
-      if (fishState.jumpPhase > 1.0) {
+      if (fishState.jumpPhase > TOTAL_FISH_DUR) {
         fishState.visible = false;
         fishState.timer = 0;
-        fishState.nextAppear = 10 + Math.random() * 20;
+        fishState.nextAppear = 8 + Math.random() * 15;
       }
     }
   }
 
-  // Draw fish clipped to pond area — it peeks out of the water briefly
   if (fishState.visible && !fishState.caught) {
     const jp = fishState.jumpPhase;
-    // Small arc: barely breaks the surface, max 12px above water line
-    const jumpArc = Math.sin(jp / 1.0 * Math.PI);
-    const fishX = fishState.x + (jp - 0.5) * 6; // slight horizontal drift
-    const fishY = POND_Y - 4 - jumpArc * 12; // small jump, stays near surface
-    const rotation = -jumpArc * 0.5;
+    let fishX: number, fishY: number, rotation: number;
 
-    // Clip to pond ellipse so fish never renders outside
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(POND_X, POND_Y, POND_RX - 2, POND_RY - 2, 0, 0, Math.PI * 2);
-    ctx.clip();
+    const startX = POND_X + 15;
+    const startY = POND_Y - 5;
 
-    // Ripples around the fish
-    if (jumpArc > 0.1) {
-      ctx.strokeStyle = `rgba(100, 200, 255, ${jumpArc * 0.3})`;
-      ctx.lineWidth = 1;
+    if (jp < JUMP_OUT_DUR) {
+      // Phase 0: Arc from pond to grass
+      const p = jp / JUMP_OUT_DUR;
+      fishX = startX + (LAND_X - startX) * p;
+      fishY = startY + (LAND_Y - startY) * p - Math.sin(p * Math.PI) * 35;
+      rotation = -0.6 + p * 1.2; // rotating as it flies
+    } else if (jp < JUMP_OUT_DUR + ON_GRASS_DUR) {
+      // Phase 1: On grass, wiggling desperately
+      const grassTime = jp - JUMP_OUT_DUR;
+      fishX = LAND_X + Math.sin(grassTime * 8) * 3;
+      fishY = LAND_Y + Math.abs(Math.sin(grassTime * 12)) * 2; // bouncing
+      rotation = Math.sin(grassTime * 10) * 0.4; // frantic wiggle
+    } else {
+      // Phase 2: Jump back into pond
+      const p = (jp - JUMP_OUT_DUR - ON_GRASS_DUR) / JUMP_BACK_DUR;
+      fishX = LAND_X + (startX - LAND_X) * p;
+      fishY = LAND_Y + (startY - LAND_Y) * p - Math.sin(p * Math.PI) * 30;
+      rotation = 0.6 - p * 1.2;
+    }
+
+    // Splash ripples at pond when jumping out or back in
+    if (jp < 0.3 || jp > TOTAL_FISH_DUR - 0.3) {
+      const splashAlpha = jp < 0.3 ? (0.3 - jp) / 0.3 : (jp - (TOTAL_FISH_DUR - 0.3)) / 0.3;
+      ctx.strokeStyle = `rgba(100, 200, 255, ${splashAlpha * 0.5})`;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.ellipse(fishX, POND_Y - 2, 6 + jumpArc * 5, 2 + jumpArc * 1.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(startX, POND_Y - 2, 8 + splashAlpha * 10, 3 + splashAlpha * 4, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Draw the fish
+    // Shadow on ground when on grass
+    if (jp >= JUMP_OUT_DUR && jp < JUMP_OUT_DUR + ON_GRASS_DUR) {
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.beginPath();
+      ctx.ellipse(fishX, LAND_Y + 5, 8, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw the fish (no clip — it's on grass!)
     ctx.save();
     ctx.translate(fishX, fishY);
     ctx.rotate(rotation);
@@ -798,55 +827,54 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
     // Body
     ctx.fillStyle = '#ff8844';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Lighter belly
     ctx.fillStyle = '#ffaa66';
     ctx.beginPath();
-    ctx.ellipse(-0.5, -0.5, 4, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(-0.5, 1, 5, 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Tail
     ctx.fillStyle = '#ff6622';
     ctx.beginPath();
-    ctx.moveTo(-5, 0);
-    ctx.lineTo(-9, -3);
-    ctx.lineTo(-9, 3);
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(-12, -4);
+    ctx.lineTo(-12, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Dorsal fin
+    ctx.fillStyle = '#ee6633';
+    ctx.beginPath();
+    ctx.moveTo(-2, -3);
+    ctx.lineTo(2, -6);
+    ctx.lineTo(4, -3);
     ctx.closePath();
     ctx.fill();
 
     // Eye
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(3, -0.5, 1.2, 0, Math.PI * 2);
+    ctx.arc(4, -1, 1.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#111111';
     ctx.beginPath();
-    ctx.arc(3.3, -0.5, 0.5, 0, Math.PI * 2);
+    ctx.arc(4.5, -1, 0.7, 0, Math.PI * 2);
     ctx.fill();
 
-    // Subtle sparkle hint
-    if (Math.sin(t * 6) > 0.5 && jumpArc > 0.5) {
-      ctx.fillStyle = 'rgba(255, 255, 150, 0.7)';
+    // Sparkle hint when on grass
+    if (jp >= JUMP_OUT_DUR && jp < JUMP_OUT_DUR + ON_GRASS_DUR && Math.sin(t * 8) > 0.3) {
+      ctx.fillStyle = 'rgba(255, 255, 150, 0.8)';
       ctx.beginPath();
-      ctx.arc(1, -2.5, 1, 0, Math.PI * 2);
+      ctx.arc(2, -4, 1.2, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    ctx.restore(); // un-translate
+    ctx.restore();
 
-    // Water overlay on the lower part of the fish (fish going back in)
-    if (jumpArc < 0.4) {
-      ctx.fillStyle = 'rgba(26, 85, 119, 0.6)';
-      ctx.beginPath();
-      ctx.ellipse(fishX, POND_Y, 12, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore(); // un-clip
-
-    // Store position for click detection
+    // Store position for click detection (bigger hitbox)
     fishState.x = fishX;
     fishState.y = fishY;
   }
