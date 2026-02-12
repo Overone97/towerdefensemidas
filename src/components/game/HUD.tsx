@@ -7,9 +7,10 @@ interface HUDProps {
   onOpenTalents: () => void;
   onOpenMaps: () => void;
   onOpenWiki: () => void;
+  onOpenAchievements: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements }) => {
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
       <div className="flex items-center gap-4">
@@ -67,6 +68,12 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
           className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
         >
           📖 Wiki
+        </button>
+        <button
+          onClick={onOpenAchievements}
+          className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+        >
+          🏆
         </button>
       </div>
 

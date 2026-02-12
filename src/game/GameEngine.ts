@@ -5,6 +5,7 @@ import { WaveManager } from './managers/WaveManager';
 import { ParticleManager } from './managers/ParticleManager';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
+import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
 import { getTalentBonus } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
@@ -123,6 +124,10 @@ export class GameEngine {
         this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
+        // Track stats
+        this.saveData.stats.totalKills++;
+        this.saveData.stats.totalGold += goldEarned;
+        if (enemy.type === 'boss') this.saveData.stats.bossKills++;
         // Death particles
         if (enemy.type === 'boss') {
           this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
@@ -156,6 +161,11 @@ export class GameEngine {
     this.state.currentWave = this.waveManager.currentWave;
     this.state.waveActive = this.waveManager.waveActive;
 
+    // Track max wave
+    if (this.state.currentWave > this.saveData.stats.maxWaveReached) {
+      this.saveData.stats.maxWaveReached = this.state.currentWave;
+    }
+
     // Auto-wave: start next wave when current ends
     if (!this.state.waveActive && this.state.autoWave && this.waveManager.currentWave < this.waveManager.totalWaves) {
       this.startWave();
@@ -170,8 +180,15 @@ export class GameEngine {
       if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
         this.saveData.mapsCompleted.push(this.state.currentMapId);
       }
+      // Perfect map (no HP lost)
+      if (this.state.baseHp === this.state.maxBaseHp) {
+        this.saveData.stats.perfectMaps++;
+      }
       this.persistSave();
     }
+
+    // Check achievements
+    this.checkAchievements();
   }
 
   startWave(): boolean {
@@ -322,7 +339,6 @@ export class GameEngine {
 
   tryCatchFish(): OwnedCharacter | null {
     if (!fishState.visible || fishState.caught) return null;
-    // Check if leviathan already owned
     const alreadyOwned = this.state.inventory.some(c => c.config.id === 'leviathan');
     if (alreadyOwned) return null;
 
@@ -331,6 +347,7 @@ export class GameEngine {
 
     fishState.caught = true;
     fishState.visible = false;
+    this.saveData.stats.fishCaught = true;
 
     const character: OwnedCharacter = {
       instanceId: nextInstanceId++,
@@ -340,6 +357,51 @@ export class GameEngine {
     this.state.inventory.push(character);
     this.persistSave();
     return character;
+  }
+
+  // Achievement queue for UI notifications
+  newAchievements: string[] = [];
+
+  private checkAchievements(): void {
+    const stats: AchievementStats = {
+      totalKills: this.saveData.stats.totalKills,
+      totalGold: this.saveData.stats.totalGold,
+      totalSummons: this.saveData.totalSummons,
+      mapsCompleted: this.saveData.mapsCompleted.length,
+      wavesCompleted: this.saveData.stats.maxWaveReached,
+      perfectMaps: this.saveData.stats.perfectMaps,
+      legendaryOwned: this.state.inventory.filter(c => c.config.rarity === 'legendary').length,
+      totalUnits: this.state.inventory.length,
+      bossKills: this.saveData.stats.bossKills,
+      maxWaveReached: this.saveData.stats.maxWaveReached,
+      fishCaught: this.saveData.stats.fishCaught,
+    };
+
+    for (const ach of ACHIEVEMENTS) {
+      if (this.saveData.achievementsUnlocked.includes(ach.id)) continue;
+      if (ach.condition(stats)) {
+        this.saveData.achievementsUnlocked.push(ach.id);
+        this.newAchievements.push(ach.id);
+        if (ach.reward?.stars) {
+          this.saveData.stars += ach.reward.stars;
+          this.state.stars = this.saveData.stars;
+        }
+        this.persistSave();
+      }
+    }
+  }
+
+  getAchievements() {
+    return {
+      all: ACHIEVEMENTS,
+      unlocked: this.saveData.achievementsUnlocked,
+    };
+  }
+
+  popNewAchievements(): string[] {
+    const popped = [...this.newAchievements];
+    this.newAchievements = [];
+    return popped;
   }
 
   private persistSave(): void {

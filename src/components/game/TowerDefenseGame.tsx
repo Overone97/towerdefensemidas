@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GameEngine } from '../../game/GameEngine';
 import { OwnedCharacter, TargetPriority } from '../../game/types';
 import GameCanvas from './GameCanvas';
@@ -11,8 +11,10 @@ import SynergyPanel from './SynergyPanel';
 import TalentTree from './TalentTree';
 import MapSelect from './MapSelect';
 import WikiScreen from './WikiScreen';
+import AchievementScreen from './AchievementScreen';
+import AchievementToast from './AchievementToast';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
@@ -20,6 +22,7 @@ const TowerDefenseGame: React.FC = () => {
   const [lastSummon, setLastSummon] = useState<OwnedCharacter | null>(null);
   const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
   const [screen, setScreen] = useState<Screen>('game');
+  const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -28,6 +31,17 @@ const TowerDefenseGame: React.FC = () => {
   const engine = engineRef.current;
   const state = engine.state;
   const saveData = engine.getSaveData();
+
+  // Poll for new achievements
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newAch = engine.popNewAchievements();
+      if (newAch.length > 0) {
+        setAchievementQueue(prev => [...prev, ...newAch]);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [engine]);
 
   const handlePlaceUnit = useCallback((instanceId: number) => {
     if (state.selectedSlotIndex === null) return;
@@ -136,6 +150,16 @@ const TowerDefenseGame: React.FC = () => {
     );
   }
 
+  if (screen === 'achievements') {
+    const achData = engine.getAchievements();
+    return (
+      <AchievementScreen
+        unlocked={achData.unlocked}
+        onBack={() => setScreen('game')}
+      />
+    );
+  }
+
   const selectedUnit = state.selectedUnitId
     ? state.placedUnits.find(u => u.id === state.selectedUnitId) ?? null
     : null;
@@ -145,7 +169,7 @@ const TowerDefenseGame: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} />
+      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
         <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
         {state.activeSynergies.length > 0 && (
@@ -173,6 +197,12 @@ const TowerDefenseGame: React.FC = () => {
           <GachaReveal character={revealChar} onComplete={handleRevealComplete} />
         )}
       </div>
+      {achievementQueue.length > 0 && (
+        <AchievementToast
+          achievementId={achievementQueue[0]}
+          onDone={() => setAchievementQueue(prev => prev.slice(1))}
+        />
+      )}
       <UnitBar
         state={state}
         unplacedCharacters={unplacedCharacters}
