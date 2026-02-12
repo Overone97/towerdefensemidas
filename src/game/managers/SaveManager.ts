@@ -1,4 +1,4 @@
-import { OwnedCharacter } from '../types';
+import { OwnedCharacter, EquippedItems } from '../types';
 import { ALL_CHARACTERS } from '../data/characterData';
 
 const SAVE_KEY = 'td_save_v1';
@@ -10,7 +10,8 @@ export interface LeaderboardEntry {
 }
 
 export interface SaveData {
-  inventory: { configId: string; level: number }[];
+  inventory: { configId: string; level: number; equipment?: EquippedItems }[];
+  equipmentInventory: string[];  // unequipped equipment ids
   totalSummons: number;
   talents: Record<string, number>;
   stars: number;
@@ -33,6 +34,7 @@ export interface SaveData {
 function defaultSave(): SaveData {
   return {
     inventory: [],
+    equipmentInventory: [],
     totalSummons: 0,
     talents: {},
     stars: 0,
@@ -76,11 +78,11 @@ export function saveDataToInventory(data: SaveData): OwnedCharacter[] {
     .map(item => {
       const config = ALL_CHARACTERS.find(c => c.id === item.configId);
       if (!config) return null;
-      return { instanceId: id++, config, level: item.level } as OwnedCharacter;
+      return { instanceId: id++, config, level: item.level, equipment: item.equipment || {} } as OwnedCharacter;
     })
     .filter(Boolean) as OwnedCharacter[];
 }
 
-export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number }[] {
-  return inventory.map(c => ({ configId: c.config.id, level: c.level }));
+export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number; equipment?: EquippedItems }[] {
+  return inventory.map(c => ({ configId: c.config.id, level: c.level, equipment: c.equipment }));
 }

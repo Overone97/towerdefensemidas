@@ -12,6 +12,7 @@ import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost } from './data/characterData';
 import { getGachaCost, rollRarity } from './data/gachaData';
 import { TALENTS } from './data/talentData';
+import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 
 let nextInstanceId = 1;
 
@@ -88,6 +89,8 @@ export class GameEngine {
       waveEnemiesSpawned: 0,
       waveEnemiesTotal: 0,
       waveEnemiesKilledThisWave: 0,
+      equipmentInventory: this.saveData.equipmentInventory || [],
+      lastDrop: null,
     };
   }
 
@@ -135,7 +138,17 @@ export class GameEngine {
         // Track stats
         this.saveData.stats.totalKills++;
         this.saveData.stats.totalGold += goldEarned;
-        if (enemy.type === 'boss') this.saveData.stats.bossKills++;
+        if (enemy.type === 'boss') {
+          this.saveData.stats.bossKills++;
+          // Boss equipment drop
+          const drop = rollBossDrop(this.state.currentWave);
+          if (drop) {
+            this.state.equipmentInventory.push(drop.id);
+            this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+            this.state.lastDrop = drop.id;
+            this.persistSave();
+          }
+        }
         // Death particles
         if (enemy.type === 'boss') {
           this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
@@ -233,6 +246,7 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config,
       level: 1,
+      equipment: {},
     };
     this.state.inventory.push(character);
     this.persistSave();
@@ -249,7 +263,7 @@ export class GameEngine {
     const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
     if (alreadyPlaced) return false;
 
-    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level);
+    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment);
     slot.unitId = unit.id;
     this.state.selectedSlotIndex = null;
     return true;
@@ -426,6 +440,7 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config: leviathan,
       level: 1,
+      equipment: {},
     };
     this.state.inventory.push(character);
     this.persistSave();
@@ -477,8 +492,47 @@ export class GameEngine {
     return popped;
   }
 
+  equipItem(characterInstanceId: number, equipmentId: string): boolean {
+    const char = this.state.inventory.find(c => c.instanceId === characterInstanceId);
+    const item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+    if (!char || !item) return false;
+
+    // Check if in equipment inventory
+    const idx = this.state.equipmentInventory.indexOf(equipmentId);
+    if (idx === -1) return false;
+
+    // Unequip current item in that slot if any
+    const currentEquipId = char.equipment[item.slot];
+    if (currentEquipId) {
+      this.state.equipmentInventory.push(currentEquipId);
+    }
+
+    // Equip
+    char.equipment[item.slot] = equipmentId;
+    this.state.equipmentInventory.splice(idx, 1);
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.persistSave();
+    return true;
+  }
+
+  unequipItem(characterInstanceId: number, slot: 'weapon' | 'armor' | 'accessory'): boolean {
+    const char = this.state.inventory.find(c => c.instanceId === characterInstanceId);
+    if (!char || !char.equipment[slot]) return false;
+
+    this.state.equipmentInventory.push(char.equipment[slot]!);
+    delete char.equipment[slot];
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.persistSave();
+    return true;
+  }
+
+  clearLastDrop(): void {
+    this.state.lastDrop = null;
+  }
+
   private persistSave(): void {
     this.saveData.inventory = inventoryToSaveData(this.state.inventory);
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
     writeSave(this.saveData);
   }
 }

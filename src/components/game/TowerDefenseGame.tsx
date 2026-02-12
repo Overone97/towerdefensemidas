@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GameEngine } from '../../game/GameEngine';
 import { OwnedCharacter, TargetPriority } from '../../game/types';
+import { EquipmentSlotType } from '../../game/data/equipmentData';
 import GameCanvas from './GameCanvas';
 import HUD from './HUD';
 import UnitBar from './UnitBar';
@@ -13,8 +14,10 @@ import MapSelect from './MapSelect';
 import WikiScreen from './WikiScreen';
 import AchievementScreen from './AchievementScreen';
 import AchievementToast from './AchievementToast';
+import EquipmentPanel from './EquipmentPanel';
+import EquipmentDropToast from './EquipmentDropToast';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
@@ -134,6 +137,28 @@ const TowerDefenseGame: React.FC = () => {
       setRevealChar(leviathan);
     }
   }, [state.inventory]);
+
+  const handleEquip = useCallback((charId: number, eqId: string) => {
+    engine.equipItem(charId, eqId);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handleUnequip = useCallback((charId: number, slot: EquipmentSlotType) => {
+    engine.unequipItem(charId, slot);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  // Poll for equipment drops
+  const [dropToast, setDropToast] = useState<string | null>(null);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (state.lastDrop) {
+        setDropToast(state.lastDrop);
+        engine.clearLastDrop();
+      }
+    }, 300);
+    return () => clearInterval(interval);
+  }, [engine, state]);
   if (screen === 'talents') {
     return (
       <TalentTree
@@ -176,6 +201,18 @@ const TowerDefenseGame: React.FC = () => {
     );
   }
 
+  if (screen === 'equipment') {
+    return (
+      <EquipmentPanel
+        inventory={state.inventory}
+        equipmentInventory={state.equipmentInventory}
+        onEquip={handleEquip}
+        onUnequip={handleUnequip}
+        onBack={() => setScreen('game')}
+      />
+    );
+  }
+
   const selectedUnit = state.selectedUnitId
     ? state.placedUnits.find(u => u.id === state.selectedUnitId) ?? null
     : null;
@@ -185,7 +222,7 @@ const TowerDefenseGame: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} />
+      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} onOpenEquipment={() => setScreen('equipment')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
         <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
         {state.activeSynergies.length > 0 && (
@@ -216,6 +253,9 @@ const TowerDefenseGame: React.FC = () => {
           <GachaReveal character={revealChar} onComplete={handleRevealComplete} />
         )}
       </div>
+      {dropToast && (
+        <EquipmentDropToast equipmentId={dropToast} onDone={() => setDropToast(null)} />
+      )}
       {achievementQueue.length > 0 && (
         <AchievementToast
           achievementId={achievementQueue[0]}

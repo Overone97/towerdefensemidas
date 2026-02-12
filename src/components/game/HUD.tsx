@@ -8,9 +8,10 @@ interface HUDProps {
   onOpenMaps: () => void;
   onOpenWiki: () => void;
   onOpenAchievements: () => void;
+  onOpenEquipment: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment }) => {
   const waveProgress = state.waveActive && state.waveEnemiesTotal > 0
     ? (state.waveEnemiesKilledThisWave / state.waveEnemiesTotal) * 100
     : 0;
@@ -79,6 +80,12 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
             className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
           >
             🏆
+          </button>
+          <button
+            onClick={onOpenEquipment}
+            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+          >
+            ⚙️
           </button>
         </div>
 

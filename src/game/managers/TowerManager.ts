@@ -1,6 +1,7 @@
-import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus } from '../types';
+import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus, EquippedItems } from '../types';
 import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
+import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
 
 let nextUnitId = 1;
 let nextProjectileId = 1;
@@ -16,8 +17,9 @@ export class TowerManager {
   projectiles: Projectile[] = [];
   synergyBonuses: Map<number, SynergyBonus> = new Map();
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
+  unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
 
-  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number): PlacedUnit {
+  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems): PlacedUnit {
     const unit: PlacedUnit = {
       id: nextUnitId++,
       characterInstanceId,
@@ -37,6 +39,7 @@ export class TowerManager {
       abilityTimer: 0,
     };
     this.units.push(unit);
+    if (equipment) this.unitEquipment.set(unit.id, equipment);
     return unit;
   }
 
@@ -52,13 +55,22 @@ export class TowerManager {
   private getEffectiveStats(unit: PlacedUnit) {
     const base = getCharacterStats(unit.config, unit.level);
     const syn = this.synergyBonuses.get(unit.id);
-    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
-    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
-    const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult;
+    
+    // Equipment bonuses
+    const eq = this.unitEquipment.get(unit.id) || {};
+    const eqItems = [eq.weapon, eq.armor, eq.accessory]
+      .filter(Boolean)
+      .map(id => ALL_EQUIPMENT.find(e => e.id === id))
+      .filter(Boolean) as any[];
+    const eqBonus = getEquipmentBonuses(eqItems);
+    
+    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * eqBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
+    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * eqBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
+    const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
     return {
-      attack: Math.floor(base.attack * aMult),
-      attackSpeed: base.attackSpeed * sMult,
-      range: Math.floor(base.range * rMult),
+      attack: Math.floor((base.attack + eqBonus.attackBonus) * aMult),
+      attackSpeed: (base.attackSpeed + eqBonus.attackSpeedBonus) * sMult,
+      range: Math.floor((base.range + eqBonus.rangeBonus) * rMult),
     };
   }
 
