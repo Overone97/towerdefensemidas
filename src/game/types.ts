@@ -94,10 +94,17 @@ export interface Enemy {
   animFrame: number;
 }
 
+export interface EquippedItems {
+  weapon?: string;   // equipment id
+  armor?: string;
+  accessory?: string;
+}
+
 export interface OwnedCharacter {
   instanceId: number;
   config: CharacterConfig;
   level: number;
+  equipment: EquippedItems;
 }
 
 export interface PlacedUnit {
@@ -167,6 +174,8 @@ export interface GameState {
   activeSynergies: ActiveSynergy[];
   stars: number;
   currentMapId: string;
+  equipmentInventory: string[];  // owned equipment ids
+  lastDrop: string | null;       // last boss drop for notification
   autoWave: boolean;
   endlessMode: boolean;
   waveEnemiesSpawned: number;
