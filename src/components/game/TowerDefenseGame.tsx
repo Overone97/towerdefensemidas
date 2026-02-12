@@ -6,11 +6,13 @@ import HUD from './HUD';
 import UnitBar from './UnitBar';
 import UnitInfoPanel from './UnitInfoPanel';
 import GameOverScreen from './GameOverScreen';
+import GachaReveal from './GachaReveal';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
   const [, forceUpdate] = useState(0);
   const [lastSummon, setLastSummon] = useState<OwnedCharacter | null>(null);
+  const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -27,9 +29,16 @@ const TowerDefenseGame: React.FC = () => {
 
   const handleSummon = useCallback(() => {
     const result = engine.summonCharacter();
-    if (result) setLastSummon(result);
+    if (result) {
+      setLastSummon(result);
+      setRevealChar(result);
+    }
     onStateChange();
   }, [engine, onStateChange]);
+
+  const handleRevealComplete = useCallback(() => {
+    setRevealChar(null);
+  }, []);
 
   const handleStartWave = useCallback(() => {
     engine.startWave();
@@ -90,6 +99,9 @@ const TowerDefenseGame: React.FC = () => {
             wave={state.currentWave}
             onRestart={handleRestart}
           />
+        )}
+        {revealChar && (
+          <GachaReveal character={revealChar} onComplete={handleRevealComplete} />
         )}
       </div>
       <UnitBar
