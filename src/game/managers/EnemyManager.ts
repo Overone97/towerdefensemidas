@@ -1,13 +1,22 @@
-import { Enemy, EnemyConfig, StatusEffect } from '../types';
+import { Enemy, EnemyConfig, Point, StatusEffect } from '../types';
 import { WAYPOINTS } from '../data/mapData';
 
 let nextEnemyId = 1;
 
 export class EnemyManager {
   enemies: Enemy[] = [];
+  private waypoints: Point[] = WAYPOINTS;
+
+  setWaypoints(wp: Point[]): void {
+    this.waypoints = wp;
+  }
+
+  getWaypoints(): Point[] {
+    return this.waypoints;
+  }
 
   spawnEnemy(config: EnemyConfig, hpMult: number, speedMult: number, rewardMult: number): void {
-    const start = WAYPOINTS[0];
+    const start = this.waypoints[0];
     const baseSpeed = config.speed * speedMult;
     this.enemies.push({
       id: nextEnemyId++,
@@ -44,14 +53,14 @@ export class EnemyManager {
       if (!enemy.alive) continue;
 
       const nextIdx = enemy.waypointIndex + 1;
-      if (nextIdx >= WAYPOINTS.length) {
+      if (nextIdx >= this.waypoints.length) {
         reachedEnd.push(enemy);
         enemy.alive = false;
         continue;
       }
 
-      const current = WAYPOINTS[enemy.waypointIndex];
-      const next = WAYPOINTS[nextIdx];
+      const current = this.waypoints[enemy.waypointIndex];
+      const next = this.waypoints[nextIdx];
       const dx = next.x - current.x;
       const dy = next.y - current.y;
       const segLen = Math.sqrt(dx * dx + dy * dy);
@@ -61,7 +70,7 @@ export class EnemyManager {
       if (enemy.progress >= 1) {
         enemy.waypointIndex++;
         enemy.progress = 0;
-        if (enemy.waypointIndex + 1 >= WAYPOINTS.length) {
+        if (enemy.waypointIndex + 1 >= this.waypoints.length) {
           reachedEnd.push(enemy);
           enemy.alive = false;
           continue;
@@ -70,9 +79,9 @@ export class EnemyManager {
 
       const ci = enemy.waypointIndex;
       const ni = ci + 1;
-      if (ni < WAYPOINTS.length) {
-        const cw = WAYPOINTS[ci];
-        const nw = WAYPOINTS[ni];
+      if (ni < this.waypoints.length) {
+        const cw = this.waypoints[ci];
+        const nw = this.waypoints[ni];
         enemy.x = cw.x + (nw.x - cw.x) * enemy.progress;
         enemy.y = cw.y + (nw.y - cw.y) * enemy.progress;
       }
@@ -97,7 +106,6 @@ export class EnemyManager {
       }
 
       if (effect.type === 'slow') {
-        // Apply slow resist
         const effectiveSlow = effect.slowFactor + (1 - effect.slowFactor) * enemy.slowResist;
         slowFactor = Math.min(slowFactor, effectiveSlow);
       }
@@ -114,7 +122,6 @@ export class EnemyManager {
     const enemy = this.enemies.find(e => e.id === enemyId && e.alive);
     if (!enemy) return;
 
-    // Poison resist blocks poison effects
     if (effect.type === 'poison' && enemy.poisonResist) return;
 
     const existing = enemy.statusEffects.find(e => e.type === effect.type);
@@ -133,7 +140,6 @@ export class EnemyManager {
     const enemy = this.enemies.find(e => e.id === id);
     if (!enemy || !enemy.alive) return { killed: false, reward: 0 };
 
-    // Apply armor reduction
     const effectiveDamage = Math.max(1, damage - enemy.armor);
     enemy.hp -= effectiveDamage;
     if (enemy.hp <= 0) {

@@ -4,17 +4,23 @@ import { GameState } from '../../game/types';
 interface HUDProps {
   state: GameState;
   onSetTab: (tab: 'game' | 'gacha') => void;
+  onOpenTalents: () => void;
+  onOpenMaps: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps }) => {
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
           <span className="text-yellow-400 font-bold">💰</span>
           <span className="text-foreground font-mono font-bold">{state.gold}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <span className="text-yellow-400">⭐</span>
+          <span className="text-foreground font-mono">{state.stars}</span>
+        </div>
+        <div className="flex items-center gap-1">
           <span className="text-blue-400 font-bold">🌊</span>
           <span className="text-foreground font-mono">
             {state.currentWave} / {state.totalWaves}
@@ -43,6 +49,18 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab }) => {
         >
           Summon
         </button>
+        <button
+          onClick={onOpenTalents}
+          className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+        >
+          Talents
+        </button>
+        <button
+          onClick={onOpenMaps}
+          className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+        >
+          Maps
+        </button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -52,7 +70,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab }) => {
         </span>
         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden ml-1">
           <div
-            className="h-full bg-red-500 transition-all"
+            className="h-full bg-destructive transition-all"
             style={{ width: `${(state.baseHp / state.maxBaseHp) * 100}%` }}
           />
         </div>
