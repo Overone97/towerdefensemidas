@@ -2,6 +2,7 @@ import { GameState, OwnedCharacter, Point, Slot } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
+import { ParticleManager } from './managers/ParticleManager';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
 import { getTalentBonus } from './data/talentData';
@@ -28,6 +29,7 @@ export class GameEngine {
   enemyManager = new EnemyManager();
   towerManager = new TowerManager();
   waveManager = new WaveManager();
+  particleManager = new ParticleManager();
 
   private saveData: SaveData;
   state: GameState;
@@ -113,14 +115,40 @@ export class GameEngine {
     }
 
     for (const { enemyId, damage } of damages) {
+      // Find enemy before damaging to get position for particles
+      const enemy = this.enemyManager.enemies.find(e => e.id === enemyId);
       const result = this.enemyManager.damageEnemy(enemyId, damage);
-      if (result.killed) {
+      if (result.killed && enemy) {
         const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
         this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
+        // Death particles
+        if (enemy.type === 'boss') {
+          this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
+        } else {
+          this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
+        }
       }
     }
+
+    // Projectile trails
+    for (const proj of this.towerManager.projectiles) {
+      if (proj.alive) {
+        const trailColor = proj.appliesPoison ? '#44ff44' : proj.pierce ? '#88aaff' : '#ffdd44';
+        this.particleManager.spawnProjectileTrail(proj.x, proj.y, trailColor);
+      }
+    }
+
+    // Legendary unit auras
+    for (const unit of this.towerManager.units) {
+      if (unit.config.rarity === 'legendary' && Math.random() < 0.15) {
+        this.particleManager.spawnLegendaryAura(unit.x, unit.y, unit.config.weaponColor);
+      }
+    }
+
+    // Update particles
+    this.particleManager.update(dt);
 
     this.state.enemies = this.enemyManager.enemies;
     this.state.placedUnits = this.towerManager.units;
@@ -277,6 +305,7 @@ export class GameEngine {
   restart(): void {
     this.enemyManager.clear();
     this.towerManager.clear();
+    this.particleManager.clear();
     this.waveManager = new WaveManager();
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
