@@ -62,7 +62,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
       lastTimeRef.current = timestamp;
 
       engine.update(dt);
-      renderGame(ctx, engine.state, engine.getWaypoints());
+      renderGame(ctx, engine.state, engine.getWaypoints(), timestamp);
       onStateChange();
 
       rafRef.current = requestAnimationFrame(gameLoop);
