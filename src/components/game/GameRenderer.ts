@@ -744,8 +744,7 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
   }
 
   // ── Fish ──
-  // Update fish timer
-  const dt = 1 / 60; // approximate
+  const dt = 1 / 60;
   if (!fishState.caught) {
     fishState.timer += dt;
     if (!fishState.visible) {
@@ -753,13 +752,13 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
         fishState.visible = true;
         fishState.timer = 0;
         fishState.jumpPhase = 0;
-        fishState.x = POND_X - 20 + Math.random() * 40;
+        // Start from a random spot inside the pond
+        fishState.x = POND_X - 15 + Math.random() * 30;
         fishState.y = POND_Y;
       }
     } else {
       fishState.jumpPhase += dt;
-      // Fish is visible for ~1.5 seconds
-      if (fishState.jumpPhase > 1.5) {
+      if (fishState.jumpPhase > 1.0) {
         fishState.visible = false;
         fishState.timer = 0;
         fishState.nextAppear = 10 + Math.random() * 20;
@@ -767,39 +766,28 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
     }
   }
 
-  // Draw fish if visible
+  // Draw fish clipped to pond area — it peeks out of the water briefly
   if (fishState.visible && !fishState.caught) {
     const jp = fishState.jumpPhase;
-    // Arc trajectory: fish jumps out and back
-    const jumpArc = Math.sin(jp / 1.5 * Math.PI);
-    const fishX = fishState.x + jp * 15;
-    const fishY = fishState.y - jumpArc * 30;
-    const rotation = -jumpArc * 0.8 + 0.3;
+    // Small arc: barely breaks the surface, max 12px above water line
+    const jumpArc = Math.sin(jp / 1.0 * Math.PI);
+    const fishX = fishState.x + (jp - 0.5) * 6; // slight horizontal drift
+    const fishY = POND_Y - 4 - jumpArc * 12; // small jump, stays near surface
+    const rotation = -jumpArc * 0.5;
 
-    // Splash at start
-    if (jp < 0.3) {
-      const splashAlpha = (0.3 - jp) / 0.3;
-      ctx.fillStyle = `rgba(100, 200, 255, ${splashAlpha * 0.5})`;
-      for (let d = 0; d < 5; d++) {
-        const angle = -Math.PI + d * 0.4;
-        const dist = 5 + jp * 30;
-        ctx.beginPath();
-        ctx.arc(fishState.x + Math.cos(angle) * dist, fishState.y + Math.sin(angle) * dist * 0.4 - 3, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+    // Clip to pond ellipse so fish never renders outside
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(POND_X, POND_Y, POND_RX - 2, POND_RY - 2, 0, 0, Math.PI * 2);
+    ctx.clip();
 
-    // Splash on re-entry
-    if (jp > 1.2) {
-      const splashAlpha = (jp - 1.2) / 0.3;
-      ctx.fillStyle = `rgba(100, 200, 255, ${(1 - splashAlpha) * 0.4})`;
-      for (let d = 0; d < 4; d++) {
-        const angle = -Math.PI + d * 0.5;
-        const dist = 3 + (jp - 1.2) * 20;
-        ctx.beginPath();
-        ctx.arc(fishX + Math.cos(angle) * dist, POND_Y + Math.sin(angle) * dist * 0.3 - 2, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    // Ripples around the fish
+    if (jumpArc > 0.1) {
+      ctx.strokeStyle = `rgba(100, 200, 255, ${jumpArc * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(fishX, POND_Y - 2, 6 + jumpArc * 5, 2 + jumpArc * 1.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     // Draw the fish
@@ -810,57 +798,55 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
     // Body
     ctx.fillStyle = '#ff8844';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Scales shimmer
+    // Lighter belly
     ctx.fillStyle = '#ffaa66';
     ctx.beginPath();
-    ctx.ellipse(-1, -1, 5, 2.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(-0.5, -0.5, 4, 2, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Tail
     ctx.fillStyle = '#ff6622';
     ctx.beginPath();
-    ctx.moveTo(-7, 0);
-    ctx.lineTo(-13, -5);
-    ctx.lineTo(-13, 5);
+    ctx.moveTo(-5, 0);
+    ctx.lineTo(-9, -3);
+    ctx.lineTo(-9, 3);
     ctx.closePath();
     ctx.fill();
 
     // Eye
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(4, -1, 1.8, 0, Math.PI * 2);
+    ctx.arc(3, -0.5, 1.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#111111';
     ctx.beginPath();
-    ctx.arc(4.5, -1, 0.8, 0, Math.PI * 2);
+    ctx.arc(3.3, -0.5, 0.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Dorsal fin
-    ctx.fillStyle = '#ff7733';
-    ctx.beginPath();
-    ctx.moveTo(-2, -3);
-    ctx.lineTo(0, -7);
-    ctx.lineTo(3, -3);
-    ctx.closePath();
-    ctx.fill();
-
-    // Sparkle (hint it's special)
-    const sparkle = Math.sin(t * 8) > 0.3;
-    if (sparkle) {
-      ctx.fillStyle = '#ffff88';
-      ctx.globalAlpha = 0.8;
+    // Subtle sparkle hint
+    if (Math.sin(t * 6) > 0.5 && jumpArc > 0.5) {
+      ctx.fillStyle = 'rgba(255, 255, 150, 0.7)';
       ctx.beginPath();
-      ctx.arc(2, -3, 1.2, 0, Math.PI * 2);
+      ctx.arc(1, -2.5, 1, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
     }
 
-    ctx.restore();
+    ctx.restore(); // un-translate
 
-    // Store clickable position for GameCanvas
+    // Water overlay on the lower part of the fish (fish going back in)
+    if (jumpArc < 0.4) {
+      ctx.fillStyle = 'rgba(26, 85, 119, 0.6)';
+      ctx.beginPath();
+      ctx.ellipse(fishX, POND_Y, 12, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore(); // un-clip
+
+    // Store position for click detection
     fishState.x = fishX;
     fishState.y = fishY;
   }
