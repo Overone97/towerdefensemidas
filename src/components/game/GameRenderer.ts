@@ -1,19 +1,15 @@
 import { GameState, Enemy, PlacedUnit, Projectile, Slot } from '../../game/types';
 import { WAYPOINTS, CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
-import { getUnitStats } from '../../game/data/unitData';
+import { getCharacterStats } from '../../game/data/characterData';
+import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 
-export function renderGame(
-  ctx: CanvasRenderingContext2D,
-  state: GameState
-): void {
+export function renderGame(ctx: CanvasRenderingContext2D, state: GameState): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
 
-  // Clear
   ctx.fillStyle = '#0f1923';
   ctx.fillRect(0, 0, w, h);
 
-  // Draw grid dots
   ctx.fillStyle = '#1a2a3a';
   for (let x = 0; x < w; x += 40) {
     for (let y = 0; y < h; y += 40) {
@@ -33,27 +29,21 @@ export function renderGame(
 
 function drawPath(ctx: CanvasRenderingContext2D): void {
   if (WAYPOINTS.length < 2) return;
-
   ctx.strokeStyle = '#2a3a4a';
   ctx.lineWidth = 30;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
   ctx.moveTo(WAYPOINTS[0].x, WAYPOINTS[0].y);
-  for (let i = 1; i < WAYPOINTS.length; i++) {
-    ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
-  }
+  for (let i = 1; i < WAYPOINTS.length; i++) ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
   ctx.stroke();
 
-  // Path border
   ctx.strokeStyle = '#3a4a5a';
   ctx.lineWidth = 32;
   ctx.globalAlpha = 0.3;
   ctx.beginPath();
   ctx.moveTo(WAYPOINTS[0].x, WAYPOINTS[0].y);
-  for (let i = 1; i < WAYPOINTS.length; i++) {
-    ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
-  }
+  for (let i = 1; i < WAYPOINTS.length; i++) ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
   ctx.stroke();
   ctx.globalAlpha = 1;
 }
@@ -61,10 +51,9 @@ function drawPath(ctx: CanvasRenderingContext2D): void {
 function drawSlots(ctx: CanvasRenderingContext2D, slots: Slot[], selectedIndex: number | null): void {
   for (let i = 0; i < slots.length; i++) {
     const slot = slots[i];
-    if (slot.unitId !== null) continue; // Occupied
-
+    if (slot.unitId !== null) continue;
     const isSelected = selectedIndex === i;
-    
+
     ctx.beginPath();
     ctx.arc(slot.x, slot.y, 18, 0, Math.PI * 2);
     ctx.fillStyle = isSelected ? 'rgba(68, 136, 255, 0.3)' : 'rgba(68, 136, 255, 0.1)';
@@ -75,7 +64,6 @@ function drawSlots(ctx: CanvasRenderingContext2D, slots: Slot[], selectedIndex: 
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Plus sign
     ctx.strokeStyle = isSelected ? '#4488ff' : '#335588';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -91,41 +79,46 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
 
-    // Body
+    const isPoisoned = enemy.statusEffects.some(e => e.type === 'poison');
+    const isSlowed = enemy.statusEffects.some(e => e.type === 'slow');
+    const isBurning = enemy.statusEffects.some(e => e.type === 'burn');
+
+    if (isPoisoned || isBurning) {
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.size + 4, 0, Math.PI * 2);
+      ctx.fillStyle = isBurning ? 'rgba(255, 100, 0, 0.3)' : 'rgba(0, 255, 0, 0.3)';
+      ctx.fill();
+    }
+
     ctx.beginPath();
     ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
-    ctx.fillStyle = '#ff4444';
+    let bodyColor = '#ff4444';
+    if (isSlowed) bodyColor = '#4488ff';
+    else if (isPoisoned) bodyColor = '#44ff44';
+    else if (isBurning) bodyColor = '#ff8800';
+    ctx.fillStyle = bodyColor;
     ctx.fill();
     ctx.strokeStyle = '#ff6666';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // HP bar
     const barW = 24;
     const barH = 4;
     const barX = enemy.x - barW / 2;
     const barY = enemy.y - enemy.size - 8;
     const hpRatio = enemy.hp / enemy.maxHp;
-
     ctx.fillStyle = '#333';
     ctx.fillRect(barX, barY, barW, barH);
     ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffaa00' : '#ff4444';
-    ctx.fillRect(barX, barY, barW * hpRatio, barH);
+    ctx.fillRect(barX, barY, barW * Math.max(0, hpRatio), barH);
   }
 }
 
-function drawUnits(
-  ctx: CanvasRenderingContext2D,
-  units: PlacedUnit[],
-  selectedId: number | null,
-  enemies: Enemy[]
-): void {
+function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[]): void {
   for (const unit of units) {
-    const stats = getUnitStats(unit.config, unit.level);
+    const stats = getCharacterStats(unit.config, unit.level);
     const isSelected = selectedId === unit.id;
-    const s = unit.config.size;
 
-    // Range circle (if selected)
     if (isSelected) {
       ctx.beginPath();
       ctx.arc(unit.x, unit.y, stats.range, 0, Math.PI * 2);
@@ -136,11 +129,11 @@ function drawUnits(
       ctx.stroke();
     }
 
-    // Attack line
-    if (unit.targetId !== null) {
+    // Attack visuals for instant attacks
+    if (unit.targetId !== null && (unit.config.attackPattern === 'rapid' || unit.config.attackPattern === 'slow')) {
       const target = enemies.find(e => e.id === unit.targetId && e.alive);
-      if (target && unit.config.attackType === 'instant') {
-        ctx.strokeStyle = `${unit.config.color}66`;
+      if (target && unit.isAttacking) {
+        ctx.strokeStyle = `${unit.config.weaponColor}66`;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(unit.x, unit.y);
@@ -149,22 +142,34 @@ function drawUnits(
       }
     }
 
-    // Body (square)
-    ctx.fillStyle = unit.config.color;
-    ctx.fillRect(unit.x - s / 2, unit.y - s / 2, s, s);
+    // Chain visual
+    if (unit.targetId !== null && unit.config.attackPattern === 'chain' && unit.isAttacking) {
+      const target = enemies.find(e => e.id === unit.targetId && e.alive);
+      if (target) {
+        ctx.strokeStyle = `${unit.config.weaponColor}88`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(unit.x, unit.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    drawCharacterSprite(ctx, unit.config, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer);
 
     if (isSelected) {
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
-      ctx.strokeRect(unit.x - s / 2 - 2, unit.y - s / 2 - 2, s + 4, s + 4);
+      ctx.strokeRect(unit.x - 11, unit.y - 11, 22, 22);
     }
 
-    // Level indicator
     if (unit.level > 1) {
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9px monospace';
+      ctx.font = 'bold 8px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`${unit.level}`, unit.x, unit.y + 3);
+      ctx.fillText(`${unit.level}`, unit.x, unit.y + 16);
     }
   }
 }
@@ -172,16 +177,28 @@ function drawUnits(
 function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[]): void {
   for (const proj of projectiles) {
     if (!proj.alive) continue;
-    ctx.beginPath();
-    ctx.arc(proj.x, proj.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffdd44';
-    ctx.fill();
-    
-    // Glow
-    ctx.beginPath();
-    ctx.arc(proj.x, proj.y, 6, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 221, 68, 0.2)';
-    ctx.fill();
+
+    if (proj.pierce) {
+      // Line projectile - elongated
+      ctx.fillStyle = '#88aaff';
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(136, 170, 255, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, 8, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = proj.appliesPoison ? '#44ff44' : '#ffdd44';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = proj.appliesPoison ? 'rgba(68, 255, 68, 0.2)' : 'rgba(255, 221, 68, 0.2)';
+      ctx.fill();
+    }
   }
 }
 
@@ -194,7 +211,7 @@ function drawBase(ctx: CanvasRenderingContext2D): void {
   ctx.lineTo(last.x - 12, last.y + 10);
   ctx.closePath();
   ctx.fill();
-  
+
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 8px monospace';
   ctx.textAlign = 'center';

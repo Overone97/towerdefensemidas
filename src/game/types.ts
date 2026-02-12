@@ -1,8 +1,14 @@
-// Core types for the Tower Defense game
+export interface Point { x: number; y: number; }
 
-export interface Point {
-  x: number;
-  y: number;
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type AttackPattern = 'single' | 'rapid' | 'aoe_circle' | 'line' | 'poison' | 'slow' | 'chain' | 'burst';
+export type TargetPriority = 'closest' | 'weakest' | 'most_advanced';
+
+export interface StatusEffect {
+  type: 'poison' | 'slow' | 'burn';
+  damagePerSecond: number;
+  duration: number;
+  slowFactor: number;
 }
 
 export interface EnemyConfig {
@@ -12,28 +18,34 @@ export interface EnemyConfig {
   size: number;
 }
 
-export interface UnitConfig {
+export interface CharacterConfig {
   id: string;
   name: string;
+  rarity: Rarity;
   attack: number;
-  attackSpeed: number; // attacks per second
+  attackSpeed: number;
   range: number;
-  cost: number;
-  attackType: 'projectile' | 'instant';
-  color: string;
-  size: number;
+  attackPattern: AttackPattern;
+  aoeRadius?: number;
+  dotDamage?: number;
+  dotDuration?: number;
+  slowFactor?: number;
+  slowDuration?: number;
+  chainCount?: number;
+  burstCount?: number;
+  bodyColor: string;
+  detailColor: string;
+  weaponColor: string;
 }
 
 export interface WaveConfig {
   waveNumber: number;
   enemyCount: number;
-  spawnInterval: number; // ms between spawns
+  spawnInterval: number;
   enemyHpMultiplier: number;
   enemySpeedMultiplier: number;
   enemyRewardMultiplier: number;
 }
-
-export type TargetPriority = 'closest' | 'weakest' | 'most_advanced';
 
 export interface Enemy {
   id: number;
@@ -42,16 +54,25 @@ export interface Enemy {
   hp: number;
   maxHp: number;
   speed: number;
+  baseSpeed: number;
   reward: number;
   size: number;
   waypointIndex: number;
-  progress: number; // 0-1 between current and next waypoint
+  progress: number;
   alive: boolean;
+  statusEffects: StatusEffect[];
+}
+
+export interface OwnedCharacter {
+  instanceId: number;
+  config: CharacterConfig;
+  level: number;
 }
 
 export interface PlacedUnit {
   id: number;
-  config: UnitConfig;
+  characterInstanceId: number;
+  config: CharacterConfig;
   slotIndex: number;
   x: number;
   y: number;
@@ -59,6 +80,9 @@ export interface PlacedUnit {
   attackCooldown: number;
   targetId: number | null;
   targetPriority: TargetPriority;
+  animFrame: number;
+  isAttacking: boolean;
+  attackAnimTimer: number;
 }
 
 export interface Projectile {
@@ -71,6 +95,11 @@ export interface Projectile {
   damage: number;
   targetId: number;
   alive: boolean;
+  pierce?: boolean;
+  hitEnemies?: number[];
+  aoeRadius?: number;
+  appliesPoison?: { damage: number; duration: number };
+  appliesSlow?: { factor: number; duration: number };
 }
 
 export interface Slot {
@@ -97,4 +126,8 @@ export interface GameState {
   enemiesSpawned: number;
   enemiesKilled: number;
   totalWaves: number;
+  inventory: OwnedCharacter[];
+  gachaCost: number;
+  totalSummons: number;
+  activeTab: 'game' | 'gacha';
 }

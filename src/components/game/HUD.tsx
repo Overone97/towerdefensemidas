@@ -3,9 +3,10 @@ import { GameState } from '../../game/types';
 
 interface HUDProps {
   state: GameState;
+  onSetTab: (tab: 'game' | 'gacha') => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab }) => {
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
       <div className="flex items-center gap-6">
@@ -20,6 +21,30 @@ const HUD: React.FC<HUDProps> = ({ state }) => {
           </span>
         </div>
       </div>
+
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onSetTab('game')}
+          className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
+            state.activeTab === 'game'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-accent'
+          }`}
+        >
+          Deploy
+        </button>
+        <button
+          onClick={() => onSetTab('gacha')}
+          className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
+            state.activeTab === 'gacha'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-accent'
+          }`}
+        >
+          Summon
+        </button>
+      </div>
+
       <div className="flex items-center gap-2">
         <span className="text-red-400 font-bold">❤️</span>
         <span className="text-foreground font-mono font-bold">
