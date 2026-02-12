@@ -117,14 +117,15 @@ function getMapTheme(mapId: string) {
   }
 }
 
-export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[]): void {
+export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[], time?: number): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
   const mapId = state.currentMapId || 'plains';
   const theme = getMapTheme(mapId);
+  const t = (time || performance.now()) / 1000;
 
   // ── Background: tiled grass ──
-  drawGrassBackground(ctx, w, h, theme);
+  drawGrassBackground(ctx, w, h, theme, t);
 
   // ── Path ──
   drawPath(ctx, waypoints, theme);
@@ -132,7 +133,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   // ── Decorations ──
   const mapDef = ALL_MAPS.find(m => m.id === mapId);
   const decos = getDecorations(mapId, waypoints, mapDef?.slots || state.slots);
-  drawDecorations(ctx, decos, theme, mapId);
+  drawDecorations(ctx, decos, theme, mapId, t);
 
   // ── Slots ──
   drawSlots(ctx, state.slots, state.selectedSlotIndex);
@@ -144,8 +145,8 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   drawBase(ctx, waypoints);
 }
 
-function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number, theme: ReturnType<typeof getMapTheme>): void {
-  // Base gradient (subtle top-to-bottom light shift for pseudo-3D)
+function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number, theme: ReturnType<typeof getMapTheme>, t: number): void {
+  // Base gradient
   const grad = ctx.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, theme.grassDark);
   grad.addColorStop(0.5, theme.grassLight);
@@ -155,7 +156,7 @@ function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number
 
   const rand = seededRandom(42);
 
-  // Layer 1: Soft rolling hills (large ellipses for terrain depth)
+  // Layer 1: Soft rolling hills
   for (let i = 0; i < 18; i++) {
     const hx = rand() * w;
     const hy = rand() * h;
@@ -169,13 +170,18 @@ function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number
   }
   ctx.globalAlpha = 1;
 
-  // Layer 2: Grass tufts (organic curved blades, not rectangles)
+  // Layer 2: Animated grass blades swaying in the wind
   for (let i = 0; i < 350; i++) {
     const bx = rand() * w;
     const by = rand() * h;
     const bladeH = 3 + rand() * 6;
-    const lean = (rand() - 0.5) * 3;
-    
+    const baseLean = (rand() - 0.5) * 3;
+    const phase = rand() * Math.PI * 2;
+    const speed = 0.8 + rand() * 0.6;
+    // Wind sway animation
+    const windSway = Math.sin(t * speed + phase + bx * 0.01) * 2.5;
+    const lean = baseLean + windSway;
+
     // Shadow blade
     ctx.strokeStyle = theme.grassDark;
     ctx.globalAlpha = 0.3;
@@ -196,14 +202,16 @@ function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number
   }
   ctx.globalAlpha = 1;
 
-  // Layer 3: Tiny highlights (dew / light dots for sparkle)
+  // Layer 3: Animated sparkles (dew glinting)
   for (let i = 0; i < 80; i++) {
     const dx = rand() * w;
     const dy = rand() * h;
+    const phase = rand() * Math.PI * 2;
+    const sparkle = (Math.sin(t * 1.5 + phase) + 1) * 0.5; // 0-1 pulsing
     ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.04 + rand() * 0.06;
+    ctx.globalAlpha = 0.02 + sparkle * 0.08;
     ctx.beginPath();
-    ctx.arc(dx, dy, 1 + rand() * 1.5, 0, Math.PI * 2);
+    ctx.arc(dx, dy, 1 + sparkle * 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -263,8 +271,8 @@ function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: Retu
   ctx.globalAlpha = 1;
 }
 
-function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof getDecorations>, theme: ReturnType<typeof getMapTheme>, mapId: string): void {
-  // Rocks
+function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof getDecorations>, theme: ReturnType<typeof getMapTheme>, mapId: string, t: number): void {
+  // Rocks (static)
   for (const rock of decos.rocks) {
     ctx.fillStyle = mapId === 'volcano' ? '#4a3020' : '#888888';
     ctx.beginPath();
@@ -276,9 +284,17 @@ function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof
     ctx.fill();
   }
 
-  // Bushes
+  // Bushes (gentle sway)
   for (const bush of decos.bushes) {
     const s = bush.size;
+    const sway = Math.sin(t * 0.8 + bush.x * 0.05) * 1.5;
+
+    ctx.save();
+    ctx.translate(bush.x, bush.y + s * 0.3);
+    // Skew the bush slightly for wind effect
+    ctx.transform(1, 0, sway * 0.02, 1, 0, 0);
+    ctx.translate(-bush.x, -(bush.y + s * 0.3));
+
     // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
     ctx.beginPath();
@@ -302,34 +318,42 @@ function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof
     ctx.arc(bush.x, bush.y - 2, s * 0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+
+    ctx.restore();
   }
 
-  // Trees (Pokémon-style round trees)
+  // Trees (canopy sway with wind)
   for (const tree of decos.trees) {
     const s = tree.size;
-    // Shadow
+    const sway = Math.sin(t * 0.6 + tree.x * 0.03 + tree.y * 0.02) * 2;
+
+    // Shadow (shifts with sway)
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath();
-    ctx.ellipse(tree.x + 2, tree.y + s * 0.7, s * 0.6, s * 0.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(tree.x + 2 + sway * 0.3, tree.y + s * 0.7, s * 0.6, s * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Trunk
+    // Trunk (static)
     ctx.fillStyle = theme.treeTrunk;
     ctx.fillRect(tree.x - 3, tree.y - 2, 6, s * 0.5);
-    // Trunk highlight
     ctx.fillStyle = mapId === 'volcano' ? '#4a2a1a' : '#8a6a3a';
     ctx.fillRect(tree.x - 1, tree.y - 2, 2, s * 0.5);
 
-    // Canopy (layered circles like Pokémon trees)
+    // Canopy (animated sway)
+    ctx.save();
+    ctx.translate(tree.x, tree.y);
+    ctx.transform(1, 0, sway * 0.015, 1, 0, 0);
+    ctx.translate(-tree.x, -tree.y);
+
     const leafColor = mapId === 'volcano' ? '#6a2a0a' : theme.treeLeaf;
     const leafHighlight = mapId === 'volcano' ? '#8a3a1a' : theme.grassAccent;
-    
+
     // Back layer
     ctx.fillStyle = theme.treeShadow;
     ctx.beginPath();
     ctx.arc(tree.x, tree.y - s * 0.3, s * 0.55, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Main canopy
     ctx.fillStyle = leafColor;
     ctx.beginPath();
@@ -341,7 +365,7 @@ function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof
     ctx.beginPath();
     ctx.arc(tree.x + s*0.2, tree.y - s * 0.25, s * 0.35, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Top highlight
     ctx.fillStyle = leafHighlight;
     ctx.globalAlpha = 0.5;
@@ -350,34 +374,50 @@ function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof
     ctx.fill();
     ctx.globalAlpha = 1;
 
+    ctx.restore();
+
     // Lava glow for volcano trees
     if (mapId === 'volcano') {
-      ctx.fillStyle = 'rgba(255, 80, 0, 0.15)';
+      const flicker = 0.12 + Math.sin(t * 3 + tree.x) * 0.05;
+      ctx.fillStyle = `rgba(255, 80, 0, ${flicker})`;
       ctx.beginPath();
       ctx.arc(tree.x, tree.y - s * 0.3, s * 0.6, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  // Flowers
+  // Flowers (gentle sway + petal pulse)
   for (const flower of decos.flowers) {
+    const fSway = Math.sin(t * 1.2 + flower.x * 0.08) * 1;
     if (mapId === 'volcano') {
-      // Embers instead of flowers
+      // Animated embers floating up
+      const emberY = flower.y - ((t * 15 + flower.x * 3) % 20);
+      const emberAlpha = 0.3 + Math.sin(t * 4 + flower.x) * 0.3;
       ctx.fillStyle = '#ff6600';
-      ctx.globalAlpha = 0.6;
-      ctx.fillRect(flower.x, flower.y, 2, 2);
+      ctx.globalAlpha = Math.max(0, emberAlpha);
+      ctx.beginPath();
+      ctx.arc(flower.x + fSway, emberY, 1.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.globalAlpha = 1;
     } else {
-      // Stem
-      ctx.fillStyle = '#2a6a1a';
-      ctx.fillRect(flower.x, flower.y + 2, 1, 3);
+      // Stem (bends with wind)
+      ctx.strokeStyle = '#2a6a1a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(flower.x, flower.y + 4);
+      ctx.quadraticCurveTo(flower.x + fSway * 0.5, flower.y + 2, flower.x + fSway, flower.y);
+      ctx.stroke();
       // Petals
+      const petalSize = 1.5 + Math.sin(t * 0.8 + flower.y) * 0.3;
       ctx.fillStyle = flower.color;
-      ctx.fillRect(flower.x - 1, flower.y, 3, 1);
-      ctx.fillRect(flower.x, flower.y - 1, 1, 3);
+      ctx.beginPath();
+      ctx.arc(flower.x + fSway, flower.y, petalSize, 0, Math.PI * 2);
+      ctx.fill();
       // Center
       ctx.fillStyle = '#ffee44';
-      ctx.fillRect(flower.x, flower.y, 1, 1);
+      ctx.beginPath();
+      ctx.arc(flower.x + fSway, flower.y, 0.8, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
