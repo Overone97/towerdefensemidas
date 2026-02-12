@@ -12,9 +12,10 @@ interface UnitBarProps {
   onPlaceUnit: (instanceId: number) => void;
   onSummon: () => void;
   onStartWave: () => void;
+  onToggleAutoWave: () => void;
 }
 
-const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave }) => {
+const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave }) => {
   const canStartWave = !state.waveActive && !state.gameOver && !state.victory;
   const slotSelected = state.selectedSlotIndex !== null;
   const isGameTab = state.activeTab === 'game';
@@ -54,19 +55,29 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
               ))
             )}
           </div>
-          <Button
-            onClick={onStartWave}
-            disabled={!canStartWave}
-            variant={canStartWave ? 'default' : 'secondary'}
-            className="px-6 shrink-0"
-          >
-            {state.waveActive
-              ? `Wave ${state.currentWave}...`
-              : state.currentWave === 0
-              ? 'Start Game'
-              : `Start Wave ${state.currentWave + 1}`
-            }
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={onToggleAutoWave}
+              variant={state.autoWave ? 'destructive' : 'outline'}
+              size="sm"
+              className="shrink-0"
+            >
+              {state.autoWave ? '⏸ Auto' : '▶ Auto'}
+            </Button>
+            <Button
+              onClick={onStartWave}
+              disabled={!canStartWave}
+              variant={canStartWave ? 'default' : 'secondary'}
+              className="px-6 shrink-0"
+            >
+              {state.waveActive
+                ? `Wave ${state.currentWave}...`
+                : state.currentWave === 0
+                ? 'Start Game'
+                : `Start Wave ${state.currentWave + 1}`
+              }
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-4">
