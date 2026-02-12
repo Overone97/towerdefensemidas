@@ -1,4 +1,5 @@
 import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus } from '../types';
+import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
 
 let nextUnitId = 1;
@@ -31,6 +32,9 @@ export class TowerManager {
       animFrame: Math.random() * 100,
       isAttacking: false,
       attackAnimTimer: 0,
+      abilityCooldown: 0,
+      abilityActive: false,
+      abilityTimer: 0,
     };
     this.units.push(unit);
     return unit;
@@ -48,14 +52,103 @@ export class TowerManager {
   private getEffectiveStats(unit: PlacedUnit) {
     const base = getCharacterStats(unit.config, unit.level);
     const syn = this.synergyBonuses.get(unit.id);
-    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult;
-    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult;
+    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
+    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
     const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult;
     return {
       attack: Math.floor(base.attack * aMult),
       attackSpeed: base.attackSpeed * sMult,
       range: Math.floor(base.range * rMult),
     };
+  }
+
+  private getAbilityEffect(unit: PlacedUnit): AbilityEffect | null {
+    const ability = ABILITIES[unit.config.attackPattern];
+    return ability ? ability.effect : null;
+  }
+
+  activateAbility(unitId: number, enemies: Enemy[]): { damages: { enemyId: number; damage: number }[]; statusEffects: { enemyId: number; effect: StatusEffect }[] } {
+    const unit = this.units.find(u => u.id === unitId);
+    const damages: { enemyId: number; damage: number }[] = [];
+    const statusEffects: { enemyId: number; effect: StatusEffect }[] = [];
+    if (!unit || unit.abilityCooldown > 0) return { damages, statusEffects };
+
+    const ability = ABILITIES[unit.config.attackPattern];
+    if (!ability) return { damages, statusEffects };
+
+    const stats = this.getEffectiveStats(unit);
+    const effect = ability.effect;
+
+    unit.abilityCooldown = ability.cooldown;
+    if (ability.duration > 0) {
+      unit.abilityActive = true;
+      unit.abilityTimer = ability.duration;
+    }
+
+    switch (effect.type) {
+      case 'snipe': {
+        const target = this.findTarget(unit, enemies, stats.range * 2);
+        if (target) {
+          damages.push({ enemyId: target.id, damage: Math.floor(stats.attack * effect.damageMult) });
+        }
+        break;
+      }
+      case 'damage_aoe': {
+        for (const e of enemies) {
+          if (!e.alive) continue;
+          const dx = e.x - unit.x; const dy = e.y - unit.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= effect.radius) {
+            damages.push({ enemyId: e.id, damage: Math.floor(stats.attack * effect.damageMult) });
+          }
+        }
+        break;
+      }
+      case 'freeze_aoe': {
+        for (const e of enemies) {
+          if (!e.alive) continue;
+          const dx = e.x - unit.x; const dy = e.y - unit.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= effect.radius) {
+            statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: effect.duration, slowFactor: 0.05 } });
+          }
+        }
+        break;
+      }
+      case 'poison_cloud': {
+        for (const e of enemies) {
+          if (!e.alive) continue;
+          const dx = e.x - unit.x; const dy = e.y - unit.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= effect.radius) {
+            statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: effect.dps, duration: effect.duration, slowFactor: 1 } });
+          }
+        }
+        break;
+      }
+      case 'chain_burst': {
+        const target = this.findTarget(unit, enemies, stats.range);
+        if (target) {
+          const hitIds = [target.id];
+          damages.push({ enemyId: target.id, damage: Math.floor(stats.attack * effect.damageMult) });
+          let last = target;
+          for (let i = 1; i < effect.chainCount; i++) {
+            const next = this.findChainTarget(last, enemies, 120, hitIds);
+            if (!next) break;
+            hitIds.push(next.id);
+            damages.push({ enemyId: next.id, damage: Math.floor(stats.attack * effect.damageMult * (1 - i * 0.08)) });
+            last = next;
+          }
+        }
+        break;
+      }
+      case 'shield': {
+        // Handled externally
+        break;
+      }
+      // buff_speed and rage are passive buffs handled via abilityActive flag
+      default:
+        break;
+    }
+
+    return { damages, statusEffects };
   }
 
   update(dt: number, enemies: Enemy[]): {
@@ -65,7 +158,7 @@ export class TowerManager {
     const damages: { enemyId: number; damage: number }[] = [];
     const statusEffects: { enemyId: number; effect: StatusEffect }[] = [];
 
-    // Update animation
+    // Update animation & ability timers
     for (const unit of this.units) {
       unit.animFrame += dt * 60;
       if (unit.attackAnimTimer > 0) {
@@ -73,6 +166,16 @@ export class TowerManager {
         if (unit.attackAnimTimer <= 0) {
           unit.isAttacking = false;
           unit.attackAnimTimer = 0;
+        }
+      }
+      // Ability cooldown
+      if (unit.abilityCooldown > 0) unit.abilityCooldown = Math.max(0, unit.abilityCooldown - dt);
+      // Ability duration
+      if (unit.abilityActive && unit.abilityTimer > 0) {
+        unit.abilityTimer -= dt;
+        if (unit.abilityTimer <= 0) {
+          unit.abilityActive = false;
+          unit.abilityTimer = 0;
         }
       }
     }

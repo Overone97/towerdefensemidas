@@ -301,6 +301,41 @@ export class GameEngine {
     if (unit) unit.targetPriority = priority;
   }
 
+  activateAbility(unitId: number): boolean {
+    const unit = this.towerManager.units.find(u => u.id === unitId);
+    if (!unit || unit.abilityCooldown > 0) return false;
+
+    const { damages, statusEffects } = this.towerManager.activateAbility(unitId, this.enemyManager.getAliveEnemies());
+
+    for (const { enemyId, effect } of statusEffects) {
+      this.enemyManager.applyStatusEffect(enemyId, effect);
+    }
+    for (const { enemyId, damage } of damages) {
+      const enemy = this.enemyManager.enemies.find(e => e.id === enemyId);
+      const result = this.enemyManager.damageEnemy(enemyId, damage);
+      if (result.killed && enemy) {
+        const talentBonus = getTalentBonus(this.saveData.talents);
+        const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
+        this.state.gold += goldEarned;
+        this.state.score += result.reward;
+        this.state.enemiesKilled++;
+        this.saveData.stats.totalKills++;
+        this.saveData.stats.totalGold += goldEarned;
+        if (enemy.type === 'boss') {
+          this.saveData.stats.bossKills++;
+          this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
+        } else {
+          this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
+        }
+      }
+    }
+    // Ability particles
+    if (unit) {
+      this.particleManager.spawnBossExplosion(unit.x, unit.y);
+    }
+    return true;
+  }
+
   setActiveTab(tab: 'game' | 'gacha'): void {
     this.state.activeTab = tab;
   }
