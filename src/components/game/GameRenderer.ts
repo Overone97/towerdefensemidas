@@ -2,6 +2,7 @@ import { GameState, Enemy, PlacedUnit, Projectile, Slot } from '../../game/types
 import { WAYPOINTS, CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
+import { drawEnemySprite } from '../../game/rendering/enemySprites';
 
 export function renderGame(ctx: CanvasRenderingContext2D, state: GameState): void {
   const w = CANVAS_WIDTH;
@@ -91,102 +92,27 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.fill();
     }
 
-    ctx.save();
-    const bob = Math.sin(enemy.animFrame * 0.1) * 1;
+    // Tint color if slowed
+    const bodyColor = isSlowed ? '#4488ff' : enemy.bodyColor;
 
-    switch (enemy.type) {
-      case 'fast':
-        // Diamond shape
-        ctx.beginPath();
-        ctx.moveTo(enemy.x, enemy.y - enemy.size + bob);
-        ctx.lineTo(enemy.x + enemy.size, enemy.y + bob);
-        ctx.lineTo(enemy.x, enemy.y + enemy.size + bob);
-        ctx.lineTo(enemy.x - enemy.size, enemy.y + bob);
-        ctx.closePath();
-        break;
-
-      case 'tank':
-        // Rounded rectangle
-        ctx.beginPath();
-        const s = enemy.size;
-        ctx.moveTo(enemy.x - s + 3, enemy.y - s + bob);
-        ctx.lineTo(enemy.x + s - 3, enemy.y - s + bob);
-        ctx.quadraticCurveTo(enemy.x + s, enemy.y - s + bob, enemy.x + s, enemy.y - s + 3 + bob);
-        ctx.lineTo(enemy.x + s, enemy.y + s - 3 + bob);
-        ctx.quadraticCurveTo(enemy.x + s, enemy.y + s + bob, enemy.x + s - 3, enemy.y + s + bob);
-        ctx.lineTo(enemy.x - s + 3, enemy.y + s + bob);
-        ctx.quadraticCurveTo(enemy.x - s, enemy.y + s + bob, enemy.x - s, enemy.y + s - 3 + bob);
-        ctx.lineTo(enemy.x - s, enemy.y - s + 3 + bob);
-        ctx.quadraticCurveTo(enemy.x - s, enemy.y - s + bob, enemy.x - s + 3, enemy.y - s + bob);
-        ctx.closePath();
-        break;
-
-      case 'armored':
-        // Hexagon
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const angle = (Math.PI / 3) * i - Math.PI / 6;
-          const px = enemy.x + Math.cos(angle) * enemy.size;
-          const py = enemy.y + Math.sin(angle) * enemy.size + bob;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        break;
-
-      case 'boss': {
-        // Spiky star
-        ctx.beginPath();
-        const spikes = 6;
-        for (let i = 0; i < spikes * 2; i++) {
-          const angle = (Math.PI / spikes) * i - Math.PI / 2;
-          const r = i % 2 === 0 ? enemy.size : enemy.size * 0.6;
-          const px = enemy.x + Math.cos(angle + enemy.animFrame * 0.02) * r;
-          const py = enemy.y + Math.sin(angle + enemy.animFrame * 0.02) * r + bob;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        // Boss glow
-        ctx.shadowColor = enemy.bodyColor;
-        ctx.shadowBlur = 10;
-        break;
-      }
-
-      default:
-        // Normal - circle
-        ctx.beginPath();
-        ctx.arc(enemy.x, enemy.y + bob, enemy.size, 0, Math.PI * 2);
-        break;
-    }
-
-    // Apply status-tinted color
-    let bodyColor = enemy.bodyColor;
-    if (isSlowed) bodyColor = '#4488ff';
-    ctx.fillStyle = bodyColor;
-    ctx.fill();
-    ctx.strokeStyle = enemy.strokeColor;
-    ctx.lineWidth = enemy.type === 'boss' ? 2.5 : 1.5;
-    ctx.stroke();
-
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
-
-    // Armor indicator (small shield icon for armored types)
-    if (enemy.armor > 0 && enemy.type !== 'boss') {
-      ctx.fillStyle = '#cccc88';
-      ctx.font = 'bold 7px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('🛡', enemy.x + enemy.size + 2, enemy.y - enemy.size + 4 + bob);
-    }
+    // Draw sprite
+    drawEnemySprite(ctx, enemy.type, enemy.x, enemy.y, enemy.size, enemy.animFrame, bodyColor, enemy.strokeColor);
 
     // Boss label
     if (enemy.type === 'boss') {
       ctx.fillStyle = '#ff88ff';
       ctx.font = 'bold 7px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('BOSS', enemy.x, enemy.y - enemy.size - 10 + bob);
+      ctx.fillText('BOSS', enemy.x, enemy.y - enemy.size - 14);
     }
 
-    ctx.restore();
+    // Armor indicator
+    if (enemy.armor > 0 && enemy.type !== 'boss') {
+      ctx.fillStyle = '#cccc88';
+      ctx.font = 'bold 7px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('🛡', enemy.x + enemy.size + 2, enemy.y - enemy.size + 4);
+    }
 
     // HP bar
     const barW = enemy.type === 'boss' ? 36 : 24;
