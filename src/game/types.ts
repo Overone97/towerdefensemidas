@@ -11,11 +11,20 @@ export interface StatusEffect {
   slowFactor: number;
 }
 
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'boss';
+
 export interface EnemyConfig {
+  type: EnemyType;
   hp: number;
   speed: number;
   reward: number;
   size: number;
+  armor?: number;           // flat damage reduction
+  poisonResist?: boolean;   // immune to poison
+  slowResist?: number;      // 0-1, reduces slow effectiveness
+  bodyColor: string;
+  strokeColor: string;
+  label?: string;
 }
 
 export interface CharacterConfig {
@@ -49,6 +58,7 @@ export interface WaveConfig {
 
 export interface Enemy {
   id: number;
+  type: EnemyType;
   x: number;
   y: number;
   hp: number;
@@ -57,10 +67,16 @@ export interface Enemy {
   baseSpeed: number;
   reward: number;
   size: number;
+  armor: number;
+  poisonResist: boolean;
+  slowResist: number;
+  bodyColor: string;
+  strokeColor: string;
   waypointIndex: number;
   progress: number;
   alive: boolean;
   statusEffects: StatusEffect[];
+  animFrame: number;
 }
 
 export interface OwnedCharacter {

@@ -11,6 +11,7 @@ export class EnemyManager {
     const baseSpeed = config.speed * speedMult;
     this.enemies.push({
       id: nextEnemyId++,
+      type: config.type,
       x: start.x,
       y: start.y,
       hp: Math.floor(config.hp * hpMult),
@@ -19,10 +20,16 @@ export class EnemyManager {
       baseSpeed,
       reward: Math.floor(config.reward * rewardMult),
       size: config.size,
+      armor: config.armor || 0,
+      poisonResist: config.poisonResist || false,
+      slowResist: config.slowResist || 0,
+      bodyColor: config.bodyColor,
+      strokeColor: config.strokeColor,
       waypointIndex: 0,
       progress: 0,
       alive: true,
       statusEffects: [],
+      animFrame: Math.random() * 100,
     });
   }
 
@@ -32,6 +39,7 @@ export class EnemyManager {
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
+      enemy.animFrame += dt * 60;
       this.processStatusEffects(enemy, dt);
       if (!enemy.alive) continue;
 
@@ -89,7 +97,9 @@ export class EnemyManager {
       }
 
       if (effect.type === 'slow') {
-        slowFactor = Math.min(slowFactor, effect.slowFactor);
+        // Apply slow resist
+        const effectiveSlow = effect.slowFactor + (1 - effect.slowFactor) * enemy.slowResist;
+        slowFactor = Math.min(slowFactor, effectiveSlow);
       }
 
       if (effect.duration <= 0) {
@@ -103,6 +113,9 @@ export class EnemyManager {
   applyStatusEffect(enemyId: number, effect: StatusEffect): void {
     const enemy = this.enemies.find(e => e.id === enemyId && e.alive);
     if (!enemy) return;
+
+    // Poison resist blocks poison effects
+    if (effect.type === 'poison' && enemy.poisonResist) return;
 
     const existing = enemy.statusEffects.find(e => e.type === effect.type);
     if (existing) {
@@ -120,7 +133,9 @@ export class EnemyManager {
     const enemy = this.enemies.find(e => e.id === id);
     if (!enemy || !enemy.alive) return { killed: false, reward: 0 };
 
-    enemy.hp -= damage;
+    // Apply armor reduction
+    const effectiveDamage = Math.max(1, damage - enemy.armor);
+    enemy.hp -= effectiveDamage;
     if (enemy.hp <= 0) {
       enemy.alive = false;
       return { killed: true, reward: enemy.reward };
