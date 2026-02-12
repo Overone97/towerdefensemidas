@@ -1,11 +1,15 @@
-import { GameState, OwnedCharacter } from './types';
+import { GameState, OwnedCharacter, Point, Slot } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
-import { INITIAL_SLOTS } from './data/mapData';
+import { computeSynergies } from './managers/SynergyManager';
+import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
+import { getTalentBonus } from './data/talentData';
+import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost } from './data/characterData';
 import { getGachaCost, rollRarity } from './data/gachaData';
+import { TALENTS } from './data/talentData';
 
 let nextInstanceId = 1;
 
@@ -14,19 +18,42 @@ export class GameEngine {
   towerManager = new TowerManager();
   waveManager = new WaveManager();
 
-  state: GameState = this.createInitialState();
+  private saveData: SaveData;
+  state: GameState;
+
+  constructor() {
+    this.saveData = loadSave();
+    this.state = this.createInitialState();
+  }
+
+  private getMap() {
+    return ALL_MAPS.find(m => m.id === this.state.currentMapId) || ALL_MAPS[0];
+  }
+
+  getWaypoints(): Point[] {
+    return this.getMap().waypoints;
+  }
 
   private createInitialState(): GameState {
+    const inventory = saveDataToInventory(this.saveData);
+    if (inventory.length > 0) {
+      nextInstanceId = Math.max(...inventory.map(c => c.instanceId)) + 1;
+    }
+    const talentBonus = getTalentBonus(this.saveData.talents);
+    const map = ALL_MAPS.find(m => m.id === (this.saveData as any).currentMapId) || ALL_MAPS[0];
+
+    this.enemyManager.setWaypoints(map.waypoints);
+
     return {
       gold: 200,
-      baseHp: 20,
-      maxBaseHp: 20,
+      baseHp: 20 + talentBonus.extraHp,
+      maxBaseHp: 20 + talentBonus.extraHp,
       currentWave: 0,
       waveActive: false,
       enemies: [],
       placedUnits: [],
       projectiles: [],
-      slots: INITIAL_SLOTS.map(s => ({ ...s })),
+      slots: map.slots.map(s => ({ ...s })),
       selectedSlotIndex: null,
       selectedUnitId: null,
       gameOver: false,
@@ -35,10 +62,13 @@ export class GameEngine {
       enemiesSpawned: 0,
       enemiesKilled: 0,
       totalWaves: TOTAL_WAVES,
-      inventory: [],
-      gachaCost: getGachaCost(0),
-      totalSummons: 0,
+      inventory,
+      gachaCost: Math.floor(getGachaCost(this.saveData.totalSummons) * talentBonus.summonDiscount),
+      totalSummons: this.saveData.totalSummons,
       activeTab: 'game',
+      activeSynergies: [],
+      stars: this.saveData.stars,
+      currentMapId: map.id,
     };
   }
 
@@ -46,6 +76,8 @@ export class GameEngine {
     if (this.state.gameOver || this.state.victory) return;
 
     this.waveManager.update(dt, this.enemyManager);
+
+    const talentBonus = getTalentBonus(this.saveData.talents);
 
     const { reachedEnd } = this.enemyManager.update(dt);
     for (const enemy of reachedEnd) {
@@ -56,6 +88,12 @@ export class GameEngine {
       }
     }
 
+    // Compute synergies
+    const { activeSynergies, unitBonuses } = computeSynergies(this.towerManager.units);
+    this.state.activeSynergies = activeSynergies;
+    this.towerManager.synergyBonuses = unitBonuses;
+    this.towerManager.talentBonus = talentBonus;
+
     const { damages, statusEffects } = this.towerManager.update(dt, this.enemyManager.getAliveEnemies());
 
     for (const { enemyId, effect } of statusEffects) {
@@ -65,7 +103,8 @@ export class GameEngine {
     for (const { enemyId, damage } of damages) {
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (result.killed) {
-        this.state.gold += result.reward;
+        const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
+        this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
       }
@@ -79,6 +118,14 @@ export class GameEngine {
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
+      // Award stars on victory
+      const starsEarned = 3;
+      this.saveData.stars += starsEarned;
+      this.state.stars = this.saveData.stars;
+      if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
+        this.saveData.mapsCompleted.push(this.state.currentMapId);
+      }
+      this.persistSave();
     }
   }
 
@@ -100,7 +147,9 @@ export class GameEngine {
 
     this.state.gold -= cost;
     this.state.totalSummons++;
-    this.state.gachaCost = getGachaCost(this.state.totalSummons);
+    this.saveData.totalSummons = this.state.totalSummons;
+    const talentBonus = getTalentBonus(this.saveData.talents);
+    this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount);
 
     const rarity = rollRarity();
     let pool = available.filter(c => c.rarity === rarity);
@@ -113,6 +162,7 @@ export class GameEngine {
       level: 1,
     };
     this.state.inventory.push(character);
+    this.persistSave();
     return character;
   }
 
@@ -155,26 +205,21 @@ export class GameEngine {
     this.towerManager.upgradeUnit(unitId);
 
     const invChar = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
-    if (invChar) invChar.level = unit.level;
+    if (invChar) {
+      invChar.level = unit.level;
+      this.persistSave();
+    }
 
     return true;
   }
 
   selectSlot(index: number): void {
-    if (this.state.selectedSlotIndex === index) {
-      this.state.selectedSlotIndex = null;
-    } else {
-      this.state.selectedSlotIndex = index;
-    }
+    this.state.selectedSlotIndex = this.state.selectedSlotIndex === index ? null : index;
     this.state.selectedUnitId = null;
   }
 
   selectPlacedUnit(unitId: number): void {
-    if (this.state.selectedUnitId === unitId) {
-      this.state.selectedUnitId = null;
-    } else {
-      this.state.selectedUnitId = unitId;
-    }
+    this.state.selectedUnitId = this.state.selectedUnitId === unitId ? null : unitId;
     this.state.selectedSlotIndex = null;
   }
 
@@ -187,11 +232,50 @@ export class GameEngine {
     this.state.activeTab = tab;
   }
 
+  upgradeTalent(talentId: string): boolean {
+    const def = TALENTS.find(t => t.id === talentId);
+    if (!def) return false;
+    const currentLevel = this.saveData.talents[talentId] || 0;
+    if (currentLevel >= def.maxLevel) return false;
+    if (this.saveData.stars < def.costPerLevel) return false;
+
+    this.saveData.stars -= def.costPerLevel;
+    this.saveData.talents[talentId] = currentLevel + 1;
+    this.state.stars = this.saveData.stars;
+    this.persistSave();
+    return true;
+  }
+
+  getSaveData(): SaveData {
+    return this.saveData;
+  }
+
+  setMap(mapId: string): void {
+    this.state.currentMapId = mapId;
+    const map = this.getMap();
+    this.enemyManager.setWaypoints(map.waypoints);
+    this.restart();
+  }
+
   restart(): void {
     this.enemyManager.clear();
     this.towerManager.clear();
     this.waveManager = new WaveManager();
-    nextInstanceId = 1;
-    this.state = this.createInitialState();
+    const map = this.getMap();
+    this.enemyManager.setWaypoints(map.waypoints);
+    
+    const talentBonus = getTalentBonus(this.saveData.talents);
+    const inventory = this.state.inventory; // Keep inventory
+
+    this.state = {
+      ...this.createInitialState(),
+      inventory,
+      currentMapId: map.id,
+    };
+  }
+
+  private persistSave(): void {
+    this.saveData.inventory = inventoryToSaveData(this.state.inventory);
+    writeSave(this.saveData);
   }
 }

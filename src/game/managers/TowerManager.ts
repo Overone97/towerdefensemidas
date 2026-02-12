@@ -1,12 +1,20 @@
-import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect } from '../types';
+import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus } from '../types';
 import { getCharacterStats } from '../data/characterData';
 
 let nextUnitId = 1;
 let nextProjectileId = 1;
 
+interface TalentBonusData {
+  attackMult: number;
+  speedMult: number;
+  rangeMult: number;
+}
+
 export class TowerManager {
   units: PlacedUnit[] = [];
   projectiles: Projectile[] = [];
+  synergyBonuses: Map<number, SynergyBonus> = new Map();
+  talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
 
   placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number): PlacedUnit {
     const unit: PlacedUnit = {
@@ -37,6 +45,19 @@ export class TowerManager {
     if (unit) unit.level++;
   }
 
+  private getEffectiveStats(unit: PlacedUnit) {
+    const base = getCharacterStats(unit.config, unit.level);
+    const syn = this.synergyBonuses.get(unit.id);
+    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult;
+    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult;
+    const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult;
+    return {
+      attack: Math.floor(base.attack * aMult),
+      attackSpeed: base.attackSpeed * sMult,
+      range: Math.floor(base.range * rMult),
+    };
+  }
+
   update(dt: number, enemies: Enemy[]): {
     damages: { enemyId: number; damage: number }[];
     statusEffects: { enemyId: number; effect: StatusEffect }[];
@@ -58,7 +79,7 @@ export class TowerManager {
 
     // Attack logic
     for (const unit of this.units) {
-      const stats = getCharacterStats(unit.config, unit.level);
+      const stats = this.getEffectiveStats(unit);
       unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
       if (unit.attackCooldown > 0) continue;
 
@@ -79,8 +100,7 @@ export class TowerManager {
           const radius = unit.config.aoeRadius || 50;
           for (const e of enemies) {
             if (!e.alive) continue;
-            const dx = e.x - target.x;
-            const dy = e.y - target.y;
+            const dx = e.x - target.x; const dy = e.y - target.y;
             if (Math.sqrt(dx * dx + dy * dy) <= radius) {
               damages.push({ enemyId: e.id, damage: stats.attack });
               this.applyOnHitEffects(unit, e.id, statusEffects);
@@ -90,13 +110,11 @@ export class TowerManager {
         }
 
         case 'line': {
-          const tdx = target.x - unit.x;
-          const tdy = target.y - unit.y;
+          const tdx = target.x - unit.x; const tdy = target.y - unit.y;
           const tdist = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
           this.projectiles.push({
             id: nextProjectileId++, x: unit.x, y: unit.y,
-            targetX: unit.x + (tdx / tdist) * 800,
-            targetY: unit.y + (tdy / tdist) * 800,
+            targetX: unit.x + (tdx / tdist) * 800, targetY: unit.y + (tdy / tdist) * 800,
             speed: 350, damage: stats.attack, targetId: target.id, alive: true,
             pierce: true, hitEnemies: [],
             appliesPoison: unit.config.dotDamage ? { damage: unit.config.dotDamage, duration: unit.config.dotDuration || 2 } : undefined,
@@ -152,8 +170,7 @@ export class TowerManager {
             const angle = (Math.PI * 2 * b) / burstCount;
             this.projectiles.push({
               id: nextProjectileId++, x: unit.x, y: unit.y,
-              targetX: target.x + Math.cos(angle) * 20,
-              targetY: target.y + Math.sin(angle) * 20,
+              targetX: target.x + Math.cos(angle) * 20, targetY: target.y + Math.sin(angle) * 20,
               speed: 350, damage: stats.attack, targetId: target.id, alive: true,
               aoeRadius: unit.config.aoeRadius || 30,
             });
@@ -183,8 +200,7 @@ export class TowerManager {
         if (target) { proj.targetX = target.x; proj.targetY = target.y; }
       }
 
-      const dx = proj.targetX - proj.x;
-      const dy = proj.targetY - proj.y;
+      const dx = proj.targetX - proj.x; const dy = proj.targetY - proj.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 1) { proj.alive = false; continue; }
 

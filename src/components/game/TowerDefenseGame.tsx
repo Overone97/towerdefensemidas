@@ -7,12 +7,18 @@ import UnitBar from './UnitBar';
 import UnitInfoPanel from './UnitInfoPanel';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
+import SynergyPanel from './SynergyPanel';
+import TalentTree from './TalentTree';
+import MapSelect from './MapSelect';
+
+type Screen = 'game' | 'talents' | 'maps';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
   const [, forceUpdate] = useState(0);
   const [lastSummon, setLastSummon] = useState<OwnedCharacter | null>(null);
   const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
+  const [screen, setScreen] = useState<Screen>('game');
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -20,6 +26,7 @@ const TowerDefenseGame: React.FC = () => {
 
   const engine = engineRef.current;
   const state = engine.state;
+  const saveData = engine.getSaveData();
 
   const handlePlaceUnit = useCallback((instanceId: number) => {
     if (state.selectedSlotIndex === null) return;
@@ -71,6 +78,40 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleUpgradeTalent = useCallback((talentId: string) => {
+    engine.upgradeTalent(talentId);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handleSelectMap = useCallback((mapId: string) => {
+    engine.setMap(mapId);
+    setScreen('game');
+    setLastSummon(null);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  if (screen === 'talents') {
+    return (
+      <TalentTree
+        talents={saveData.talents}
+        stars={state.stars}
+        onUpgradeTalent={handleUpgradeTalent}
+        onBack={() => setScreen('game')}
+      />
+    );
+  }
+
+  if (screen === 'maps') {
+    return (
+      <MapSelect
+        stars={state.stars}
+        mapsCompleted={saveData.mapsCompleted}
+        onSelectMap={handleSelectMap}
+        onBack={() => setScreen('game')}
+      />
+    );
+  }
+
   const selectedUnit = state.selectedUnitId
     ? state.placedUnits.find(u => u.id === state.selectedUnitId) ?? null
     : null;
@@ -80,9 +121,12 @@ const TowerDefenseGame: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <HUD state={state} onSetTab={handleSetTab} />
+      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
         <GameCanvas engine={engine} onStateChange={onStateChange} />
+        {state.activeSynergies.length > 0 && (
+          <SynergyPanel synergies={state.activeSynergies} />
+        )}
         {selectedUnit && (
           <UnitInfoPanel
             unit={selectedUnit}
@@ -97,6 +141,7 @@ const TowerDefenseGame: React.FC = () => {
             victory={state.victory}
             score={state.score}
             wave={state.currentWave}
+            starsEarned={state.victory ? 3 : 0}
             onRestart={handleRestart}
           />
         )}

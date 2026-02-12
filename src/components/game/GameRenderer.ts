@@ -1,10 +1,10 @@
-import { GameState, Enemy, PlacedUnit, Projectile, Slot } from '../../game/types';
-import { WAYPOINTS, CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
+import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point } from '../../game/types';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
 
-export function renderGame(ctx: CanvasRenderingContext2D, state: GameState): void {
+export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[]): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
 
@@ -20,31 +20,31 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState): voi
     }
   }
 
-  drawPath(ctx);
+  drawPath(ctx, waypoints);
   drawSlots(ctx, state.slots, state.selectedSlotIndex);
   drawEnemies(ctx, state.enemies);
   drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
   drawProjectiles(ctx, state.projectiles);
-  drawBase(ctx);
+  drawBase(ctx, waypoints);
 }
 
-function drawPath(ctx: CanvasRenderingContext2D): void {
-  if (WAYPOINTS.length < 2) return;
+function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
+  if (waypoints.length < 2) return;
   ctx.strokeStyle = '#2a3a4a';
   ctx.lineWidth = 30;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(WAYPOINTS[0].x, WAYPOINTS[0].y);
-  for (let i = 1; i < WAYPOINTS.length; i++) ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
+  ctx.moveTo(waypoints[0].x, waypoints[0].y);
+  for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
   ctx.stroke();
 
   ctx.strokeStyle = '#3a4a5a';
   ctx.lineWidth = 32;
   ctx.globalAlpha = 0.3;
   ctx.beginPath();
-  ctx.moveTo(WAYPOINTS[0].x, WAYPOINTS[0].y);
-  for (let i = 1; i < WAYPOINTS.length; i++) ctx.lineTo(WAYPOINTS[i].x, WAYPOINTS[i].y);
+  ctx.moveTo(waypoints[0].x, waypoints[0].y);
+  for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
   ctx.stroke();
   ctx.globalAlpha = 1;
 }
@@ -84,7 +84,6 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
     const isSlowed = enemy.statusEffects.some(e => e.type === 'slow');
     const isBurning = enemy.statusEffects.some(e => e.type === 'burn');
 
-    // Status effect glow
     if (isPoisoned || isBurning) {
       ctx.beginPath();
       ctx.arc(enemy.x, enemy.y, enemy.size + 4, 0, Math.PI * 2);
@@ -92,13 +91,9 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.fill();
     }
 
-    // Tint color if slowed
     const bodyColor = isSlowed ? '#4488ff' : enemy.bodyColor;
-
-    // Draw sprite
     drawEnemySprite(ctx, enemy.type, enemy.x, enemy.y, enemy.size, enemy.animFrame, bodyColor, enemy.strokeColor);
 
-    // Boss label
     if (enemy.type === 'boss') {
       ctx.fillStyle = '#ff88ff';
       ctx.font = 'bold 7px monospace';
@@ -106,7 +101,6 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.fillText('BOSS', enemy.x, enemy.y - enemy.size - 14);
     }
 
-    // Armor indicator
     if (enemy.armor > 0 && enemy.type !== 'boss') {
       ctx.fillStyle = '#cccc88';
       ctx.font = 'bold 7px monospace';
@@ -114,7 +108,6 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.fillText('🛡', enemy.x + enemy.size + 2, enemy.y - enemy.size + 4);
     }
 
-    // HP bar
     const barW = enemy.type === 'boss' ? 36 : 24;
     const barH = enemy.type === 'boss' ? 5 : 4;
     const barX = enemy.x - barW / 2;
@@ -142,7 +135,6 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       ctx.stroke();
     }
 
-    // Attack visuals for instant attacks
     if (unit.targetId !== null && (unit.config.attackPattern === 'rapid' || unit.config.attackPattern === 'slow')) {
       const target = enemies.find(e => e.id === unit.targetId && e.alive);
       if (target && unit.isAttacking) {
@@ -155,7 +147,6 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       }
     }
 
-    // Chain visual
     if (unit.targetId !== null && unit.config.attackPattern === 'chain' && unit.isAttacking) {
       const target = enemies.find(e => e.id === unit.targetId && e.alive);
       if (target) {
@@ -214,8 +205,8 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
   }
 }
 
-function drawBase(ctx: CanvasRenderingContext2D): void {
-  const last = WAYPOINTS[WAYPOINTS.length - 1];
+function drawBase(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
+  const last = waypoints[waypoints.length - 1];
   ctx.fillStyle = '#44aaff';
   ctx.beginPath();
   ctx.moveTo(last.x, last.y - 15);

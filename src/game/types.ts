@@ -4,6 +4,21 @@ export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type AttackPattern = 'single' | 'rapid' | 'aoe_circle' | 'line' | 'poison' | 'slow' | 'chain' | 'burst';
 export type TargetPriority = 'closest' | 'weakest' | 'most_advanced';
 
+export interface SynergyBonus {
+  attackMult?: number;
+  speedMult?: number;
+  rangeMult?: number;
+  extraHp?: number;
+  dotMult?: number;
+  slowMult?: number;
+}
+
+export interface ActiveSynergy {
+  name: string;
+  description: string;
+  bonus: SynergyBonus;
+}
+
 export interface StatusEffect {
   type: 'poison' | 'slow' | 'burn';
   damagePerSecond: number;
@@ -146,4 +161,7 @@ export interface GameState {
   gachaCost: number;
   totalSummons: number;
   activeTab: 'game' | 'gacha';
+  activeSynergies: ActiveSynergy[];
+  stars: number;
+  currentMapId: string;
 }

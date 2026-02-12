@@ -23,7 +23,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
 
-    // Check if clicked on a placed unit
     for (const unit of engine.state.placedUnits) {
       const dx = x - unit.x;
       const dy = y - unit.y;
@@ -34,7 +33,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
       }
     }
 
-    // Check if clicked on a slot
     for (let i = 0; i < engine.state.slots.length; i++) {
       const slot = engine.state.slots[i];
       if (slot.unitId !== null) continue;
@@ -47,7 +45,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
       }
     }
 
-    // Deselect
     engine.state.selectedSlotIndex = null;
     engine.state.selectedUnitId = null;
     onStateChange();
@@ -65,17 +62,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange }) => {
       lastTimeRef.current = timestamp;
 
       engine.update(dt);
-      renderGame(ctx, engine.state);
+      renderGame(ctx, engine.state, engine.getWaypoints());
       onStateChange();
 
       rafRef.current = requestAnimationFrame(gameLoop);
     };
 
     rafRef.current = requestAnimationFrame(gameLoop);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-    };
+    return () => cancelAnimationFrame(rafRef.current);
   }, [engine, onStateChange]);
 
   return (

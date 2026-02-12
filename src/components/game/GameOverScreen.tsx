@@ -5,10 +5,11 @@ interface GameOverScreenProps {
   victory: boolean;
   score: number;
   wave: number;
+  starsEarned: number;
   onRestart: () => void;
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, onRestart }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, starsEarned, onRestart }) => {
   return (
     <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
       <div className="bg-card border border-border rounded-xl p-8 text-center shadow-2xl">
@@ -18,9 +19,14 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, o
         <p className="text-muted-foreground mb-1">
           {victory ? 'All waves defeated!' : `Defeated at wave ${wave}`}
         </p>
-        <p className="text-foreground font-mono text-lg mb-6">
+        <p className="text-foreground font-mono text-lg mb-2">
           Score: {score}
         </p>
+        {starsEarned > 0 && (
+          <p className="text-yellow-400 font-mono text-lg mb-4 animate-fade-in">
+            +{starsEarned} ⭐ earned!
+          </p>
+        )}
         <Button onClick={onRestart} size="lg">
           Play Again
         </Button>
