@@ -6,6 +6,7 @@ export class WaveManager {
   currentWave: number = 0;
   waveActive: boolean = false;
   totalWaves: number = TOTAL_WAVES;
+  endlessMode: boolean = false;
   
   private waveConfig: WaveConfig | null = null;
   private spawnTimer: number = 0;
@@ -15,9 +16,9 @@ export class WaveManager {
   private totalWeight: number = 0;
 
   startWave(): WaveConfig | null {
-    if (this.currentWave >= this.totalWaves) return null;
+    if (!this.endlessMode && this.currentWave >= this.totalWaves) return null;
     this.currentWave++;
-    this.waveConfig = getWaveConfig(this.currentWave);
+    this.waveConfig = this.endlessMode ? this.getEndlessWaveConfig(this.currentWave) : getWaveConfig(this.currentWave);
     this.waveActive = true;
     this.spawnTimer = 0;
     this.spawned = 0;
@@ -27,13 +28,24 @@ export class WaveManager {
     return this.waveConfig;
   }
 
+  private getEndlessWaveConfig(wave: number): WaveConfig {
+    const scaleFactor = 1 + (wave - 1) * 0.15;
+    return {
+      waveNumber: wave,
+      enemyCount: 5 + Math.floor(wave * 2),
+      spawnInterval: Math.max(250, 1000 - wave * 20),
+      enemyHpMultiplier: scaleFactor * 1.5,
+      enemySpeedMultiplier: 1 + (wave - 1) * 0.03,
+      enemyRewardMultiplier: 1 + (wave - 1) * 0.15,
+    };
+  }
+
   update(dt: number, enemyManager: EnemyManager): void {
     if (!this.waveActive || !this.waveConfig) return;
 
     this.spawnTimer -= dt * 1000;
 
     if (this.spawnTimer <= 0 && this.spawned < this.waveConfig.enemyCount) {
-      // Spawn boss on boss waves as the last enemy
       const isBoss = isBossWave(this.currentWave) && !this.bossSpawned && this.spawned >= this.waveConfig.enemyCount - 1;
       
       let enemyType: EnemyType;
@@ -70,6 +82,7 @@ export class WaveManager {
   }
 
   isComplete(): boolean {
+    if (this.endlessMode) return false; // Endless never "completes"
     return this.currentWave >= this.totalWaves && !this.waveActive;
   }
 }

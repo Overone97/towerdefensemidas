@@ -25,7 +25,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         <div className="flex items-center gap-1">
           <span className="text-blue-400 font-bold">🌊</span>
           <span className="text-foreground font-mono">
-            {state.currentWave} / {state.totalWaves}
+            {state.endlessMode ? `Wave ${state.currentWave} ♾️` : `${state.currentWave} / ${state.totalWaves}`}
           </span>
         </div>
       </div>

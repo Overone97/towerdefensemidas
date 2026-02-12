@@ -96,10 +96,13 @@ const TowerDefenseGame: React.FC = () => {
   }, [engine, onStateChange]);
 
   const handleRestart = useCallback(() => {
+    if (state.endlessMode && state.gameOver) {
+      engine.submitEndlessScore();
+    }
     engine.restart();
     setLastSummon(null);
     onStateChange();
-  }, [engine, onStateChange]);
+  }, [engine, state, onStateChange]);
 
   const handleUpgradeTalent = useCallback((talentId: string) => {
     engine.upgradeTalent(talentId);
@@ -108,6 +111,13 @@ const TowerDefenseGame: React.FC = () => {
 
   const handleSelectMap = useCallback((mapId: string) => {
     engine.setMap(mapId);
+    setScreen('game');
+    setLastSummon(null);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handleStartEndless = useCallback((mapId: string) => {
+    engine.startEndless(mapId);
     setScreen('game');
     setLastSummon(null);
     onStateChange();
@@ -136,6 +146,7 @@ const TowerDefenseGame: React.FC = () => {
         stars={state.stars}
         mapsCompleted={saveData.mapsCompleted}
         onSelectMap={handleSelectMap}
+        onStartEndless={handleStartEndless}
         onBack={() => setScreen('game')}
       />
     );
@@ -189,7 +200,9 @@ const TowerDefenseGame: React.FC = () => {
             victory={state.victory}
             score={state.score}
             wave={state.currentWave}
-            starsEarned={state.victory ? 3 : 0}
+            starsEarned={state.victory && !state.endlessMode ? 3 : 0}
+            endlessMode={state.endlessMode}
+            leaderboard={engine.getEndlessLeaderboard()}
             onRestart={handleRestart}
           />
         )}
