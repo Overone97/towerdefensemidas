@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameState } from '../../game/types';
+import { soundManager } from '../../game/audio/SoundManager';
 
 interface HUDProps {
   state: GameState;
@@ -90,6 +91,27 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => { soundManager.toggleMute(); }}
+            className="px-2 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+            title={soundManager.muted ? 'Unmute' : 'Mute'}
+          >
+            {soundManager.muted ? '🔇' : '🔊'}
+          </button>
+          <button
+            onClick={() => {
+              soundManager.toggleMusic();
+              if (!soundManager.musicMuted) {
+                soundManager.startMusic();
+              } else {
+                soundManager.stopMusic();
+              }
+            }}
+            className="px-2 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
+            title={soundManager.musicMuted ? 'Music On' : 'Music Off'}
+          >
+            {soundManager.musicMuted ? '🎵' : '🎶'}
+          </button>
           <span className="text-red-400 font-bold">❤️</span>
           <span className="text-foreground font-mono font-bold">
             {state.baseHp} / {state.maxBaseHp}

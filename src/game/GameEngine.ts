@@ -14,6 +14,7 @@ import { getGachaCost, rollRarity } from './data/gachaData';
 import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
+import { soundManager } from './audio/SoundManager';
 
 let nextInstanceId = 1;
 
@@ -105,8 +106,10 @@ export class GameEngine {
     const { reachedEnd } = this.enemyManager.update(dt);
     for (const enemy of reachedEnd) {
       this.state.baseHp--;
+      soundManager.playBaseDamage();
       if (this.state.baseHp <= 0) {
         this.state.gameOver = true;
+        soundManager.playGameOver();
         if (this.state.endlessMode) {
           this.submitEndlessScore();
         }
@@ -140,6 +143,7 @@ export class GameEngine {
         this.saveData.stats.totalKills++;
         this.saveData.stats.totalGold += goldEarned;
         if (enemy.type === 'boss') {
+          soundManager.playBossDeath();
           this.saveData.stats.bossKills++;
           // Award 1 star per boss kill
           this.saveData.stars += 1;
@@ -157,6 +161,7 @@ export class GameEngine {
         if (enemy.type === 'boss') {
           this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
         } else {
+          soundManager.playEnemyDeath();
           this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
         }
       }
@@ -200,6 +205,7 @@ export class GameEngine {
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
+      soundManager.playVictory();
       // Award base stars on first completion
       if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
         this.saveData.stars += 3;
@@ -241,6 +247,7 @@ export class GameEngine {
     if (this.state.waveActive || this.state.gameOver || this.state.victory) return false;
     const config = this.waveManager.startWave();
     if (!config) return false;
+    soundManager.playWaveStart();
     this.state.waveActive = true;
     this.state.waveEnemiesKilledThisWave = 0;
     return true;
@@ -288,6 +295,7 @@ export class GameEngine {
 
     const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment);
     slot.unitId = unit.id;
+    soundManager.playPlaceUnit();
     this.state.selectedSlotIndex = null;
     return true;
   }
@@ -341,6 +349,7 @@ export class GameEngine {
   activateAbility(unitId: number): boolean {
     const unit = this.towerManager.units.find(u => u.id === unitId);
     if (!unit || unit.abilityCooldown > 0) return false;
+    soundManager.playAbility();
 
     const { damages, statusEffects } = this.towerManager.activateAbility(unitId, this.enemyManager.getAliveEnemies());
 
