@@ -141,14 +141,17 @@ export class GameEngine {
         this.saveData.stats.totalGold += goldEarned;
         if (enemy.type === 'boss') {
           this.saveData.stats.bossKills++;
+          // Award 1 star per boss kill
+          this.saveData.stars += 1;
+          this.state.stars = this.saveData.stars;
           // Boss equipment drop
           const drop = rollBossDrop(this.state.currentWave);
           if (drop) {
             this.state.equipmentInventory.push(drop.id);
             this.saveData.equipmentInventory = [...this.state.equipmentInventory];
             this.state.lastDrop = drop.id;
-            this.persistSave();
           }
+          this.persistSave();
         }
         // Death particles
         if (enemy.type === 'boss') {
@@ -357,6 +360,10 @@ export class GameEngine {
         this.saveData.stats.totalGold += goldEarned;
         if (enemy.type === 'boss') {
           this.saveData.stats.bossKills++;
+          // Award 1 star per boss kill
+          this.saveData.stars += 1;
+          this.state.stars = this.saveData.stars;
+          this.persistSave();
           this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
         } else {
           this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
