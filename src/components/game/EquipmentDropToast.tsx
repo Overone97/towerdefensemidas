@@ -10,14 +10,16 @@ interface EquipmentDropToastProps {
 const EquipmentDropToast: React.FC<EquipmentDropToastProps> = ({ equipmentId, onDone }) => {
   const [visible, setVisible] = useState(true);
   const item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+  const onDoneRef = React.useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDone, 300);
+      setTimeout(() => onDoneRef.current(), 300);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [onDone]);
+  }, [equipmentId]);
 
   if (!item) return null;
 
