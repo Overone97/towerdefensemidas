@@ -17,6 +17,7 @@ export interface SaveData {
   stars: number;
   highScore: number;
   mapsCompleted: string[];
+  questsCompleted: string[];  // completed quest ids
   // Achievement tracking
   achievementsUnlocked: string[];
   // Endless mode leaderboard
@@ -40,6 +41,7 @@ function defaultSave(): SaveData {
     stars: 0,
     highScore: 0,
     mapsCompleted: [],
+    questsCompleted: [],
     achievementsUnlocked: [],
     endlessLeaderboard: [],
     stats: {

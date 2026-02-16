@@ -13,6 +13,7 @@ import { ALL_CHARACTERS, getCharacterUpgradeCost } from './data/characterData';
 import { getGachaCost, rollRarity } from './data/gachaData';
 import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
+import { getQuestsForMap, QuestContext } from './data/questData';
 
 let nextInstanceId = 1;
 
@@ -196,13 +197,32 @@ export class GameEngine {
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
-      // Award stars on victory
-      const starsEarned = 3;
-      this.saveData.stars += starsEarned;
-      this.state.stars = this.saveData.stars;
+      // Award base stars on first completion
       if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
+        this.saveData.stars += 3;
         this.saveData.mapsCompleted.push(this.state.currentMapId);
       }
+      // Check & award quest stars
+      const questCtx: QuestContext = {
+        victory: true,
+        baseHp: this.state.baseHp,
+        maxBaseHp: this.state.maxBaseHp,
+        enemiesKilled: this.state.enemiesKilled,
+        wavesCompleted: this.state.currentWave,
+        placedUnitsCount: this.towerManager.units.length,
+        goldEarned: this.state.gold,
+        totalWaves: this.state.totalWaves,
+        hpLost: this.state.maxBaseHp - this.state.baseHp,
+      };
+      const quests = getQuestsForMap(this.state.currentMapId);
+      for (const quest of quests) {
+        if (this.saveData.questsCompleted.includes(quest.id)) continue;
+        if (quest.condition(questCtx)) {
+          this.saveData.questsCompleted.push(quest.id);
+          this.saveData.stars += quest.starsReward;
+        }
+      }
+      this.state.stars = this.saveData.stars;
       // Perfect map (no HP lost)
       if (this.state.baseHp === this.state.maxBaseHp) {
         this.saveData.stats.perfectMaps++;
