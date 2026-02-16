@@ -8,8 +8,11 @@ import { Button } from '../ui/button';
 interface EquipmentPanelProps {
   inventory: OwnedCharacter[];
   equipmentInventory: string[];
+  stars: number;
+  gachaCost: number;
   onEquip: (characterInstanceId: number, equipmentId: string) => void;
   onUnequip: (characterInstanceId: number, slot: EquipmentSlotType) => void;
+  onSummonEquipment: () => void;
   onBack: () => void;
 }
 
@@ -19,7 +22,7 @@ const SLOT_ICONS: Record<EquipmentSlotType, string> = {
   accessory: '💍',
 };
 
-const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInventory, onEquip, onUnequip, onBack }) => {
+const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInventory, stars, gachaCost, onEquip, onUnequip, onSummonEquipment, onBack }) => {
   const [selectedChar, setSelectedChar] = useState<number | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotType | null>(null);
 
@@ -36,7 +39,18 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="text-lg font-bold">⚙️ Equipment</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold">⚙️ Equipment</h2>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onSummonEquipment}
+            disabled={stars < gachaCost}
+          >
+            🎲 Summon ({gachaCost} ⭐)
+          </Button>
+          <span className="text-xs text-muted-foreground font-mono">⭐ {stars}</span>
+        </div>
         <Button variant="outline" size="sm" onClick={onBack}>← Back</Button>
       </div>
 

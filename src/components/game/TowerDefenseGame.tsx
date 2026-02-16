@@ -148,6 +148,14 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleSummonEquipment = useCallback(() => {
+    const item = engine.summonEquipment();
+    if (item) {
+      setDropToast(item.id);
+    }
+    onStateChange();
+  }, [engine, onStateChange]);
+
   // Poll for equipment drops
   const [dropToast, setDropToast] = useState<string | null>(null);
   useEffect(() => {
@@ -206,8 +214,11 @@ const TowerDefenseGame: React.FC = () => {
       <EquipmentPanel
         inventory={state.inventory}
         equipmentInventory={state.equipmentInventory}
+        stars={state.stars}
+        gachaCost={engine.getEquipmentGachaCost()}
         onEquip={handleEquip}
         onUnequip={handleUnequip}
+        onSummonEquipment={handleSummonEquipment}
         onBack={() => setScreen('game')}
       />
     );

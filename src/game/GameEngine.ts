@@ -526,6 +526,35 @@ export class GameEngine {
     return true;
   }
 
+  summonEquipment(): EquipmentItem | null {
+    const cost = this.getEquipmentGachaCost();
+    if (this.state.stars < cost) return null;
+
+    this.state.stars -= cost;
+    this.saveData.stars = this.state.stars;
+
+    // Roll rarity based on similar rates
+    const roll = Math.random();
+    let rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+    if (roll < 0.35) rarity = 'common';
+    else if (roll < 0.60) rarity = 'uncommon';
+    else if (roll < 0.80) rarity = 'rare';
+    else if (roll < 0.95) rarity = 'epic';
+    else rarity = 'legendary';
+
+    const pool = ALL_EQUIPMENT.filter(e => e.rarity === rarity);
+    const item = pool[Math.floor(Math.random() * pool.length)];
+
+    this.state.equipmentInventory.push(item.id);
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.persistSave();
+    return item;
+  }
+
+  getEquipmentGachaCost(): number {
+    return 3;
+  }
+
   clearLastDrop(): void {
     this.state.lastDrop = null;
   }
