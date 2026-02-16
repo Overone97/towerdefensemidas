@@ -9,15 +9,17 @@ interface AchievementToastProps {
 const AchievementToast: React.FC<AchievementToastProps> = ({ achievementId, onDone }) => {
   const [visible, setVisible] = useState(false);
   const ach = ACHIEVEMENTS.find(a => a.id === achievementId);
+  const onDoneRef = React.useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDone, 400);
+      setTimeout(() => onDoneRef.current(), 400);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [onDone]);
+  }, [achievementId]);
 
   if (!ach) return null;
 
