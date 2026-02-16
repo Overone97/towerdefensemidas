@@ -183,6 +183,7 @@ const TowerDefenseGame: React.FC = () => {
       <MapSelect
         stars={state.stars}
         mapsCompleted={saveData.mapsCompleted}
+        questsCompleted={saveData.questsCompleted || []}
         onSelectMap={handleSelectMap}
         onStartEndless={handleStartEndless}
         onBack={() => setScreen('game')}
