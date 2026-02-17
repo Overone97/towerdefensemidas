@@ -3,6 +3,8 @@ import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
 import { ParticleManager } from './managers/ParticleManager';
+import { FloatingTextManager } from './managers/FloatingTextManager';
+import { ScreenShake } from './managers/ScreenShake';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
 import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
@@ -15,6 +17,7 @@ import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
+import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
 
 let nextInstanceId = 1;
 
@@ -34,12 +37,16 @@ export class GameEngine {
   towerManager = new TowerManager();
   waveManager = new WaveManager();
   particleManager = new ParticleManager();
+  floatingTextManager = new FloatingTextManager();
+  screenShake = new ScreenShake();
+  dailyQuests: DailyQuestState;
 
   private saveData: SaveData;
   state: GameState;
 
   constructor() {
     this.saveData = loadSave();
+    this.dailyQuests = loadDailyQuests();
     this.state = this.createInitialState();
   }
 
@@ -107,6 +114,8 @@ export class GameEngine {
     for (const enemy of reachedEnd) {
       this.state.baseHp--;
       soundManager.playBaseDamage();
+      this.screenShake.trigger(6, 0.3);
+      this.floatingTextManager.spawn(enemy.x, enemy.y, '-1 HP', '#ff4444', 12);
       if (this.state.baseHp <= 0) {
         this.state.gameOver = true;
         soundManager.playGameOver();
@@ -139,16 +148,20 @@ export class GameEngine {
         this.state.score += result.reward;
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
+        this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#ffdd44', 9);
+        this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
+        this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
         // Track stats
         this.saveData.stats.totalKills++;
         this.saveData.stats.totalGold += goldEarned;
         if (enemy.type === 'boss') {
           soundManager.playBossDeath();
           this.saveData.stats.bossKills++;
-          // Award 1 star per boss kill
           this.saveData.stars += 1;
           this.state.stars = this.saveData.stars;
-          // Boss equipment drop
+          this.screenShake.trigger(10, 0.5);
+          this.floatingTextManager.spawn(enemy.x, enemy.y - 10, 'BOSS KILL! +1⭐', '#ff88ff', 14);
+          this.trackDailyEvent({ type: 'kill_bosses', count: 1 });
           const drop = rollBossDrop(this.state.currentWave);
           if (drop) {
             this.state.equipmentInventory.push(drop.id);
@@ -182,8 +195,10 @@ export class GameEngine {
       }
     }
 
-    // Update particles
+    // Update particles, floating text, screen shake
     this.particleManager.update(dt);
+    this.floatingTextManager.update(dt);
+    this.screenShake.update(dt);
 
     this.state.enemies = this.enemyManager.enemies;
     this.state.placedUnits = this.towerManager.units;
@@ -235,7 +250,9 @@ export class GameEngine {
       // Perfect map (no HP lost)
       if (this.state.baseHp === this.state.maxBaseHp) {
         this.saveData.stats.perfectMaps++;
+        this.trackDailyEvent({ type: 'perfect_wave', count: 1 });
       }
+      this.trackDailyEvent({ type: 'win_map', count: 1 });
       this.persistSave();
     }
 
@@ -250,6 +267,7 @@ export class GameEngine {
     soundManager.playWaveStart();
     this.state.waveActive = true;
     this.state.waveEnemiesKilledThisWave = 0;
+    this.trackDailyEvent({ type: 'complete_waves', count: 1 });
     return true;
   }
 
@@ -296,6 +314,7 @@ export class GameEngine {
     const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment);
     slot.unitId = unit.id;
     soundManager.playPlaceUnit();
+    this.trackDailyEvent({ type: 'place_units', count: 1 });
     this.state.selectedSlotIndex = null;
     return true;
   }
@@ -350,6 +369,7 @@ export class GameEngine {
     const unit = this.towerManager.units.find(u => u.id === unitId);
     if (!unit || unit.abilityCooldown > 0) return false;
     soundManager.playAbility();
+    this.trackDailyEvent({ type: 'use_abilities', count: 1 });
 
     const { damages, statusEffects } = this.towerManager.activateAbility(unitId, this.enemyManager.getAliveEnemies());
 
@@ -446,6 +466,7 @@ export class GameEngine {
     this.enemyManager.clear();
     this.towerManager.clear();
     this.particleManager.clear();
+    this.floatingTextManager.clear();
     this.waveManager = new WaveManager();
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
@@ -593,6 +614,29 @@ export class GameEngine {
 
   clearLastDrop(): void {
     this.state.lastDrop = null;
+  }
+
+  trackDailyEvent(event: DailyQuestEvent): void {
+    const completed = progressDailyQuest(this.dailyQuests, event);
+    if (completed) {
+      // Will be picked up by UI polling
+    }
+  }
+
+  claimDailyQuest(questId: string): boolean {
+    const quest = this.dailyQuests.quests.find(q => q.id === questId);
+    if (!quest || !quest.completed || quest.claimed) return false;
+    quest.claimed = true;
+    this.saveData.stars += quest.reward.stars;
+    this.state.stars = this.saveData.stars;
+    this.state.gold += quest.reward.gold;
+    saveDailyQuests(this.dailyQuests);
+    this.persistSave();
+    return true;
+  }
+
+  getDailyQuests(): DailyQuestState {
+    return this.dailyQuests;
   }
 
   private persistSave(): void {

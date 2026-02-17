@@ -77,8 +77,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       lastTimeRef.current = timestamp;
 
       engine.update(dt);
+
+      // Apply screen shake
+      const shake = engine.screenShake;
+      ctx.save();
+      ctx.translate(shake.offsetX, shake.offsetY);
+
       renderGame(ctx, engine.state, engine.getWaypoints(), timestamp);
       engine.particleManager.render(ctx);
+      engine.floatingTextManager.render(ctx);
+
+      ctx.restore();
+
       onStateChange();
 
       rafRef.current = requestAnimationFrame(gameLoop);

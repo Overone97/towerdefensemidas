@@ -16,6 +16,7 @@ import AchievementScreen from './AchievementScreen';
 import AchievementToast from './AchievementToast';
 import EquipmentPanel from './EquipmentPanel';
 import EquipmentDropToast from './EquipmentDropToast';
+import DailyQuestPanel from './DailyQuestPanel';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
@@ -258,6 +259,7 @@ const TowerDefenseGame: React.FC = () => {
             starsEarned={state.victory && !state.endlessMode ? 3 : 0}
             endlessMode={state.endlessMode}
             leaderboard={engine.getEndlessLeaderboard()}
+            mapId={state.currentMapId}
             onRestart={handleRestart}
           />
         )}
@@ -274,6 +276,7 @@ const TowerDefenseGame: React.FC = () => {
           onDone={() => setAchievementQueue(prev => prev.slice(1))}
         />
       )}
+      <DailyQuestPanel engine={engine} onStateChange={onStateChange} />
       <UnitBar
         state={state}
         unplacedCharacters={unplacedCharacters}
