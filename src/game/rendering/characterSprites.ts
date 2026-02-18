@@ -126,6 +126,20 @@ function drawBody(ctx: CanvasRenderingContext2D, id: string, x: number, y: numbe
       ctx.fillRect(x - hs, y - hs + ps, s, s - ps);
       ctx.fillRect(x - hs - ps, y - hs, s + ps * 2, ps * 3);
       break;
+    case 'alistar':
+      // Massive torso
+      ctx.fillRect(x - hs - ps, y - hs + ps * 2, s + ps * 2, s - ps * 2);
+      // Broad shoulders
+      ctx.fillRect(x - hs - ps * 2, y - hs + ps * 2, s + ps * 4, ps * 3);
+      // Head (smaller, bull-like)
+      ctx.fillRect(x - ps * 2, y - hs - ps, ps * 4, ps * 3);
+      // Horns
+      ctx.fillRect(x - hs - ps * 2, y - hs - ps * 2, ps * 2, ps * 2);
+      ctx.fillRect(x + hs, y - hs - ps * 2, ps * 2, ps * 2);
+      // Horn tips curving up
+      ctx.fillRect(x - hs - ps * 3, y - hs - ps * 3, ps, ps * 2);
+      ctx.fillRect(x + hs + ps * 2, y - hs - ps * 3, ps, ps * 2);
+      break;
     case 'phoenix':
       ctx.fillRect(x - hs + ps, y - hs + ps, s - ps * 2, s - ps * 2);
       ctx.fillRect(x - hs - ps * 2, y - ps, ps * 3, ps * 3);
@@ -156,6 +170,17 @@ function drawDetail(ctx: CanvasRenderingContext2D, id: string, x: number, y: num
       break;
     case 'dark_knight':
       ctx.fillRect(x - ps * 2, y - hs + ps * 2, ps * 4, ps);
+      break;
+    case 'alistar':
+      // Nose ring
+      ctx.fillStyle = '#d4a0ff';
+      ctx.fillRect(x - ps / 2, y - hs + ps, ps, ps);
+      // Eyes (red, angry)
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(x - ps * 2, y - hs - ps / 2, ps, ps);
+      ctx.fillRect(x + ps, y - hs - ps / 2, ps, ps);
+      // Belt/armor line
+      ctx.fillRect(x - hs, y + ps, hs * 2, ps);
       break;
     case 'void_walker':
       ctx.fillStyle = '#110022';
@@ -230,6 +255,17 @@ function drawWeapon(ctx: CanvasRenderingContext2D, id: string, x: number, y: num
     case 'shadow_assassin':
       ctx.fillRect(x + hs + 1, y - ps * 2 + swing, ps, ps * 5);
       ctx.fillRect(x - hs - ps - 1, y - ps * 2 - swing, ps, ps * 5);
+      break;
+    case 'alistar':
+      // Fists (no weapon, he punches!)
+      ctx.fillRect(x - hs - ps * 3, y + ps + swing, ps * 2, ps * 2);
+      ctx.fillRect(x + hs + ps, y + ps - swing, ps * 2, ps * 2);
+      // Ground slam effect when attacking
+      if (swing !== 0) {
+        ctx.globalAlpha = 0.4;
+        ctx.fillRect(x - hs - ps * 2, y + hs, s + ps * 4, ps);
+        ctx.globalAlpha = 1;
+      }
       break;
     case 'phoenix':
       ctx.fillRect(x - hs - ps * 3, y - ps + swing, ps * 2, ps * 2);
