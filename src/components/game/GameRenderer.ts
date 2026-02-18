@@ -521,50 +521,69 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
 function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): void {
   for (const wave of waves) {
     if (!wave.alive) continue;
-    const progress = wave.currentRadius / wave.maxRadius;
-    const alpha = Math.max(0, 1 - progress * 0.8);
+    const r = wave.currentRadius;
+    const progress = r / wave.maxRadius;
+    const fade = Math.max(0, 1 - progress * 0.6);
+    const waveThickness = 18 + (1 - progress) * 12; // thick band that thins as it expands
 
     ctx.save();
 
-    // Main wave ring (thick, bright)
-    ctx.strokeStyle = wave.weaponColor;
-    ctx.globalAlpha = alpha * 0.9;
-    ctx.lineWidth = 4 + (1 - progress) * 3;
-    ctx.beginPath();
-    ctx.arc(wave.x, wave.y, wave.currentRadius, 0, Math.PI * 2);
-    ctx.stroke();
+    // ── Thick tsunami wave band ──
+    // Draw as a filled ring (annulus) between r-thickness and r
+    const outerR = r;
+    const innerR = Math.max(0, r - waveThickness);
 
-    // Trailing inner ring
-    const innerRadius = Math.max(0, wave.currentRadius - 12);
-    ctx.globalAlpha = alpha * 0.5;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(wave.x, wave.y, innerRadius, 0, Math.PI * 2);
-    ctx.stroke();
+    // Radial gradient across the wave band: bright leading edge, fading trail
+    const bandGrad = ctx.createRadialGradient(wave.x, wave.y, innerR, wave.x, wave.y, outerR + 4);
+    bandGrad.addColorStop(0, 'transparent');
+    bandGrad.addColorStop(0.2, wave.weaponColor + 'aa');
+    bandGrad.addColorStop(0.5, wave.weaponColor);
+    bandGrad.addColorStop(0.8, '#ffffff');
+    bandGrad.addColorStop(1, wave.weaponColor + '44');
 
-    // Leading edge glow
-    const edgeGrad = ctx.createRadialGradient(
-      wave.x, wave.y, Math.max(0, wave.currentRadius - 15),
-      wave.x, wave.y, wave.currentRadius + 5
-    );
-    edgeGrad.addColorStop(0, 'transparent');
-    edgeGrad.addColorStop(0.5, wave.weaponColor + '44');
-    edgeGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = edgeGrad;
-    ctx.globalAlpha = alpha * 0.6;
+    ctx.globalAlpha = fade * 0.85;
+    ctx.fillStyle = bandGrad;
     ctx.beginPath();
-    ctx.arc(wave.x, wave.y, wave.currentRadius + 5, 0, Math.PI * 2);
+    ctx.arc(wave.x, wave.y, outerR + 2, 0, Math.PI * 2);
+    ctx.arc(wave.x, wave.y, innerR, 0, Math.PI * 2, true); // cut out inner
     ctx.fill();
 
-    // Subtle fill behind wave front
-    const fillGrad = ctx.createRadialGradient(wave.x, wave.y, 0, wave.x, wave.y, wave.currentRadius);
-    fillGrad.addColorStop(0, wave.weaponColor + '08');
-    fillGrad.addColorStop(0.7, wave.weaponColor + '12');
-    fillGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = fillGrad;
-    ctx.globalAlpha = alpha * 0.3;
+    // ── Bright leading edge stroke ──
+    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = fade * 0.9;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(wave.x, wave.y, wave.currentRadius, 0, Math.PI * 2);
+    ctx.arc(wave.x, wave.y, outerR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // ── Secondary colored edge ──
+    ctx.strokeStyle = wave.weaponColor;
+    ctx.globalAlpha = fade * 0.7;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, outerR + 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // ── Ground distortion effect (subtle inner ripples) ──
+    for (let i = 1; i <= 2; i++) {
+      const rippleR = Math.max(0, r - waveThickness - i * 10);
+      if (rippleR <= 0) continue;
+      ctx.strokeStyle = wave.weaponColor;
+      ctx.globalAlpha = fade * 0.2 / i;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(wave.x, wave.y, rippleR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ── Outer glow halo ──
+    const glowGrad = ctx.createRadialGradient(wave.x, wave.y, outerR, wave.x, wave.y, outerR + 20);
+    glowGrad.addColorStop(0, wave.weaponColor + '55');
+    glowGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowGrad;
+    ctx.globalAlpha = fade * 0.5;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, outerR + 20, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
