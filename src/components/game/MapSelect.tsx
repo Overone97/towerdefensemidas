@@ -14,14 +14,14 @@ interface MapSelectProps {
 
 const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompleted, onSelectMap, onStartEndless, onBack }) => {
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
-        <h2 className="text-foreground font-bold font-mono">Select Map</h2>
+    <div className="flex flex-col h-screen bg-background text-foreground">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <Button variant="outline" size="sm" onClick={onBack}>← Back</Button>
+        <h2 className="font-bold font-mono">🗺️ Select Map</h2>
         <div className="text-yellow-400 font-mono font-bold">⭐ {stars}</div>
       </div>
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="flex gap-6">
+      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+        <div className="flex flex-wrap justify-center gap-6">
           {ALL_MAPS.map(map => {
             const unlocked = stars >= map.requiredStars;
             const completed = mapsCompleted.includes(map.id);
@@ -54,10 +54,9 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
                     />
                   </svg>
                 </div>
-                <span className="text-foreground font-bold">{map.name}</span>
+                <span className="font-bold">{map.name}</span>
                 <span className="text-muted-foreground text-xs text-center">{map.description}</span>
 
-                {/* Quests */}
                 {unlocked && quests.length > 0 && (
                   <div className="w-full space-y-1 mt-1">
                     {quests.map(quest => {
