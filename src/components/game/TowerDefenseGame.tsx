@@ -133,9 +133,9 @@ const TowerDefenseGame: React.FC = () => {
   }, [engine, onStateChange]);
 
   const handleFishCaught = useCallback(() => {
-    const leviathan = state.inventory.find(c => c.config.id === 'leviathan');
-    if (leviathan) {
-      setRevealChar(leviathan);
+    const fizz = state.inventory.find(c => c.config.id === 'fizz');
+    if (fizz) {
+      setRevealChar(fizz);
     }
   }, [state.inventory]);
 
