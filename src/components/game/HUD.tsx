@@ -86,7 +86,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
             onClick={onOpenEquipment}
             className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
           >
-            ⚙️
+            🎒
           </button>
         </div>
 

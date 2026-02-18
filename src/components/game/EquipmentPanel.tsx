@@ -40,7 +40,7 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
     <div className="flex flex-col h-screen bg-background text-foreground">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold">⚙️ Equipment</h2>
+          <h2 className="text-lg font-bold">🎒 Equipment</h2>
           <Button
             variant="default"
             size="sm"
