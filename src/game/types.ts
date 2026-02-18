@@ -149,6 +149,15 @@ export interface Slot {
   unitId: number | null;
 }
 
+export interface AoeWaveState {
+  x: number;
+  y: number;
+  currentRadius: number;
+  maxRadius: number;
+  weaponColor: string;
+  alive: boolean;
+}
+
 export interface GameState {
   gold: number;
   baseHp: number;
@@ -158,6 +167,7 @@ export interface GameState {
   enemies: Enemy[];
   placedUnits: PlacedUnit[];
   projectiles: Projectile[];
+  aoeWaves: AoeWaveState[];
   slots: Slot[];
   selectedSlotIndex: number | null;
   selectedUnitId: number | null;
@@ -174,8 +184,8 @@ export interface GameState {
   activeSynergies: ActiveSynergy[];
   stars: number;
   currentMapId: string;
-  equipmentInventory: string[];  // owned equipment ids
-  lastDrop: string | null;       // last boss drop for notification
+  equipmentInventory: string[];
+  lastDrop: string | null;
   autoWave: boolean;
   endlessMode: boolean;
   waveEnemiesSpawned: number;

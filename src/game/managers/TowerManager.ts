@@ -6,6 +6,27 @@ import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
 let nextUnitId = 1;
 let nextProjectileId = 1;
 
+export interface AoeWave {
+  id: number;
+  unitId: number;
+  x: number;
+  y: number;
+  currentRadius: number;
+  maxRadius: number;
+  speed: number;
+  damage: number;
+  weaponColor: string;
+  hitEnemies: number[];
+  alive: boolean;
+  dotDamage?: number;
+  dotDuration?: number;
+  slowFactor?: number;
+  slowDuration?: number;
+  attackPattern: string;
+}
+
+let nextWaveId = 1;
+
 interface TalentBonusData {
   attackMult: number;
   speedMult: number;
@@ -15,6 +36,7 @@ interface TalentBonusData {
 export class TowerManager {
   units: PlacedUnit[] = [];
   projectiles: Projectile[] = [];
+  aoeWaves: AoeWave[] = [];
   synergyBonuses: Map<number, SynergyBonus> = new Map();
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
@@ -212,15 +234,25 @@ export class TowerManager {
           break;
 
         case 'aoe_circle': {
-          const radius = unit.config.aoeRadius || 50;
-          for (const e of enemies) {
-            if (!e.alive) continue;
-            const dx = e.x - target.x; const dy = e.y - target.y;
-            if (Math.sqrt(dx * dx + dy * dy) <= radius) {
-              damages.push({ enemyId: e.id, damage: stats.attack });
-              this.applyOnHitEffects(unit, e.id, statusEffects);
-            }
-          }
+          // Spawn expanding wave instead of instant damage
+          this.aoeWaves.push({
+            id: nextWaveId++,
+            unitId: unit.id,
+            x: unit.x,
+            y: unit.y,
+            currentRadius: 0,
+            maxRadius: stats.range,
+            speed: 200, // px/s wave expansion speed
+            damage: stats.attack,
+            weaponColor: unit.config.weaponColor,
+            hitEnemies: [],
+            alive: true,
+            dotDamage: unit.config.dotDamage,
+            dotDuration: unit.config.dotDuration,
+            slowFactor: unit.config.slowFactor,
+            slowDuration: unit.config.slowDuration,
+            attackPattern: unit.config.attackPattern,
+          });
           break;
         }
 
@@ -358,6 +390,37 @@ export class TowerManager {
       return true;
     });
 
+    // Update AOE waves
+    for (const wave of this.aoeWaves) {
+      if (!wave.alive) continue;
+      wave.currentRadius += wave.speed * dt;
+
+      // Damage enemies as wave reaches them
+      for (const e of enemies) {
+        if (!e.alive || wave.hitEnemies.includes(e.id)) continue;
+        const dx = e.x - wave.x;
+        const dy = e.y - wave.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        // Enemy is hit when wave front passes through them
+        if (dist <= wave.currentRadius && dist >= wave.currentRadius - wave.speed * dt - e.size) {
+          wave.hitEnemies.push(e.id);
+          damages.push({ enemyId: e.id, damage: wave.damage });
+          // Apply on-hit effects
+          if (wave.dotDamage) {
+            statusEffects.push({ enemyId: e.id, effect: { type: 'burn', damagePerSecond: wave.dotDamage, duration: wave.dotDuration || 2, slowFactor: 1 } });
+          }
+          if (wave.slowFactor) {
+            statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: wave.slowDuration || 2, slowFactor: wave.slowFactor } });
+          }
+        }
+      }
+
+      if (wave.currentRadius >= wave.maxRadius) {
+        wave.alive = false;
+      }
+    }
+    this.aoeWaves = this.aoeWaves.filter(w => w.alive);
+
     return { damages, statusEffects };
   }
 
@@ -408,5 +471,6 @@ export class TowerManager {
   clear(): void {
     this.units = [];
     this.projectiles = [];
+    this.aoeWaves = [];
   }
 }
