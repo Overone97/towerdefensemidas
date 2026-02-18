@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { CharacterConfig } from '../../game/types';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { RARITY_COLORS } from '../../game/data/characterData';
+import { preloadLolSprites } from '../../game/rendering/lolSprites';
 
 interface CharacterSpriteProps {
   config: CharacterConfig;
