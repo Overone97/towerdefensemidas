@@ -4,6 +4,55 @@
 import alistarImg from '@/assets/sprites/alistar.png';
 import brandImg from '@/assets/sprites/brand.png';
 import jinxImg from '@/assets/sprites/jinx.png';
+import garenImg from '@/assets/sprites/garen.png';
+import asheImg from '@/assets/sprites/ashe.png';
+import leonaImg from '@/assets/sprites/leona.png';
+import teemoImg from '@/assets/sprites/teemo.png';
+import luxImg from '@/assets/sprites/lux.png';
+import annieImg from '@/assets/sprites/annie.png';
+import jarvanImg from '@/assets/sprites/jarvan.png';
+import singedImg from '@/assets/sprites/singed.png';
+import dariusImg from '@/assets/sprites/darius.png';
+import lissandraImg from '@/assets/sprites/lissandra.png';
+import yasuoImg from '@/assets/sprites/yasuo.png';
+import rumbleImg from '@/assets/sprites/rumble.png';
+import caitlynImg from '@/assets/sprites/caitlyn.png';
+import threshImg from '@/assets/sprites/thresh.png';
+import rivenImg from '@/assets/sprites/riven.png';
+import zedImg from '@/assets/sprites/zed.png';
+import volibearImg from '@/assets/sprites/volibear.png';
+import aniviaImg from '@/assets/sprites/anivia.png';
+import kassadinImg from '@/assets/sprites/kassadin.png';
+import sonaImg from '@/assets/sprites/sona.png';
+import fizzImg from '@/assets/sprites/fizz.png';
+
+// Map character IDs to their sprite imports
+const SPRITE_MAP: Record<string, string> = {
+  garen: garenImg,
+  ashe: asheImg,
+  leona: leonaImg,
+  teemo: teemoImg,
+  lux: luxImg,
+  annie: annieImg,
+  jarvan: jarvanImg,
+  singed: singedImg,
+  darius: dariusImg,
+  lissandra: lissandraImg,
+  yasuo: yasuoImg,
+  rumble: rumbleImg,
+  caitlyn: caitlynImg,
+  thresh: threshImg,
+  riven: rivenImg,
+  zed: zedImg,
+  volibear: volibearImg,
+  anivia: aniviaImg,
+  kassadin: kassadinImg,
+  sona: sonaImg,
+  fizz: fizzImg,
+  alistar: alistarImg,
+  brand: brandImg,
+  jinx: jinxImg,
+};
 
 // Image cache (cleaned versions without background)
 const imageCache: Map<string, HTMLCanvasElement> = new Map();
@@ -25,7 +74,7 @@ function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
     const dg = Math.abs(d[i + 1] - bgG);
     const db = Math.abs(d[i + 2] - bgB);
     if (dr < threshold && dg < threshold && db < threshold) {
-      d[i + 3] = 0; // make transparent
+      d[i + 3] = 0;
     }
   }
   ctx.putImageData(data, 0, 0);
@@ -55,18 +104,18 @@ function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
 
 // Preload all sprites
 export function preloadLolSprites() {
-  getOrLoadImage(alistarImg, 'alistar');
-  getOrLoadImage(brandImg, 'brand');
-  getOrLoadImage(jinxImg, 'jinx');
+  for (const [key, src] of Object.entries(SPRITE_MAP)) {
+    getOrLoadImage(src, key);
+  }
 }
 
 // Call preload immediately
 preloadLolSprites();
 
-function drawSpriteImage(
+// Universal sprite drawer for all LoL characters
+export function drawLolSprite(
   ctx: CanvasRenderingContext2D,
-  key: string,
-  src: string,
+  charId: string,
   x: number,
   y: number,
   size: number,
@@ -74,13 +123,16 @@ function drawSpriteImage(
   isAttacking: boolean,
   attackAnimTimer: number
 ) {
-  const img = getOrLoadImage(src, key);
+  const src = SPRITE_MAP[charId];
+  if (!src) return false; // not a LoL sprite
+
+  const img = getOrLoadImage(src, charId);
   const drawSize = size * 2.2;
-  
+
   // Idle bob animation
   const bob = Math.sin(animFrame * 0.08) * 1.5;
-  
-  // Attack animation: lean forward + scale pulse
+
+  // Attack animation
   let swing = 0;
   let pulse = 1;
   let tilt = 0;
@@ -99,61 +151,27 @@ function drawSpriteImage(
     ctx.restore();
   } else {
     // Fallback: colored circle while loading
-    ctx.fillStyle = key === 'alistar' ? '#7b4fa0' : key === 'brand' ? '#ff6600' : '#44aadd';
+    ctx.fillStyle = '#666';
     ctx.beginPath();
     ctx.arc(x, y, size / 2, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  return true;
 }
 
-export function drawAlistarSprite(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, size: number,
-  animFrame: number, isAttacking: boolean, attackAnimTimer: number
-) {
-  drawSpriteImage(ctx, 'alistar', alistarImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
-
-  if (isAttacking && attackAnimTimer > 0) {
-    const ps = size / 8;
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = '#d4a0ff';
-    ctx.fillRect(x - size, y + size * 0.8, size * 2, ps);
-    ctx.globalAlpha = 1;
-  }
+// Check if a character ID has a LoL sprite
+export function hasLolSprite(charId: string): boolean {
+  return charId in SPRITE_MAP;
 }
 
-export function drawBrandSprite(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, size: number,
-  animFrame: number, isAttacking: boolean, attackAnimTimer: number
-) {
-  drawSpriteImage(ctx, 'brand', brandImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
-
-  if (isAttacking) {
-    const ps = size / 8;
-    ctx.globalAlpha = 0.6;
-    ctx.fillStyle = '#ff6600';
-    const t = attackAnimTimer * 10;
-    ctx.fillRect(x + size * 0.6 + Math.sin(t) * ps, y - size * 0.5 + Math.cos(t) * ps, ps, ps);
-    ctx.fillRect(x - size * 0.3 + Math.cos(t) * ps, y - size * 0.7 + Math.sin(t) * ps, ps, ps);
-    ctx.globalAlpha = 1;
-  }
+// Legacy exports for backwards compat
+export function drawAlistarSprite(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, animFrame: number, isAttacking: boolean, attackAnimTimer: number) {
+  drawLolSprite(ctx, 'alistar', x, y, size, animFrame, isAttacking, attackAnimTimer);
 }
-
-export function drawJinxSprite(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, size: number,
-  animFrame: number, isAttacking: boolean, attackAnimTimer: number
-) {
-  drawSpriteImage(ctx, 'jinx', jinxImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
-
-  if (isAttacking) {
-    const ps = size / 6;
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = '#ffaa00';
-    ctx.beginPath();
-    ctx.arc(x + size * 0.9, y - size * 0.1, ps * 1.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
+export function drawBrandSprite(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, animFrame: number, isAttacking: boolean, attackAnimTimer: number) {
+  drawLolSprite(ctx, 'brand', x, y, size, animFrame, isAttacking, attackAnimTimer);
+}
+export function drawJinxSprite(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, animFrame: number, isAttacking: boolean, attackAnimTimer: number) {
+  drawLolSprite(ctx, 'jinx', x, y, size, animFrame, isAttacking, attackAnimTimer);
 }

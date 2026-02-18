@@ -276,7 +276,7 @@ export class GameEngine {
     if (this.state.gold < cost) return null;
 
     const ownedIds = new Set(this.state.inventory.map(c => c.config.id));
-    const available = ALL_CHARACTERS.filter(c => !ownedIds.has(c.id) && c.id !== 'leviathan');
+    const available = ALL_CHARACTERS.filter(c => !ownedIds.has(c.id) && c.id !== 'fizz');
     if (available.length === 0) return null;
 
     this.state.gold -= cost;
@@ -483,11 +483,11 @@ export class GameEngine {
 
   tryCatchFish(): OwnedCharacter | null {
     if (!fishState.visible || fishState.caught) return null;
-    const alreadyOwned = this.state.inventory.some(c => c.config.id === 'leviathan');
+    const alreadyOwned = this.state.inventory.some(c => c.config.id === 'fizz');
     if (alreadyOwned) return null;
 
-    const leviathan = ALL_CHARACTERS.find(c => c.id === 'leviathan');
-    if (!leviathan) return null;
+    const fizz = ALL_CHARACTERS.find(c => c.id === 'fizz');
+    if (!fizz) return null;
 
     fishState.caught = true;
     fishState.visible = false;
@@ -495,7 +495,7 @@ export class GameEngine {
 
     const character: OwnedCharacter = {
       instanceId: nextInstanceId++,
-      config: leviathan,
+      config: fizz,
       level: 1,
       equipment: {},
     };
