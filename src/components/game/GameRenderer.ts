@@ -565,10 +565,9 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       const pattern = unit.config.attackPattern;
 
       if (pattern === 'aoe_circle') {
-        // Expanding shockwave ring from unit to full range
-        const target = enemies.find(e => e.id === unit.targetId && e.alive);
-        const cx = target ? target.x : unit.x;
-        const cy = target ? target.y : unit.y;
+        // Expanding shockwave ring FROM the unit outward to full range
+        const cx = unit.x;
+        const cy = unit.y;
         const maxRadius = stats.range;
         const waveProgress = 1 - t * 2; // expands as timer decreases
         const waveRadius = maxRadius * Math.min(1, Math.max(0.1, waveProgress + 0.3));
@@ -577,25 +576,32 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
         // Outer shockwave ring
         ctx.strokeStyle = unit.config.weaponColor;
         ctx.globalAlpha = waveAlpha * 0.8;
-        ctx.lineWidth = 2.5 + (1 - waveProgress) * 1.5;
+        ctx.lineWidth = 3 + (1 - waveProgress) * 2;
         ctx.beginPath();
         ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
         ctx.stroke();
 
         // Second inner ring for depth
-        ctx.globalAlpha = waveAlpha * 0.4;
+        ctx.globalAlpha = waveAlpha * 0.5;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, waveRadius * 0.65, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Third fast ring
+        ctx.globalAlpha = waveAlpha * 0.3;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(cx, cy, waveRadius * 0.6, 0, Math.PI * 2);
+        ctx.arc(cx, cy, waveRadius * 0.35, 0, Math.PI * 2);
         ctx.stroke();
         
         // Radial glow fill
         const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, waveRadius);
-        glowGrad.addColorStop(0, `${unit.config.weaponColor}`);
-        glowGrad.addColorStop(0.4, `${unit.config.weaponColor}33`);
+        glowGrad.addColorStop(0, `${unit.config.weaponColor}44`);
+        glowGrad.addColorStop(0.5, `${unit.config.weaponColor}18`);
         glowGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = glowGrad;
-        ctx.globalAlpha = waveAlpha * 0.25;
+        ctx.globalAlpha = waveAlpha * 0.3;
         ctx.beginPath();
         ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
         ctx.fill();
