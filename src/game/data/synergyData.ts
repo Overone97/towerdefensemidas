@@ -24,6 +24,9 @@ export const CHARACTER_ELEMENTS: Record<string, Element> = {
   void_walker: 'shadow',
   celestial: 'light',
   leviathan: 'ice',
+  alistar: 'nature',
+  brand: 'fire',
+  jinx: 'storm',
 };
 
 export const ELEMENT_COLORS: Record<Element, string> = {
@@ -68,6 +71,9 @@ export const PAIR_SYNERGIES: PairSynergyDef[] = [
   { id: 'iron_wall', name: 'Iron Wall', char1Id: 'warrior', char2Id: 'guardian', description: '+3 Base HP', bonus: { extraHp: 3 } },
   { id: 'toxic_shadow', name: 'Toxic Shadow', char1Id: 'alchemist', char2Id: 'shadow_assassin', description: '+30% DoT', bonus: { dotMult: 1.3 } },
   { id: 'tidal_convergence', name: '🐟 Tidal Convergence', char1Id: 'leviathan', char2Id: 'void_walker', description: '+40% ATK & +30% Slow', bonus: { attackMult: 1.4, slowMult: 1.3 } },
+  { id: 'wild_charge', name: '🐂 Wild Charge', char1Id: 'alistar', char2Id: 'berserker', description: '+25% ATK & SPD', bonus: { attackMult: 1.25, speedMult: 1.25 } },
+  { id: 'arson', name: '🔥 Arson', char1Id: 'brand', char2Id: 'fire_mage', description: '+35% DoT & ATK', bonus: { dotMult: 1.35, attackMult: 1.2 } },
+  { id: 'chaos_duo', name: '💥 Chaos Duo', char1Id: 'jinx', char2Id: 'sniper', description: '+30% ATK SPD & Range', bonus: { speedMult: 1.3, rangeMult: 1.2 } },
 ];
 
 export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
