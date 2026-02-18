@@ -94,4 +94,22 @@ export const ABILITIES: Record<AttackPattern, AbilityDef> = {
     duration: 6,
     effect: { type: 'rage', attackMult: 1.5, speedMult: 1.5 },
   },
+  poison_trail: {
+    id: 'mega_trail',
+    name: 'Mega Trail',
+    icon: '☠️',
+    description: 'Double poison DPS for 6s',
+    cooldown: 18,
+    duration: 6,
+    effect: { type: 'rage', attackMult: 2, speedMult: 1.3 },
+  },
+  mushroom: {
+    id: 'mega_shroom',
+    name: 'Mega Shroom',
+    icon: '🍄',
+    description: 'Place 5 mushrooms at once',
+    cooldown: 20,
+    duration: 0,
+    effect: { type: 'damage_aoe', radius: 60, damageMult: 2 },
+  },
 };

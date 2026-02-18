@@ -1,4 +1,4 @@
-import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus, EquippedItems } from '../types';
+import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus, EquippedItems, GroundEffect } from '../types';
 import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
 import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
@@ -26,6 +26,7 @@ export interface AoeWave {
 }
 
 let nextWaveId = 1;
+let nextGroundEffectId = 1;
 
 interface TalentBonusData {
   attackMult: number;
@@ -37,11 +38,13 @@ export class TowerManager {
   units: PlacedUnit[] = [];
   projectiles: Projectile[] = [];
   aoeWaves: AoeWave[] = [];
+  groundEffects: GroundEffect[] = [];
   synergyBonuses: Map<number, SynergyBonus> = new Map();
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
 
   placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems): PlacedUnit {
+    const isSinged = config.attackPattern === 'poison_trail';
     const unit: PlacedUnit = {
       id: nextUnitId++,
       characterInstanceId,
@@ -59,6 +62,11 @@ export class TowerManager {
       abilityCooldown: 0,
       abilityActive: false,
       abilityTimer: 0,
+      homeX: slot.x,
+      homeY: slot.y,
+      roamTargetX: isSinged ? slot.x : undefined,
+      roamTargetY: isSinged ? slot.y : undefined,
+      lastCloudTime: 0,
     };
     this.units.push(unit);
     if (equipment) this.unitEquipment.set(unit.id, equipment);
@@ -214,8 +222,66 @@ export class TowerManager {
       }
     }
 
+    // Singed roaming logic
+    for (const unit of this.units) {
+      if (unit.config.attackPattern !== 'poison_trail') continue;
+      const stats = this.getEffectiveStats(unit);
+      const speed = 80 + unit.level * 10; // movement speed
+
+      // Pick a roam target: random alive enemy or return home
+      const alive = enemies.filter(e => e.alive);
+      if (alive.length > 0) {
+        // Change target periodically or if close enough
+        const dx = (unit.roamTargetX || unit.x) - unit.x;
+        const dy = (unit.roamTargetY || unit.y) - unit.y;
+        const distToTarget = Math.sqrt(dx * dx + dy * dy);
+        if (distToTarget < 15 || !unit.roamTargetX) {
+          const randEnemy = alive[Math.floor(Math.random() * alive.length)];
+          unit.roamTargetX = randEnemy.x;
+          unit.roamTargetY = randEnemy.y;
+        }
+      } else {
+        unit.roamTargetX = unit.homeX;
+        unit.roamTargetY = unit.homeY;
+      }
+
+      // Move toward roam target
+      const mx = (unit.roamTargetX || unit.x) - unit.x;
+      const my = (unit.roamTargetY || unit.y) - unit.y;
+      const md = Math.sqrt(mx * mx + my * my);
+      if (md > 3) {
+        unit.x += (mx / md) * speed * dt;
+        unit.y += (my / md) * speed * dt;
+        unit.isAttacking = true;
+        unit.attackAnimTimer = 0.1;
+      }
+
+      // Drop poison cloud trail every 0.4s
+      unit.lastCloudTime = (unit.lastCloudTime || 0) + dt;
+      if (unit.lastCloudTime >= 0.4) {
+        unit.lastCloudTime = 0;
+        const cloudDuration = (unit.config.dotDuration || 3) + unit.level * 0.3;
+        const cloudDps = stats.attack * 0.4 + (unit.config.dotDamage || 5) * (1 + (unit.level - 1) * 0.3);
+        this.groundEffects.push({
+          id: nextGroundEffectId++,
+          type: 'poison_cloud',
+          x: unit.x,
+          y: unit.y,
+          radius: 22 + unit.level * 2,
+          duration: cloudDuration,
+          maxDuration: cloudDuration,
+          damagePerSecond: cloudDps,
+          alive: true,
+          color: unit.config.weaponColor,
+        });
+      }
+    }
+
     // Attack logic
     for (const unit of this.units) {
+      // Singed uses roaming, not normal attacks
+      if (unit.config.attackPattern === 'poison_trail') continue;
+
       const stats = this.getEffectiveStats(unit);
       unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
       if (unit.attackCooldown > 0) continue;
@@ -242,7 +308,7 @@ export class TowerManager {
             y: unit.y,
             currentRadius: 0,
             maxRadius: stats.range,
-            speed: 200, // px/s wave expansion speed
+            speed: 200,
             damage: stats.attack,
             weaponColor: unit.config.weaponColor,
             hitEnemies: [],
@@ -278,6 +344,31 @@ export class TowerManager {
             appliesPoison: { damage: unit.config.dotDamage || 5, duration: unit.config.dotDuration || 3 },
           });
           break;
+
+        case 'mushroom': {
+          // Teemo throws a mushroom projectile that lands and becomes a trap
+          const shroomDps = (unit.config.dotDamage || 4) * (1 + (unit.level - 1) * 0.3);
+          const shroomDuration = 8 + unit.level;
+          const explRadius = (unit.config.aoeRadius || 35) + unit.level * 3;
+          this.groundEffects.push({
+            id: nextGroundEffectId++,
+            type: 'mushroom',
+            x: target.x + (Math.random() - 0.5) * 20,
+            y: target.y + (Math.random() - 0.5) * 20,
+            radius: 12,
+            duration: shroomDuration,
+            maxDuration: shroomDuration,
+            damagePerSecond: shroomDps,
+            slowFactor: unit.config.slowFactor || 0.6,
+            slowDuration: unit.config.slowDuration || 2,
+            aoeRadius: explRadius,
+            explosionDamage: stats.attack,
+            exploded: false,
+            alive: true,
+            color: '#88dd44',
+          });
+          break;
+        }
 
         case 'slow':
           damages.push({ enemyId: target.id, damage: stats.attack });
@@ -421,6 +512,63 @@ export class TowerManager {
     }
     this.aoeWaves = this.aoeWaves.filter(w => w.alive);
 
+    // Update ground effects (poison clouds & mushrooms)
+    for (const ge of this.groundEffects) {
+      if (!ge.alive) continue;
+      ge.duration -= dt;
+      if (ge.duration <= 0) { ge.alive = false; continue; }
+
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        const dx = e.x - ge.x;
+        const dy = e.y - ge.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (ge.type === 'mushroom' && !ge.exploded && dist <= ge.radius + e.size) {
+          // Mushroom triggered! Explode
+          ge.exploded = true;
+          ge.duration = Math.min(ge.duration, 0.5); // short remaining for visual
+          const explR = ge.aoeRadius || 40;
+          for (const e2 of enemies) {
+            if (!e2.alive) continue;
+            const d2x = e2.x - ge.x;
+            const d2y = e2.y - ge.y;
+            if (Math.sqrt(d2x * d2x + d2y * d2y) <= explR) {
+              damages.push({ enemyId: e2.id, damage: ge.explosionDamage || 10 });
+              statusEffects.push({ enemyId: e2.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: ge.slowDuration || 3, slowFactor: 1 } });
+              if (ge.slowFactor) {
+                statusEffects.push({ enemyId: e2.id, effect: { type: 'slow', damagePerSecond: 0, duration: ge.slowDuration || 2, slowFactor: ge.slowFactor } });
+              }
+            }
+          }
+          // Spawn explosion wave visual
+          this.aoeWaves.push({
+            id: nextWaveId++,
+            unitId: -1,
+            x: ge.x, y: ge.y,
+            currentRadius: 0,
+            maxRadius: explR,
+            speed: 250,
+            damage: 0,
+            weaponColor: '#88dd44',
+            hitEnemies: [],
+            alive: true,
+            attackPattern: 'mushroom',
+          });
+          break;
+        }
+
+        if (ge.type === 'poison_cloud' && dist <= ge.radius + e.size) {
+          // Apply poison DOT to enemies inside the cloud
+          const hasPoisonFromCloud = e.statusEffects.some(s => s.type === 'poison' && s.damagePerSecond >= ge.damagePerSecond);
+          if (!hasPoisonFromCloud) {
+            statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: 1, slowFactor: 1 } });
+          }
+        }
+      }
+    }
+    this.groundEffects = this.groundEffects.filter(ge => ge.alive);
+
     return { damages, statusEffects };
   }
 
@@ -472,5 +620,6 @@ export class TowerManager {
     this.units = [];
     this.projectiles = [];
     this.aoeWaves = [];
+    this.groundEffects = [];
   }
 }

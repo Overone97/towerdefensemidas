@@ -17,6 +17,8 @@ const ATTACK_PATTERN_LABELS: Record<string, { icon: string; label: string }> = {
   aoe_circle: { icon: '💥', label: 'Area of Effect' },
   line: { icon: '➡️', label: 'Piercing Line' },
   poison: { icon: '☠️', label: 'Poison' },
+  poison_trail: { icon: '☁️', label: 'Poison Trail' },
+  mushroom: { icon: '🍄', label: 'Mushroom Trap' },
   slow: { icon: '🧊', label: 'Slow' },
   chain: { icon: '⛓️', label: 'Chain Lightning' },
   burst: { icon: '💣', label: 'Burst' },

@@ -78,6 +78,7 @@ export class GameEngine {
       placedUnits: [],
       projectiles: [],
       aoeWaves: [],
+      groundEffects: [],
       slots: map.slots.map(s => ({ ...s })),
       selectedSlotIndex: null,
       selectedUnitId: null,
@@ -205,6 +206,7 @@ export class GameEngine {
     this.state.placedUnits = this.towerManager.units;
     this.state.projectiles = this.towerManager.projectiles;
     this.state.aoeWaves = this.towerManager.aoeWaves;
+    this.state.groundEffects = this.towerManager.groundEffects;
     this.state.currentWave = this.waveManager.currentWave;
     this.state.waveActive = this.waveManager.waveActive;
     this.state.waveEnemiesSpawned = this.waveManager.spawned;
