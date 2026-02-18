@@ -11,13 +11,13 @@ interface TalentTreeProps {
 
 const TalentTree: React.FC<TalentTreeProps> = ({ talents, stars, onUpgradeTalent, onBack }) => {
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
-        <h2 className="text-foreground font-bold font-mono">Talent Tree</h2>
+    <div className="flex flex-col h-screen bg-background text-foreground">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <Button variant="outline" size="sm" onClick={onBack}>← Back</Button>
+        <h2 className="font-bold font-mono">🌟 Talent Tree</h2>
         <div className="text-yellow-400 font-mono font-bold">⭐ {stars}</div>
       </div>
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
         <div className="grid grid-cols-3 gap-4 max-w-lg w-full">
           {TALENTS.map(t => {
             const level = talents[t.id] || 0;
@@ -37,7 +37,7 @@ const TalentTree: React.FC<TalentTreeProps> = ({ talents, stars, onUpgradeTalent
                 }`}
               >
                 <span className="text-2xl">{t.icon}</span>
-                <span className="text-foreground font-bold text-sm">{t.name}</span>
+                <span className="font-bold text-sm">{t.name}</span>
                 <span className="text-muted-foreground text-xs">{t.description}</span>
                 <div className="flex gap-0.5 mt-1">
                   {Array.from({ length: t.maxLevel }).map((_, i) => (
