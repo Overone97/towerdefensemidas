@@ -38,11 +38,6 @@ export function drawCharacterSprite(
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
 
-    // Rarity border
-    ctx.strokeStyle = rarityColor;
-    ctx.lineWidth = config.rarity === 'legendary' ? 2.5 : config.rarity === 'epic' ? 2 : 1;
-    ctx.strokeRect(x - hs - 1, cy - hs - 1, size + 2, size + 2);
-
     ctx.restore();
     return;
   }
