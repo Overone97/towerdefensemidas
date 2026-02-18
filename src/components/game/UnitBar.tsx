@@ -47,10 +47,41 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
   return (
     <div className="px-4 py-3 bg-card border-t border-border">
       {isGameTab ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 overflow-x-auto flex-1 pr-4">
+        <div className="flex flex-col gap-2">
+          {/* Action buttons row */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground font-mono">
+              {slotSelected ? '👆 Select a unit to deploy' : '📍 Click a slot on the map first'}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                onClick={onToggleAutoWave}
+                variant={state.autoWave ? 'destructive' : 'outline'}
+                size="sm"
+                className="shrink-0"
+              >
+                {state.autoWave ? '⏸ Auto' : '▶ Auto'}
+              </Button>
+              <Button
+                onClick={onStartWave}
+                disabled={!canStartWave}
+                variant={canStartWave ? 'default' : 'secondary'}
+                className="px-6 shrink-0"
+              >
+                {state.waveActive
+                  ? `Wave ${state.currentWave}...`
+                  : state.currentWave === 0
+                  ? 'Start Game'
+                  : `Start Wave ${state.currentWave + 1}`
+                }
+              </Button>
+            </div>
+          </div>
+
+          {/* Unit grid */}
+          <div className="flex flex-wrap gap-2">
             {unplacedCharacters.length === 0 ? (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-sm py-1">
                 {state.inventory.length === 0 ? 'No characters yet. Use Summon tab!' : 'All characters deployed!'}
               </span>
             ) : (
@@ -60,13 +91,13 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 const isHovered = hoveredChar === char.instanceId;
 
                 return (
-                  <div key={char.instanceId} className="relative shrink-0">
+                  <div key={char.instanceId} className="relative">
                     <button
                       onClick={() => onPlaceUnit(char.instanceId)}
                       onMouseEnter={() => setHoveredChar(char.instanceId)}
                       onMouseLeave={() => setHoveredChar(null)}
                       disabled={!slotSelected}
-                      className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg border-2 transition-all
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all
                         ${slotSelected
                           ? 'hover:bg-accent cursor-pointer hover:scale-105'
                           : 'opacity-50 cursor-not-allowed'
@@ -74,15 +105,18 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                       `}
                       style={{ borderColor: RARITY_COLORS[char.config.rarity] }}
                     >
-                      <CharacterSprite config={char.config} size={32} owned />
-                      <span className="text-xs text-foreground font-mono font-semibold">{char.config.name}</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
-                          Lv.{char.level}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {ATTACK_PATTERN_ICONS[char.config.attackPattern]}
-                        </span>
+                      <CharacterSprite config={char.config} size={24} owned />
+                      <div className="flex flex-col items-start">
+                        <span className="text-xs font-mono font-semibold leading-tight">{char.config.name}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
+                            Lv.{char.level}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {ATTACK_PATTERN_ICONS[char.config.attackPattern]}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{dps}dps</span>
+                        </div>
                       </div>
                     </button>
 
@@ -91,7 +125,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
                         <div className="bg-popover border border-border rounded-lg shadow-lg p-3 min-w-[160px]">
                           <div className="flex items-center gap-1.5 mb-1.5">
-                            <span className="font-bold text-sm text-foreground">{char.config.name}</span>
+                            <span className="font-bold text-sm">{char.config.name}</span>
                             <span className="text-xs font-mono font-bold" style={{ color: RARITY_COLORS[char.config.rarity] }}>
                               {RARITY_LABELS[char.config.rarity]}
                             </span>
@@ -100,9 +134,9 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                             {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {ATTACK_PATTERN_LABELS[char.config.attackPattern]}
                           </div>
                           <div className="space-y-0.5 text-xs font-mono">
-                            <div className="flex justify-between"><span className="text-muted-foreground">ATK</span><span className="text-foreground">{stats.attack}</span></div>
-                            <div className="flex justify-between"><span className="text-muted-foreground">SPD</span><span className="text-foreground">{stats.attackSpeed.toFixed(1)}/s</span></div>
-                            <div className="flex justify-between"><span className="text-muted-foreground">RNG</span><span className="text-foreground">{stats.range}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">ATK</span><span>{stats.attack}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">SPD</span><span>{stats.attackSpeed.toFixed(1)}/s</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">RNG</span><span>{stats.range}</span></div>
                             <div className="flex justify-between border-t border-border pt-0.5 mt-0.5">
                               <span className="text-muted-foreground">DPS</span>
                               <span className="text-primary font-bold">{dps}</span>
@@ -128,29 +162,6 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 );
               })
             )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={onToggleAutoWave}
-              variant={state.autoWave ? 'destructive' : 'outline'}
-              size="sm"
-              className="shrink-0"
-            >
-              {state.autoWave ? '⏸ Auto' : '▶ Auto'}
-            </Button>
-            <Button
-              onClick={onStartWave}
-              disabled={!canStartWave}
-              variant={canStartWave ? 'default' : 'secondary'}
-              className="px-6 shrink-0"
-            >
-              {state.waveActive
-                ? `Wave ${state.currentWave}...`
-                : state.currentWave === 0
-                ? 'Start Game'
-                : `Start Wave ${state.currentWave + 1}`
-              }
-            </Button>
           </div>
         </div>
       ) : (
@@ -178,7 +189,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 style={{ borderColor: RARITY_COLORS[lastSummon.config.rarity] }}
               >
                 <CharacterSprite config={lastSummon.config} size={20} owned />
-                <span className="text-sm text-foreground font-bold">{lastSummon.config.name}</span>
+                <span className="text-sm font-bold">{lastSummon.config.name}</span>
                 <span className="text-xs font-bold" style={{ color: RARITY_COLORS[lastSummon.config.rarity] }}>
                   {RARITY_LABELS[lastSummon.config.rarity]}
                 </span>
@@ -186,11 +197,6 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
             )}
             <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/20</span>
           </div>
-        </div>
-      )}
-      {slotSelected && isGameTab && (
-        <div className="text-center text-sm text-muted-foreground mt-2">
-          Select a character to deploy on the selected slot
         </div>
       )}
     </div>
