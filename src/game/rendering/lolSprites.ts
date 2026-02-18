@@ -1,30 +1,53 @@
 // LoL character sprite renderer using pre-generated pixel art images
-// Images are loaded once and cached, then drawn on canvas
+// Images are loaded once, background-removed, cached, then drawn on canvas
 
 import alistarImg from '@/assets/sprites/alistar.png';
 import brandImg from '@/assets/sprites/brand.png';
 import jinxImg from '@/assets/sprites/jinx.png';
 
-// Image cache
-const imageCache: Map<string, HTMLImageElement> = new Map();
+// Image cache (cleaned versions without background)
+const imageCache: Map<string, HTMLCanvasElement> = new Map();
 const loadingImages: Set<string> = new Set();
 
-function getOrLoadImage(src: string, key: string): HTMLImageElement | null {
+function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const ctx = c.getContext('2d')!;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  const d = data.data;
+  // Sample corner pixel as background color
+  const bgR = d[0], bgG = d[1], bgB = d[2];
+  const threshold = 40;
+  for (let i = 0; i < d.length; i += 4) {
+    const dr = Math.abs(d[i] - bgR);
+    const dg = Math.abs(d[i + 1] - bgG);
+    const db = Math.abs(d[i + 2] - bgB);
+    if (dr < threshold && dg < threshold && db < threshold) {
+      d[i + 3] = 0; // make transparent
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  return c;
+}
+
+function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
   const cached = imageCache.get(key);
-  if (cached && cached.complete) return cached;
+  if (cached) return cached;
 
   if (!loadingImages.has(key)) {
     loadingImages.add(key);
     const img = new Image();
     img.src = src;
     img.onload = () => {
-      imageCache.set(key, img);
+      const cleaned = removeBackground(img);
+      imageCache.set(key, cleaned);
       loadingImages.delete(key);
     };
     img.onerror = () => {
       loadingImages.delete(key);
     };
-    imageCache.set(key, img);
   }
 
   return null;
@@ -47,24 +70,32 @@ function drawSpriteImage(
   x: number,
   y: number,
   size: number,
+  animFrame: number,
   isAttacking: boolean,
   attackAnimTimer: number
 ) {
   const img = getOrLoadImage(src, key);
-  const drawSize = size * 2.2; // Scale up for visibility
-  const swing = isAttacking ? Math.sin(attackAnimTimer * 15) * 1.5 : 0;
+  const drawSize = size * 2.2;
+  
+  // Idle bob animation
+  const bob = Math.sin(animFrame * 0.08) * 1.5;
+  
+  // Attack animation: lean forward + scale pulse
+  let swing = 0;
+  let pulse = 1;
+  let tilt = 0;
+  if (isAttacking) {
+    swing = Math.sin(attackAnimTimer * 15) * 2;
+    pulse = 1 + Math.sin(attackAnimTimer * 12) * 0.12;
+    tilt = Math.sin(attackAnimTimer * 10) * 0.08;
+  }
 
-  if (img && img.complete && img.naturalWidth > 0) {
+  if (img) {
     ctx.save();
-    if (isAttacking) {
-      ctx.translate(x, y + swing);
-      // Slight scale pulse on attack
-      const pulse = 1 + Math.sin(attackAnimTimer * 12) * 0.08;
-      ctx.scale(pulse, pulse);
-      ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
-    } else {
-      ctx.drawImage(img, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
-    }
+    ctx.translate(x, y + bob + swing);
+    ctx.rotate(tilt);
+    ctx.scale(pulse, pulse);
+    ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
     ctx.restore();
   } else {
     // Fallback: colored circle while loading
@@ -80,9 +111,8 @@ export function drawAlistarSprite(
   x: number, y: number, size: number,
   animFrame: number, isAttacking: boolean, attackAnimTimer: number
 ) {
-  drawSpriteImage(ctx, 'alistar', alistarImg, x, y, size, isAttacking, attackAnimTimer);
+  drawSpriteImage(ctx, 'alistar', alistarImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
 
-  // Ground slam effect
   if (isAttacking && attackAnimTimer > 0) {
     const ps = size / 8;
     ctx.globalAlpha = 0.4;
@@ -97,9 +127,8 @@ export function drawBrandSprite(
   x: number, y: number, size: number,
   animFrame: number, isAttacking: boolean, attackAnimTimer: number
 ) {
-  drawSpriteImage(ctx, 'brand', brandImg, x, y, size, isAttacking, attackAnimTimer);
+  drawSpriteImage(ctx, 'brand', brandImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
 
-  // Fire particles when attacking
   if (isAttacking) {
     const ps = size / 8;
     ctx.globalAlpha = 0.6;
@@ -116,9 +145,8 @@ export function drawJinxSprite(
   x: number, y: number, size: number,
   animFrame: number, isAttacking: boolean, attackAnimTimer: number
 ) {
-  drawSpriteImage(ctx, 'jinx', jinxImg, x, y, size, isAttacking, attackAnimTimer);
+  drawSpriteImage(ctx, 'jinx', jinxImg, x, y, size, animFrame, isAttacking, attackAnimTimer);
 
-  // Muzzle flash when attacking
   if (isAttacking) {
     const ps = size / 6;
     ctx.globalAlpha = 0.7;
