@@ -1,4 +1,4 @@
-import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState } from '../../game/types';
+import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState, GroundEffect } from '../../game/types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
@@ -143,6 +143,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   drawPond(ctx, t);
 
   // ── Game entities ──
+  drawGroundEffects(ctx, state.groundEffects || [], t);
   drawEnemies(ctx, state.enemies);
   drawAoeWaves(ctx, state.aoeWaves || []);
   drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
@@ -515,6 +516,105 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
     ctx.fillRect(barX, barY, barW, barH);
     ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffaa00' : '#ff4444';
     ctx.fillRect(barX, barY, barW * Math.max(0, hpRatio), barH);
+  }
+}
+
+function drawGroundEffects(ctx: CanvasRenderingContext2D, effects: GroundEffect[], t: number): void {
+  for (const ge of effects) {
+    if (!ge.alive) continue;
+    const lifeRatio = ge.duration / ge.maxDuration;
+
+    if (ge.type === 'poison_cloud') {
+      // Animated toxic cloud
+      ctx.save();
+      const pulse = 1 + Math.sin(t * 4 + ge.x * 0.1) * 0.15;
+      const r = ge.radius * pulse;
+
+      // Cloud gradient
+      const grad = ctx.createRadialGradient(ge.x, ge.y, 0, ge.x, ge.y, r);
+      grad.addColorStop(0, ge.color + '55');
+      grad.addColorStop(0.5, ge.color + '33');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = lifeRatio * 0.8;
+      ctx.beginPath();
+      ctx.arc(ge.x, ge.y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Swirling sub-clouds
+      for (let i = 0; i < 3; i++) {
+        const angle = t * 2 + (i * Math.PI * 2) / 3 + ge.y * 0.05;
+        const dist = r * 0.4;
+        const cx = ge.x + Math.cos(angle) * dist;
+        const cy = ge.y + Math.sin(angle) * dist;
+        ctx.globalAlpha = lifeRatio * 0.4;
+        ctx.fillStyle = ge.color + '66';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Toxic particles floating up
+      for (let i = 0; i < 2; i++) {
+        const px = ge.x + Math.sin(t * 3 + i * 2 + ge.x) * r * 0.5;
+        const py = ge.y - ((t * 20 + i * 10 + ge.x * 2) % (r * 1.5));
+        ctx.globalAlpha = lifeRatio * 0.5;
+        ctx.fillStyle = ge.color;
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    } else if (ge.type === 'mushroom') {
+      ctx.save();
+
+      if (ge.exploded) {
+        // Explosion flash
+        ctx.globalAlpha = ge.duration * 2;
+        const explGrad = ctx.createRadialGradient(ge.x, ge.y, 0, ge.x, ge.y, ge.aoeRadius || 40);
+        explGrad.addColorStop(0, '#ffff44aa');
+        explGrad.addColorStop(0.5, '#88dd4466');
+        explGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = explGrad;
+        ctx.beginPath();
+        ctx.arc(ge.x, ge.y, ge.aoeRadius || 40, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Mushroom sprite
+        const bob = Math.sin(t * 2 + ge.x * 0.1) * 1;
+
+        // Stem
+        ctx.fillStyle = '#ccbb88';
+        ctx.fillRect(ge.x - 2, ge.y - 2 + bob, 4, 7);
+
+        // Cap
+        ctx.fillStyle = '#dd4444';
+        ctx.beginPath();
+        ctx.ellipse(ge.x, ge.y - 4 + bob, 7, 5, 0, Math.PI, 0);
+        ctx.fill();
+
+        // White spots
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ge.x - 2, ge.y - 6 + bob, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ge.x + 2, ge.y - 5 + bob, 1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Danger radius hint (subtle)
+        ctx.strokeStyle = '#ff444422';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.arc(ge.x, ge.y, ge.aoeRadius || 40, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+    }
   }
 }
 

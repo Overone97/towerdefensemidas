@@ -29,12 +29,12 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'garen', name: 'Garen', rarity: 'common', attack: 12, attackSpeed: 1.2, range: 100, attackPattern: 'single', bodyColor: '#7a8b9a', detailColor: '#5a6b7a', weaponColor: '#c0c8d0' },
   { id: 'ashe', name: 'Ashe', rarity: 'common', attack: 10, attackSpeed: 1.8, range: 140, attackPattern: 'single', bodyColor: '#6b8e5a', detailColor: '#4a6e3a', weaponColor: '#8b6b3a' },
   { id: 'leona', name: 'Leona', rarity: 'common', attack: 8, attackSpeed: 1.0, range: 80, attackPattern: 'rapid', bodyColor: '#8a8a9a', detailColor: '#6a6a7a', weaponColor: '#b0b0c0' },
-  { id: 'teemo', name: 'Teemo', rarity: 'common', attack: 6, attackSpeed: 2.5, range: 110, attackPattern: 'single', bodyColor: '#6a9a8a', detailColor: '#4a7a6a', weaponColor: '#9ab0a0' },
+  { id: 'teemo', name: 'Teemo', rarity: 'common', attack: 6, attackSpeed: 2.5, range: 110, attackPattern: 'mushroom', dotDamage: 4, dotDuration: 3, slowFactor: 0.6, slowDuration: 2, aoeRadius: 35, bodyColor: '#6a9a8a', detailColor: '#4a7a6a', weaponColor: '#9ab0a0' },
   { id: 'lux', name: 'Lux', rarity: 'common', attack: 7, attackSpeed: 1.5, range: 120, attackPattern: 'slow', slowFactor: 0.7, slowDuration: 2, bodyColor: '#8a7aaa', detailColor: '#6a5a8a', weaponColor: '#b0a0c0' },
   // UNCOMMON (5)
   { id: 'annie', name: 'Annie', rarity: 'uncommon', attack: 15, attackSpeed: 0.8, range: 110, attackPattern: 'aoe_circle', aoeRadius: 50, bodyColor: '#cc5533', detailColor: '#aa3311', weaponColor: '#ff8844' },
   { id: 'jarvan', name: 'Jarvan IV', rarity: 'uncommon', attack: 14, attackSpeed: 1.0, range: 130, attackPattern: 'line', bodyColor: '#5577aa', detailColor: '#3355aa', weaponColor: '#8899cc' },
-  { id: 'singed', name: 'Singed', rarity: 'uncommon', attack: 8, attackSpeed: 1.2, range: 100, attackPattern: 'poison', dotDamage: 5, dotDuration: 3, bodyColor: '#55aa55', detailColor: '#338833', weaponColor: '#88dd44' },
+  { id: 'singed', name: 'Singed', rarity: 'uncommon', attack: 8, attackSpeed: 1.2, range: 200, attackPattern: 'poison_trail', dotDamage: 6, dotDuration: 3, bodyColor: '#55aa55', detailColor: '#338833', weaponColor: '#88dd44' },
   { id: 'darius', name: 'Darius', rarity: 'uncommon', attack: 25, attackSpeed: 0.5, range: 90, attackPattern: 'single', bodyColor: '#aa4444', detailColor: '#882222', weaponColor: '#dd6644' },
   { id: 'lissandra', name: 'Lissandra', rarity: 'uncommon', attack: 10, attackSpeed: 0.9, range: 120, attackPattern: 'slow', slowFactor: 0.4, slowDuration: 3, aoeRadius: 40, bodyColor: '#66aacc', detailColor: '#4488aa', weaponColor: '#aaddff' },
   // RARE (4)

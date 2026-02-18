@@ -1,7 +1,7 @@
 export interface Point { x: number; y: number; }
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type AttackPattern = 'single' | 'rapid' | 'aoe_circle' | 'line' | 'poison' | 'slow' | 'chain' | 'burst';
+export type AttackPattern = 'single' | 'rapid' | 'aoe_circle' | 'line' | 'poison' | 'poison_trail' | 'mushroom' | 'slow' | 'chain' | 'burst';
 export type TargetPriority = 'closest' | 'weakest' | 'most_advanced';
 
 export interface SynergyBonus {
@@ -124,6 +124,30 @@ export interface PlacedUnit {
   abilityCooldown: number;
   abilityActive: boolean;
   abilityTimer: number;
+  // Singed roaming
+  homeX?: number;
+  homeY?: number;
+  roamTargetX?: number;
+  roamTargetY?: number;
+  lastCloudTime?: number;
+}
+
+export interface GroundEffect {
+  id: number;
+  type: 'poison_cloud' | 'mushroom';
+  x: number;
+  y: number;
+  radius: number;
+  duration: number;
+  maxDuration: number;
+  damagePerSecond: number;
+  slowFactor?: number;
+  slowDuration?: number;
+  aoeRadius?: number; // mushroom explosion radius
+  explosionDamage?: number;
+  exploded?: boolean;
+  alive: boolean;
+  color: string;
 }
 
 export interface Projectile {
@@ -168,6 +192,7 @@ export interface GameState {
   placedUnits: PlacedUnit[];
   projectiles: Projectile[];
   aoeWaves: AoeWaveState[];
+  groundEffects: GroundEffect[];
   slots: Slot[];
   selectedSlotIndex: number | null;
   selectedUnitId: number | null;
