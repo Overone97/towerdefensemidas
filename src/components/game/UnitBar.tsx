@@ -169,7 +169,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
           <div className="flex items-center gap-4">
             <Button
               onClick={onSummon}
-              disabled={state.gold < state.gachaCost || state.inventory.length >= 20}
+              disabled={state.gold < state.gachaCost || state.inventory.length >= 30}
               className="px-6 shrink-0"
             >
               🎲 Summon ({state.gachaCost}g)
@@ -195,7 +195,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 </span>
               </div>
             )}
-            <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/20</span>
+            <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/30</span>
           </div>
         </div>
       )}
