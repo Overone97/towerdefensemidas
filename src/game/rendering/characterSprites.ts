@@ -129,16 +129,37 @@ function drawBody(ctx: CanvasRenderingContext2D, id: string, x: number, y: numbe
     case 'alistar':
       // Massive torso
       ctx.fillRect(x - hs - ps, y - hs + ps * 2, s + ps * 2, s - ps * 2);
-      // Broad shoulders
       ctx.fillRect(x - hs - ps * 2, y - hs + ps * 2, s + ps * 4, ps * 3);
-      // Head (smaller, bull-like)
       ctx.fillRect(x - ps * 2, y - hs - ps, ps * 4, ps * 3);
-      // Horns
       ctx.fillRect(x - hs - ps * 2, y - hs - ps * 2, ps * 2, ps * 2);
       ctx.fillRect(x + hs, y - hs - ps * 2, ps * 2, ps * 2);
-      // Horn tips curving up
       ctx.fillRect(x - hs - ps * 3, y - hs - ps * 3, ps, ps * 2);
       ctx.fillRect(x + hs + ps * 2, y - hs - ps * 3, ps, ps * 2);
+      break;
+    case 'brand':
+      // Burning humanoid body — slim torso with flame-like edges
+      ctx.fillRect(x - hs + ps, y - hs + ps, s - ps * 2, s - ps);
+      // Head with flame crown
+      ctx.fillRect(x - ps * 2, y - hs - ps, ps * 4, ps * 2);
+      // Flame tips on head
+      ctx.fillRect(x - ps * 2, y - hs - ps * 3, ps, ps * 2);
+      ctx.fillRect(x, y - hs - ps * 4, ps, ps * 3);
+      ctx.fillRect(x + ps, y - hs - ps * 3, ps, ps * 2);
+      // Wide burning shoulders
+      ctx.fillRect(x - hs - ps, y - hs + ps, ps * 2, ps * 2);
+      ctx.fillRect(x + hs - ps, y - hs + ps, ps * 2, ps * 2);
+      break;
+    case 'jinx':
+      // Slim body
+      ctx.fillRect(x - hs + ps * 2, y - hs + ps, s - ps * 4, s - ps);
+      // Head
+      ctx.fillRect(x - ps * 2, y - hs - ps, ps * 4, ps * 2);
+      // Long twin braids going down on each side
+      ctx.fillRect(x - hs - ps, y - hs, ps, ps * 6);
+      ctx.fillRect(x + hs, y - hs, ps, ps * 6);
+      // Braid tips
+      ctx.fillRect(x - hs - ps * 2, y - hs + ps * 5, ps, ps * 2);
+      ctx.fillRect(x + hs + ps, y - hs + ps * 5, ps, ps * 2);
       break;
     case 'phoenix':
       ctx.fillRect(x - hs + ps, y - hs + ps, s - ps * 2, s - ps * 2);
@@ -181,6 +202,31 @@ function drawDetail(ctx: CanvasRenderingContext2D, id: string, x: number, y: num
       ctx.fillRect(x + ps, y - hs - ps / 2, ps, ps);
       // Belt/armor line
       ctx.fillRect(x - hs, y + ps, hs * 2, ps);
+      break;
+    case 'brand':
+      // Glowing eyes
+      ctx.fillStyle = '#ffff00';
+      ctx.fillRect(x - ps, y - hs - ps / 2, ps, ps);
+      ctx.fillRect(x + ps / 2, y - hs - ps / 2, ps, ps);
+      // Burning cracks on body
+      ctx.fillStyle = '#ffaa00';
+      ctx.fillRect(x - ps / 2, y - hs + ps * 2, ps, ps * 3);
+      ctx.fillRect(x - hs + ps * 2, y, ps * 2, ps);
+      break;
+    case 'jinx':
+      // Crazy eyes (red)
+      ctx.fillStyle = '#ff2266';
+      ctx.fillRect(x - ps, y - hs - ps / 2, ps, ps);
+      ctx.fillRect(x + ps / 2, y - hs - ps / 2, ps, ps);
+      // Grin
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - ps, y - hs + ps / 2, ps * 2, ps / 2);
+      // Belt with bullets
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillRect(x - hs + ps * 2, y + ps, ps, ps / 2);
+      ctx.fillRect(x - hs + ps * 3, y + ps, ps, ps / 2);
+      ctx.fillRect(x, y + ps, ps, ps / 2);
+      ctx.fillRect(x + ps, y + ps, ps, ps / 2);
       break;
     case 'void_walker':
       ctx.fillStyle = '#110022';
@@ -257,15 +303,36 @@ function drawWeapon(ctx: CanvasRenderingContext2D, id: string, x: number, y: num
       ctx.fillRect(x - hs - ps - 1, y - ps * 2 - swing, ps, ps * 5);
       break;
     case 'alistar':
-      // Fists (no weapon, he punches!)
       ctx.fillRect(x - hs - ps * 3, y + ps + swing, ps * 2, ps * 2);
       ctx.fillRect(x + hs + ps, y + ps - swing, ps * 2, ps * 2);
-      // Ground slam effect when attacking
       if (swing !== 0) {
         ctx.globalAlpha = 0.4;
         ctx.fillRect(x - hs - ps * 2, y + hs, s + ps * 4, ps);
         ctx.globalAlpha = 1;
       }
+      break;
+    case 'brand':
+      // Fireball in hand
+      ctx.fillRect(x + hs + 2, y - hs + swing, ps, s);
+      // Fireball orb
+      ctx.beginPath();
+      ctx.arc(x + hs + ps + 2, y - hs - ps + swing, ps * 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Embers
+      if (swing !== 0) {
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(x + hs + ps * 2, y - hs - ps * 2 + swing, ps, ps);
+        ctx.fillRect(x + hs, y - hs - ps * 3 + swing, ps, ps);
+        ctx.globalAlpha = 1;
+      }
+      break;
+    case 'jinx':
+      // Pow-Pow minigun (right side)
+      ctx.fillRect(x + hs + 1, y - ps + swing, ps * 5, ps);
+      ctx.fillRect(x + hs + 1, y + swing, ps * 5, ps);
+      ctx.fillRect(x + hs + ps * 4, y - ps * 2 + swing, ps * 2, ps * 4);
+      // Barrel
+      ctx.fillRect(x + hs + ps * 5, y - ps / 2 + swing, ps * 2, ps);
       break;
     case 'phoenix':
       ctx.fillRect(x - hs - ps * 3, y - ps + swing, ps * 2, ps * 2);

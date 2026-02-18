@@ -47,6 +47,8 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'shadow_assassin', name: 'Shadow Assassin', rarity: 'epic', attack: 15, attackSpeed: 2.0, range: 100, attackPattern: 'poison', dotDamage: 10, dotDuration: 4, bodyColor: '#2a2a3a', detailColor: '#1a1a2a', weaponColor: '#6644aa' },
   { id: 'storm_lord', name: 'Storm Lord', rarity: 'epic', attack: 18, attackSpeed: 0.9, range: 150, attackPattern: 'chain', chainCount: 4, bodyColor: '#3355aa', detailColor: '#2244aa', weaponColor: '#66ccff' },
   { id: 'alistar', name: 'Alistar', rarity: 'epic', attack: 20, attackSpeed: 0.7, range: 90, attackPattern: 'aoe_circle', aoeRadius: 55, slowFactor: 0.5, slowDuration: 2, bodyColor: '#7b4fa0', detailColor: '#5a3478', weaponColor: '#d4a0ff' },
+  { id: 'brand', name: 'Brand', rarity: 'epic', attack: 24, attackSpeed: 0.6, range: 130, attackPattern: 'aoe_circle', aoeRadius: 60, dotDamage: 10, dotDuration: 3, bodyColor: '#cc3300', detailColor: '#ff6600', weaponColor: '#ffaa00' },
+  { id: 'jinx', name: 'Jinx', rarity: 'epic', attack: 14, attackSpeed: 2.2, range: 160, attackPattern: 'rapid', bodyColor: '#4488cc', detailColor: '#ee44aa', weaponColor: '#ff66cc' },
   // LEGENDARY (3)
   { id: 'phoenix', name: 'Phoenix', rarity: 'legendary', attack: 25, attackSpeed: 0.8, range: 140, attackPattern: 'aoe_circle', aoeRadius: 70, dotDamage: 12, dotDuration: 3, bodyColor: '#ff6600', detailColor: '#dd4400', weaponColor: '#ffdd00' },
   { id: 'void_walker', name: 'Void Walker', rarity: 'legendary', attack: 30, attackSpeed: 0.6, range: 160, attackPattern: 'line', slowFactor: 0.3, slowDuration: 4, bodyColor: '#220044', detailColor: '#110033', weaponColor: '#8800ff' },
