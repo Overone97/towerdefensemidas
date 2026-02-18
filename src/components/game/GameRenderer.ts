@@ -1,4 +1,4 @@
-import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point } from '../../game/types';
+import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState } from '../../game/types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
@@ -144,6 +144,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
 
   // ── Game entities ──
   drawEnemies(ctx, state.enemies);
+  drawAoeWaves(ctx, state.aoeWaves || []);
   drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
   drawProjectiles(ctx, state.projectiles);
   drawBase(ctx, waypoints);
@@ -517,6 +518,59 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
   }
 }
 
+function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): void {
+  for (const wave of waves) {
+    if (!wave.alive) continue;
+    const progress = wave.currentRadius / wave.maxRadius;
+    const alpha = Math.max(0, 1 - progress * 0.8);
+
+    ctx.save();
+
+    // Main wave ring (thick, bright)
+    ctx.strokeStyle = wave.weaponColor;
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.lineWidth = 4 + (1 - progress) * 3;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, wave.currentRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Trailing inner ring
+    const innerRadius = Math.max(0, wave.currentRadius - 12);
+    ctx.globalAlpha = alpha * 0.5;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, innerRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Leading edge glow
+    const edgeGrad = ctx.createRadialGradient(
+      wave.x, wave.y, Math.max(0, wave.currentRadius - 15),
+      wave.x, wave.y, wave.currentRadius + 5
+    );
+    edgeGrad.addColorStop(0, 'transparent');
+    edgeGrad.addColorStop(0.5, wave.weaponColor + '44');
+    edgeGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = edgeGrad;
+    ctx.globalAlpha = alpha * 0.6;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, wave.currentRadius + 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtle fill behind wave front
+    const fillGrad = ctx.createRadialGradient(wave.x, wave.y, 0, wave.x, wave.y, wave.currentRadius);
+    fillGrad.addColorStop(0, wave.weaponColor + '08');
+    fillGrad.addColorStop(0.7, wave.weaponColor + '12');
+    fillGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = fillGrad;
+    ctx.globalAlpha = alpha * 0.3;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, wave.currentRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
 function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[]): void {
   const now = performance.now() / 1000;
 
@@ -565,48 +619,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       const pattern = unit.config.attackPattern;
 
       if (pattern === 'aoe_circle') {
-        // Expanding shockwave ring FROM the unit outward to full range
-        const cx = unit.x;
-        const cy = unit.y;
-        const maxRadius = stats.range;
-        const waveProgress = 1 - t * 2; // expands as timer decreases
-        const waveRadius = maxRadius * Math.min(1, Math.max(0.1, waveProgress + 0.3));
-        const waveAlpha = Math.max(0, t * 2);
-        
-        // Outer shockwave ring
-        ctx.strokeStyle = unit.config.weaponColor;
-        ctx.globalAlpha = waveAlpha * 0.8;
-        ctx.lineWidth = 3 + (1 - waveProgress) * 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Second inner ring for depth
-        ctx.globalAlpha = waveAlpha * 0.5;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(cx, cy, waveRadius * 0.65, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Third fast ring
-        ctx.globalAlpha = waveAlpha * 0.3;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, waveRadius * 0.35, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Radial glow fill
-        const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, waveRadius);
-        glowGrad.addColorStop(0, `${unit.config.weaponColor}44`);
-        glowGrad.addColorStop(0.5, `${unit.config.weaponColor}18`);
-        glowGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = glowGrad;
-        ctx.globalAlpha = waveAlpha * 0.3;
-        ctx.beginPath();
-        ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.globalAlpha = 1;
+        // AOE wave visuals are now drawn by drawAoeWaves
       } else if (pattern === 'line') {
         // Slash effect
         const target = enemies.find(e => e.id === unit.targetId && e.alive);
