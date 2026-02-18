@@ -518,20 +518,147 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
 }
 
 function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[]): void {
+  const now = performance.now() / 1000;
+
   for (const unit of units) {
     const stats = getCharacterStats(unit.config, unit.level);
     const isSelected = selectedId === unit.id;
 
+    // ── Range circle (enhanced) ──
     if (isSelected) {
+      // Outer pulsing ring
+      const pulse = 0.6 + Math.sin(now * 3) * 0.15;
+      const rangeGrad = ctx.createRadialGradient(unit.x, unit.y, stats.range * 0.7, unit.x, unit.y, stats.range);
+      rangeGrad.addColorStop(0, 'rgba(68, 170, 255, 0.0)');
+      rangeGrad.addColorStop(0.8, `rgba(68, 170, 255, ${0.06 * pulse})`);
+      rangeGrad.addColorStop(1, `rgba(68, 170, 255, ${0.15 * pulse})`);
       ctx.beginPath();
       ctx.arc(unit.x, unit.y, stats.range, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(68, 136, 255, 0.08)';
+      ctx.fillStyle = rangeGrad;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(68, 136, 255, 0.3)';
+
+      // Dashed rotating border
+      ctx.save();
+      ctx.translate(unit.x, unit.y);
+      ctx.rotate(now * 0.5);
+      ctx.translate(-unit.x, -unit.y);
+      ctx.setLineDash([8, 6]);
+      ctx.strokeStyle = `rgba(100, 200, 255, ${0.5 + Math.sin(now * 2) * 0.2})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(unit.x, unit.y, stats.range, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Inner solid ring
+      ctx.strokeStyle = 'rgba(100, 200, 255, 0.35)';
       ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(unit.x, unit.y, stats.range - 3, 0, Math.PI * 2);
       ctx.stroke();
     }
 
+    // ── Attack VFX (shockwave / effects) ──
+    if (unit.isAttacking && unit.attackAnimTimer > 0) {
+      const t = unit.attackAnimTimer;
+      const pattern = unit.config.attackPattern;
+
+      if (pattern === 'aoe_circle' && unit.config.aoeRadius) {
+        // Expanding shockwave ring at target position
+        const target = enemies.find(e => e.id === unit.targetId && e.alive);
+        if (target) {
+          const waveProgress = 1 - t * 2; // 0→1 as timer goes from 0.5→0
+          const waveRadius = unit.config.aoeRadius * Math.min(1, waveProgress + 0.3);
+          const waveAlpha = Math.max(0, t * 2);
+          
+          // Shockwave ring
+          ctx.strokeStyle = `${unit.config.weaponColor}`;
+          ctx.globalAlpha = waveAlpha * 0.7;
+          ctx.lineWidth = 3 - waveProgress * 2;
+          ctx.beginPath();
+          ctx.arc(target.x, target.y, waveRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Inner glow
+          const glowGrad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, waveRadius);
+          glowGrad.addColorStop(0, `${unit.config.weaponColor}`);
+          glowGrad.addColorStop(0.5, `${unit.config.weaponColor}44`);
+          glowGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = glowGrad;
+          ctx.globalAlpha = waveAlpha * 0.3;
+          ctx.beginPath();
+          ctx.arc(target.x, target.y, waveRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.globalAlpha = 1;
+        }
+      } else if (pattern === 'line') {
+        // Slash effect
+        const target = enemies.find(e => e.id === unit.targetId && e.alive);
+        if (target) {
+          const slashAlpha = Math.max(0, t * 3);
+          ctx.save();
+          ctx.strokeStyle = unit.config.weaponColor;
+          ctx.globalAlpha = slashAlpha * 0.6;
+          ctx.lineWidth = 4 * t * 3;
+          ctx.beginPath();
+          ctx.moveTo(unit.x, unit.y);
+          ctx.lineTo(target.x, target.y);
+          ctx.stroke();
+          // Bright tip
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = slashAlpha * 0.8;
+          ctx.beginPath();
+          ctx.arc(target.x, target.y, 4 * t * 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      } else if (pattern === 'chain') {
+        // Lightning chain effect
+        const target = enemies.find(e => e.id === unit.targetId && e.alive);
+        if (target) {
+          const chainAlpha = Math.max(0, t * 3);
+          ctx.save();
+          ctx.strokeStyle = unit.config.weaponColor;
+          ctx.globalAlpha = chainAlpha * 0.7;
+          ctx.lineWidth = 2;
+          // Jagged lightning line
+          const dx = target.x - unit.x;
+          const dy = target.y - unit.y;
+          ctx.beginPath();
+          ctx.moveTo(unit.x, unit.y);
+          const segments = 6;
+          for (let i = 1; i < segments; i++) {
+            const frac = i / segments;
+            const jx = unit.x + dx * frac + (Math.random() - 0.5) * 12;
+            const jy = unit.y + dy * frac + (Math.random() - 0.5) * 12;
+            ctx.lineTo(jx, jy);
+          }
+          ctx.lineTo(target.x, target.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+      } else if (pattern === 'burst') {
+        // Burst explosion particles
+        const burstAlpha = Math.max(0, t * 3);
+        ctx.save();
+        ctx.globalAlpha = burstAlpha * 0.5;
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 + now * 5;
+          const dist = 12 + (1 - t) * 20;
+          const px = unit.x + Math.cos(angle) * dist;
+          const py = unit.y + Math.sin(angle) * dist;
+          ctx.fillStyle = unit.config.weaponColor;
+          ctx.beginPath();
+          ctx.arc(px, py, 2 + t * 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // ── Target line for rapid/slow/chain attacks ──
     if (unit.targetId !== null && (unit.config.attackPattern === 'rapid' || unit.config.attackPattern === 'slow') ) {
       const target = enemies.find(e => e.id === unit.targetId && e.alive);
       if (target && unit.isAttacking) {
@@ -560,10 +687,18 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
 
     drawCharacterSprite(ctx, unit.config, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer);
 
+    // Selection indicator (subtle glow instead of box)
     if (isSelected) {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(unit.x - 11, unit.y - 11, 22, 22);
+      ctx.save();
+      const selGlow = ctx.createRadialGradient(unit.x, unit.y, 8, unit.x, unit.y, 18);
+      selGlow.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      selGlow.addColorStop(0.7, 'rgba(100, 200, 255, 0.15)');
+      selGlow.addColorStop(1, `rgba(100, 200, 255, ${0.3 + Math.sin(now * 4) * 0.1})`);
+      ctx.fillStyle = selGlow;
+      ctx.beginPath();
+      ctx.arc(unit.x, unit.y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     if (unit.level > 1) {
