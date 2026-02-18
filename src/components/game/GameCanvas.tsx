@@ -13,6 +13,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+  const [gameSpeed, setGameSpeed] = useState(1);
+  const gameSpeedRef = useRef(1);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -73,8 +75,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
     const gameLoop = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-      const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05);
+      const rawDt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05);
       lastTimeRef.current = timestamp;
+      const dt = rawDt * gameSpeedRef.current;
 
       engine.update(dt);
 
@@ -98,15 +101,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     return () => cancelAnimationFrame(rafRef.current);
   }, [engine, onStateChange]);
 
+  const toggleSpeed = useCallback(() => {
+    const next = gameSpeed === 1 ? 2 : 1;
+    setGameSpeed(next);
+    gameSpeedRef.current = next;
+  }, [gameSpeed]);
+
   return (
-    <canvas
-      ref={canvasRef}
-      width={CANVAS_WIDTH}
-      height={CANVAS_HEIGHT}
-      onClick={handleClick}
-      className="w-full max-w-[800px] border border-border rounded-lg cursor-pointer"
-      style={{ imageRendering: 'pixelated' }}
-    />
+    <div className="relative">
+      <canvas
+        ref={canvasRef}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
+        onClick={handleClick}
+        className="w-full max-w-[800px] border border-border rounded-lg cursor-pointer"
+        style={{ imageRendering: 'pixelated' }}
+      />
+      <button
+        onClick={toggleSpeed}
+        className={`absolute top-2 right-2 px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
+          gameSpeed === 2
+            ? 'bg-yellow-500 text-black'
+            : 'bg-muted/80 text-muted-foreground hover:bg-accent'
+        }`}
+        title={gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
+      >
+        {gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
+      </button>
+    </div>
   );
 };
 

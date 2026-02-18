@@ -564,35 +564,43 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       const t = unit.attackAnimTimer;
       const pattern = unit.config.attackPattern;
 
-      if (pattern === 'aoe_circle' && unit.config.aoeRadius) {
-        // Expanding shockwave ring at target position
+      if (pattern === 'aoe_circle') {
+        // Expanding shockwave ring from unit to full range
         const target = enemies.find(e => e.id === unit.targetId && e.alive);
-        if (target) {
-          const waveProgress = 1 - t * 2; // 0→1 as timer goes from 0.5→0
-          const waveRadius = unit.config.aoeRadius * Math.min(1, waveProgress + 0.3);
-          const waveAlpha = Math.max(0, t * 2);
-          
-          // Shockwave ring
-          ctx.strokeStyle = `${unit.config.weaponColor}`;
-          ctx.globalAlpha = waveAlpha * 0.7;
-          ctx.lineWidth = 3 - waveProgress * 2;
-          ctx.beginPath();
-          ctx.arc(target.x, target.y, waveRadius, 0, Math.PI * 2);
-          ctx.stroke();
-          
-          // Inner glow
-          const glowGrad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, waveRadius);
-          glowGrad.addColorStop(0, `${unit.config.weaponColor}`);
-          glowGrad.addColorStop(0.5, `${unit.config.weaponColor}44`);
-          glowGrad.addColorStop(1, 'transparent');
-          ctx.fillStyle = glowGrad;
-          ctx.globalAlpha = waveAlpha * 0.3;
-          ctx.beginPath();
-          ctx.arc(target.x, target.y, waveRadius, 0, Math.PI * 2);
-          ctx.fill();
-          
-          ctx.globalAlpha = 1;
-        }
+        const cx = target ? target.x : unit.x;
+        const cy = target ? target.y : unit.y;
+        const maxRadius = stats.range;
+        const waveProgress = 1 - t * 2; // expands as timer decreases
+        const waveRadius = maxRadius * Math.min(1, Math.max(0.1, waveProgress + 0.3));
+        const waveAlpha = Math.max(0, t * 2);
+        
+        // Outer shockwave ring
+        ctx.strokeStyle = unit.config.weaponColor;
+        ctx.globalAlpha = waveAlpha * 0.8;
+        ctx.lineWidth = 2.5 + (1 - waveProgress) * 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Second inner ring for depth
+        ctx.globalAlpha = waveAlpha * 0.4;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, waveRadius * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Radial glow fill
+        const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, waveRadius);
+        glowGrad.addColorStop(0, `${unit.config.weaponColor}`);
+        glowGrad.addColorStop(0.4, `${unit.config.weaponColor}33`);
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.globalAlpha = waveAlpha * 0.25;
+        ctx.beginPath();
+        ctx.arc(cx, cy, waveRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 1;
       } else if (pattern === 'line') {
         // Slash effect
         const target = enemies.find(e => e.id === unit.targetId && e.alive);
