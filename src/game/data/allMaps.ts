@@ -9,6 +9,7 @@ export interface MapDef {
   requiredStars: number;
   bgColor: string;
   pathColor: string;
+  bgImage?: string;
 }
 
 export const ALL_MAPS: MapDef[] = [

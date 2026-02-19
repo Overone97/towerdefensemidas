@@ -133,6 +133,7 @@ export class GameEngine {
     this.state.activeSynergies = activeSynergies;
     this.towerManager.synergyBonuses = unitBonuses;
     this.towerManager.talentBonus = talentBonus;
+    this.towerManager.setWaypoints(this.getWaypoints());
 
     const { damages, statusEffects } = this.towerManager.update(dt, this.enemyManager.getAliveEnemies());
 

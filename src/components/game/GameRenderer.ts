@@ -5,6 +5,27 @@ import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
 import { ALL_MAPS } from '../../game/data/allMaps';
 import { fishState } from '../../game/GameEngine';
+import plainsBg from '../../assets/maps/plains-bg.jpg';
+import forestBg from '../../assets/maps/forest-bg.jpg';
+import volcanoBg from '../../assets/maps/volcano-bg.jpg';
+
+const MAP_BG_IMAGES: Record<string, string> = {
+  plains: plainsBg,
+  forest: forestBg,
+  volcano: volcanoBg,
+};
+
+// Preload background images
+const bgImageCache: Record<string, HTMLImageElement> = {};
+function getMapBgImage(mapId: string): HTMLImageElement | null {
+  const src = MAP_BG_IMAGES[mapId];
+  if (!src) return null;
+  if (bgImageCache[mapId]) return bgImageCache[mapId];
+  const img = new Image();
+  img.src = src;
+  bgImageCache[mapId] = img;
+  return img.complete ? img : null;
+}
 
 // Seeded random for consistent decorations per map
 function seededRandom(seed: number): () => number {
@@ -125,16 +146,26 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   const theme = getMapTheme(mapId);
   const t = (time || performance.now()) / 1000;
 
-  // ── Background: tiled grass ──
-  drawGrassBackground(ctx, w, h, theme, t);
+  // ── Background: image or fallback ──
+  const bgImg = getMapBgImage(mapId);
+  if (bgImg) {
+    ctx.drawImage(bgImg, 0, 0, w, h);
+    // Slight dark overlay so game elements pop
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    drawGrassBackground(ctx, w, h, theme, t);
+  }
 
   // ── Path ──
   drawPath(ctx, waypoints, theme);
 
-  // ── Decorations ──
-  const mapDef = ALL_MAPS.find(m => m.id === mapId);
-  const decos = getDecorations(mapId, waypoints, mapDef?.slots || state.slots);
-  drawDecorations(ctx, decos, theme, mapId, t);
+  // ── Decorations (skip if bg image) ──
+  if (!bgImg) {
+    const mapDef = ALL_MAPS.find(m => m.id === mapId);
+    const decos = getDecorations(mapId, waypoints, mapDef?.slots || state.slots);
+    drawDecorations(ctx, decos, theme, mapId, t);
+  }
 
   // ── Slots ──
   drawSlots(ctx, state.slots, state.selectedSlotIndex);
