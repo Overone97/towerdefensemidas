@@ -1,4 +1,4 @@
-import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus, EquippedItems, GroundEffect } from '../types';
+import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, SynergyBonus, EquippedItems, GroundEffect, Point } from '../types';
 import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
 import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
@@ -193,6 +193,12 @@ export class TowerManager {
     return { damages, statusEffects };
   }
 
+  waypoints: Point[] = [];
+
+  setWaypoints(wp: Point[]) {
+    this.waypoints = wp;
+  }
+
   update(dt: number, enemies: Enemy[]): {
     damages: { enemyId: number; damage: number }[];
     statusEffects: { enemyId: number; effect: StatusEffect }[];
@@ -229,20 +235,43 @@ export class TowerManager {
       const stats = this.getEffectiveStats(unit);
       const speed = 80 + unit.level * 10;
 
-      // Pick a roam target: random alive enemy or return home
-      const alive = enemies.filter(e => e.alive);
-      if (alive.length > 0) {
-        const dx = (unit.roamTargetX || unit.x) - unit.x;
-        const dy = (unit.roamTargetY || unit.y) - unit.y;
-        const distToTarget = Math.sqrt(dx * dx + dy * dy);
-        if (distToTarget < 15 || !unit.roamTargetX) {
-          const randEnemy = alive[Math.floor(Math.random() * alive.length)];
-          unit.roamTargetX = randEnemy.x;
-          unit.roamTargetY = randEnemy.y;
+      const isSinged = unit.config.attackPattern === 'poison_trail';
+      const isTeemo = unit.config.attackPattern === 'mushroom';
+
+      if (isSinged) {
+        // Singed: chase random alive enemy
+        const alive = enemies.filter(e => e.alive);
+        if (alive.length > 0) {
+          const dx = (unit.roamTargetX || unit.x) - unit.x;
+          const dy = (unit.roamTargetY || unit.y) - unit.y;
+          const distToTarget = Math.sqrt(dx * dx + dy * dy);
+          if (distToTarget < 15 || !unit.roamTargetX) {
+            const randEnemy = alive[Math.floor(Math.random() * alive.length)];
+            unit.roamTargetX = randEnemy.x;
+            unit.roamTargetY = randEnemy.y;
+          }
+        } else {
+          unit.roamTargetX = unit.homeX;
+          unit.roamTargetY = unit.homeY;
         }
-      } else {
-        unit.roamTargetX = unit.homeX;
-        unit.roamTargetY = unit.homeY;
+      } else if (isTeemo) {
+        // Teemo: roam along waypoints (the enemy path), picking random waypoints to visit
+        const wp = this.waypoints;
+        if (wp.length > 0) {
+          const dx = (unit.roamTargetX || unit.x) - unit.x;
+          const dy = (unit.roamTargetY || unit.y) - unit.y;
+          const distToTarget = Math.sqrt(dx * dx + dy * dy);
+          if (distToTarget < 20 || unit.roamTargetX === undefined) {
+            // Pick a random point along a random segment of the path
+            const segIdx = Math.floor(Math.random() * (wp.length - 1));
+            const t = Math.random();
+            unit.roamTargetX = wp[segIdx].x + (wp[segIdx + 1].x - wp[segIdx].x) * t;
+            unit.roamTargetY = wp[segIdx].y + (wp[segIdx + 1].y - wp[segIdx].y) * t;
+          }
+        } else {
+          unit.roamTargetX = unit.homeX;
+          unit.roamTargetY = unit.homeY;
+        }
       }
 
       // Move toward roam target
