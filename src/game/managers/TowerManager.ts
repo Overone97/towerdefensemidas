@@ -44,7 +44,7 @@ export class TowerManager {
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
 
   placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems): PlacedUnit {
-    const isSinged = config.attackPattern === 'poison_trail';
+    const isRoamer = config.attackPattern === 'poison_trail' || config.attackPattern === 'mushroom';
     const unit: PlacedUnit = {
       id: nextUnitId++,
       characterInstanceId,
@@ -64,8 +64,8 @@ export class TowerManager {
       abilityTimer: 0,
       homeX: slot.x,
       homeY: slot.y,
-      roamTargetX: isSinged ? slot.x : undefined,
-      roamTargetY: isSinged ? slot.y : undefined,
+      roamTargetX: isRoamer ? slot.x : undefined,
+      roamTargetY: isRoamer ? slot.y : undefined,
       lastCloudTime: 0,
     };
     this.units.push(unit);
@@ -222,16 +222,16 @@ export class TowerManager {
       }
     }
 
-    // Singed roaming logic
+    // Roaming logic (Singed + Teemo)
     for (const unit of this.units) {
-      if (unit.config.attackPattern !== 'poison_trail') continue;
+      const isRoamer = unit.config.attackPattern === 'poison_trail' || unit.config.attackPattern === 'mushroom';
+      if (!isRoamer) continue;
       const stats = this.getEffectiveStats(unit);
-      const speed = 80 + unit.level * 10; // movement speed
+      const speed = 80 + unit.level * 10;
 
       // Pick a roam target: random alive enemy or return home
       const alive = enemies.filter(e => e.alive);
       if (alive.length > 0) {
-        // Change target periodically or if close enough
         const dx = (unit.roamTargetX || unit.x) - unit.x;
         const dy = (unit.roamTargetY || unit.y) - unit.y;
         const distToTarget = Math.sqrt(dx * dx + dy * dy);
@@ -256,31 +256,61 @@ export class TowerManager {
         unit.attackAnimTimer = 0.1;
       }
 
-      // Drop poison cloud trail every 0.4s
+      // Drop effects based on champion type
       unit.lastCloudTime = (unit.lastCloudTime || 0) + dt;
-      if (unit.lastCloudTime >= 0.4) {
-        unit.lastCloudTime = 0;
-        const cloudDuration = (unit.config.dotDuration || 3) + unit.level * 0.3;
-        const cloudDps = stats.attack * 0.4 + (unit.config.dotDamage || 5) * (1 + (unit.level - 1) * 0.3);
-        this.groundEffects.push({
-          id: nextGroundEffectId++,
-          type: 'poison_cloud',
-          x: unit.x,
-          y: unit.y,
-          radius: 22 + unit.level * 2,
-          duration: cloudDuration,
-          maxDuration: cloudDuration,
-          damagePerSecond: cloudDps,
-          alive: true,
-          color: unit.config.weaponColor,
-        });
+
+      if (unit.config.attackPattern === 'poison_trail') {
+        // Singed: poison cloud trail every 0.4s
+        if (unit.lastCloudTime >= 0.4) {
+          unit.lastCloudTime = 0;
+          const cloudDuration = (unit.config.dotDuration || 3) + unit.level * 0.3;
+          const cloudDps = stats.attack * 0.4 + (unit.config.dotDamage || 5) * (1 + (unit.level - 1) * 0.3);
+          this.groundEffects.push({
+            id: nextGroundEffectId++,
+            type: 'poison_cloud',
+            x: unit.x,
+            y: unit.y,
+            radius: 22 + unit.level * 2,
+            duration: cloudDuration,
+            maxDuration: cloudDuration,
+            damagePerSecond: cloudDps,
+            alive: true,
+            color: unit.config.weaponColor,
+          });
+        }
+      } else if (unit.config.attackPattern === 'mushroom') {
+        // Teemo: drop a mushroom trap every 1.5s
+        const dropInterval = Math.max(0.8, 1.5 - unit.level * 0.05);
+        if (unit.lastCloudTime >= dropInterval) {
+          unit.lastCloudTime = 0;
+          const shroomDps = (unit.config.dotDamage || 4) * (1 + (unit.level - 1) * 0.3);
+          const shroomDuration = 8 + unit.level;
+          const explRadius = (unit.config.aoeRadius || 35) + unit.level * 3;
+          this.groundEffects.push({
+            id: nextGroundEffectId++,
+            type: 'mushroom',
+            x: unit.x + (Math.random() - 0.5) * 30,
+            y: unit.y + (Math.random() - 0.5) * 30,
+            radius: 12,
+            duration: shroomDuration,
+            maxDuration: shroomDuration,
+            damagePerSecond: shroomDps,
+            slowFactor: unit.config.slowFactor || 0.6,
+            slowDuration: unit.config.slowDuration || 2,
+            aoeRadius: explRadius,
+            explosionDamage: stats.attack,
+            exploded: false,
+            alive: true,
+            color: '#88dd44',
+          });
+        }
       }
     }
 
     // Attack logic
     for (const unit of this.units) {
-      // Singed uses roaming, not normal attacks
-      if (unit.config.attackPattern === 'poison_trail') continue;
+      // Roaming units don't use normal attacks
+      if (unit.config.attackPattern === 'poison_trail' || unit.config.attackPattern === 'mushroom') continue;
 
       const stats = this.getEffectiveStats(unit);
       unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
@@ -345,30 +375,8 @@ export class TowerManager {
           });
           break;
 
-        case 'mushroom': {
-          // Teemo throws a mushroom projectile that lands and becomes a trap
-          const shroomDps = (unit.config.dotDamage || 4) * (1 + (unit.level - 1) * 0.3);
-          const shroomDuration = 8 + unit.level;
-          const explRadius = (unit.config.aoeRadius || 35) + unit.level * 3;
-          this.groundEffects.push({
-            id: nextGroundEffectId++,
-            type: 'mushroom',
-            x: target.x + (Math.random() - 0.5) * 20,
-            y: target.y + (Math.random() - 0.5) * 20,
-            radius: 12,
-            duration: shroomDuration,
-            maxDuration: shroomDuration,
-            damagePerSecond: shroomDps,
-            slowFactor: unit.config.slowFactor || 0.6,
-            slowDuration: unit.config.slowDuration || 2,
-            aoeRadius: explRadius,
-            explosionDamage: stats.attack,
-            exploded: false,
-            alive: true,
-            color: '#88dd44',
-          });
-          break;
-        }
+
+
 
         case 'slow':
           damages.push({ enemyId: target.id, damage: stats.attack });
