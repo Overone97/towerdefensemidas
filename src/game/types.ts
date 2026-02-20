@@ -26,7 +26,7 @@ export interface StatusEffect {
   slowFactor: number;
 }
 
-export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'boss';
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'dragon_fire' | 'dragon_ice' | 'dragon_earth' | 'dragon_air' | 'boss';
 
 export interface EnemyConfig {
   type: EnemyType;
