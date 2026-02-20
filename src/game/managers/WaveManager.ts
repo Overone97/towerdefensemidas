@@ -1,5 +1,5 @@
 import { WaveConfig, EnemyType } from '../types';
-import { getWaveConfig, ENEMY_CONFIGS, TOTAL_WAVES, getWaveEnemyPool, isBossWave, WaveEnemyPool } from '../data/waveData';
+import { getWaveConfig, ENEMY_CONFIGS, TOTAL_WAVES, getWaveEnemyPool, isBossWave, getBossTypeForWave, WaveEnemyPool } from '../data/waveData';
 import { EnemyManager } from './EnemyManager';
 
 export class WaveManager {
@@ -52,7 +52,7 @@ export class WaveManager {
       
       let enemyType: EnemyType;
       if (isBoss) {
-        enemyType = 'boss';
+        enemyType = getBossTypeForWave(this.currentWave);
         this.bossSpawned = true;
       } else {
         enemyType = this.rollEnemyType();
@@ -84,7 +84,7 @@ export class WaveManager {
   }
 
   isComplete(): boolean {
-    if (this.endlessMode) return false; // Endless never "completes"
+    if (this.endlessMode) return false;
     return this.currentWave >= this.totalWaves && !this.waveActive;
   }
 }

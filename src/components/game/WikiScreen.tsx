@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ALL_CHARACTERS } from '../../game/data/characterData';
 import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
 import { CHARACTER_ELEMENTS, ELEMENT_COLORS, ELEMENT_LABELS, PAIR_SYNERGIES, ELEMENT_SYNERGIES } from '../../game/data/synergyData';
-import { OwnedCharacter, Rarity } from '../../game/types';
+import { OwnedCharacter, Rarity, EnemyType } from '../../game/types';
+import { ENEMY_CONFIGS } from '../../game/data/waveData';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
 
@@ -26,7 +27,19 @@ const ATTACK_PATTERN_LABELS: Record<string, { icon: string; label: string }> = {
 
 const RARITY_ORDER: Rarity[] = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
 
-type Tab = 'units' | 'synergies';
+type Tab = 'units' | 'synergies' | 'bestiary';
+
+const BESTIARY_INFO: Record<string, { name: string; desc: string; icon: string; wave: string }> = {
+  normal: { name: 'Melee Minion', desc: 'Sbire de base de la Faille. Petit, nombreux, mais inoffensif seul.', icon: '⚔️', wave: 'Vague 1+' },
+  fast: { name: 'Scuttle Crab', desc: 'Crabe rapide de la rivière. Fragile mais difficile à toucher grâce à sa vitesse.', icon: '🦀', wave: 'Vague 5+' },
+  tank: { name: 'Red Brambleback', desc: 'Le Brambleback rouge. Massif, lent, recouvert de braises ardentes.', icon: '🔥', wave: 'Vague 11+' },
+  armored: { name: 'Super Minion', desc: 'Sbire d\'élite blindé. Armure dorée, résistant au poison et au ralentissement.', icon: '🛡️', wave: 'Vague 14+' },
+  dragon_fire: { name: 'Dragon Infernal', desc: 'Dragon élémentaire de feu. Ailes déployées, souffle dévastateur.', icon: '🐉', wave: 'Boss Vague 10' },
+  dragon_ice: { name: 'Dragon de Glace', desc: 'Dragon élémentaire de glace. Aura glacée qui ralentit tout autour.', icon: '❄️', wave: 'Boss Vague 20' },
+  dragon_earth: { name: 'Dragon de Terre', desc: 'Dragon élémentaire de terre. Écailles rocheuses, armure massive.', icon: '🪨', wave: 'Boss Vague 30' },
+  dragon_air: { name: 'Dragon des Airs', desc: 'Dragon élémentaire d\'air. Ultra rapide, semi-transparent.', icon: '🌪️', wave: 'Boss Vague 40' },
+  boss: { name: 'Baron Nashor / Atakhan', desc: 'Le seigneur de la Faille. Tentacules, œil central, aura magique dévastatrice. Atakhan apparaît à la vague 50.', icon: '👁️', wave: 'Boss Vague 50' },
+};
 
 const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
   const [tab, setTab] = useState<Tab>('units');
@@ -60,6 +73,14 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
             }`}
           >
             📖 Units ({ownedIds.size}/{ALL_CHARACTERS.length})
+          </button>
+          <button
+            onClick={() => setTab('bestiary')}
+            className={`px-4 py-1.5 rounded text-sm font-mono font-bold transition-colors ${
+              tab === 'bestiary' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            🐉 Bestiaire
           </button>
           <button
             onClick={() => setTab('synergies')}
@@ -248,6 +269,53 @@ const WikiScreen: React.FC<WikiScreenProps> = ({ inventory, onBack }) => {
               )}
             </div>
           )}
+        </div>
+      ) : tab === 'bestiary' ? (
+        /* Bestiary tab */
+        <div className="flex-1 overflow-y-auto p-4">
+          <h3 className="text-foreground font-bold text-lg font-mono mb-4 flex items-center gap-2">
+            🐉 Bestiaire de la Faille
+            <span className="text-muted-foreground text-xs font-normal">Les monstres que vous affronterez</span>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(BESTIARY_INFO).map(([key, info]) => {
+              const config = ENEMY_CONFIGS[key as EnemyType];
+              return (
+                <div
+                  key={key}
+                  className="rounded-xl border-2 p-4 bg-card/50"
+                  style={{ borderColor: config.strokeColor + '66' }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{info.icon}</span>
+                    <div>
+                      <h4 className="text-foreground font-bold font-mono text-sm">{info.name}</h4>
+                      <span className="text-muted-foreground text-[10px] font-mono">{info.wave}</span>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground text-xs font-mono mb-3">{info.desc}</p>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                    <div className="flex justify-between bg-muted/30 rounded px-2 py-1">
+                      <span className="text-muted-foreground">HP</span>
+                      <span className="text-foreground font-bold">{config.hp}</span>
+                    </div>
+                    <div className="flex justify-between bg-muted/30 rounded px-2 py-1">
+                      <span className="text-muted-foreground">Speed</span>
+                      <span className="text-foreground font-bold">{config.speed}</span>
+                    </div>
+                    <div className="flex justify-between bg-muted/30 rounded px-2 py-1">
+                      <span className="text-muted-foreground">Armor</span>
+                      <span className="text-foreground font-bold">{config.armor || 0}</span>
+                    </div>
+                    <div className="flex justify-between bg-muted/30 rounded px-2 py-1">
+                      <span className="text-muted-foreground">Reward</span>
+                      <span className="text-foreground font-bold" style={{ color: '#FFD700' }}>{config.reward}g</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
         /* Synergies tab */
