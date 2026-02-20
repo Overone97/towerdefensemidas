@@ -234,7 +234,7 @@ const TowerDefenseGame: React.FC = () => {
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} onOpenEquipment={() => setScreen('equipment')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
         <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
