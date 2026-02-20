@@ -107,7 +107,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                     >
                       <CharacterSprite config={char.config} size={32} owned />
                       <div className="flex flex-col items-start">
-                        <span className="text-xs font-mono font-semibold leading-tight">{char.config.name}</span>
+                        <span className="text-xs font-mono font-semibold leading-tight text-foreground">{char.config.name}</span>
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
                             Lv.{char.level}
