@@ -1,5 +1,6 @@
 import { OwnedCharacter, EquippedItems } from '../types';
 import { ALL_CHARACTERS } from '../data/characterData';
+import { ALL_MAPS } from '../data/allMaps';
 
 const SAVE_KEY = 'td_save_v1';
 
@@ -60,7 +61,13 @@ export function loadSave(): SaveData {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return defaultSave();
     const data = JSON.parse(raw);
-    return { ...defaultSave(), ...data };
+    const merged = { ...defaultSave(), ...data };
+    // Validate mapsCompleted against existing maps
+    const validMapIds = ALL_MAPS.map(m => m.id);
+    if (merged.mapsCompleted) {
+      merged.mapsCompleted = merged.mapsCompleted.filter((id: string) => validMapIds.includes(id));
+    }
+    return merged;
   } catch {
     return defaultSave();
   }

@@ -61,7 +61,7 @@ export function getCharacterStats(config: CharacterConfig, level: number) {
   return {
     attack: Math.floor(config.attack * (1 + (level - 1) * 0.3)),
     attackSpeed: config.attackSpeed * (1 + (level - 1) * 0.1),
-    range: config.range + (level - 1) * 10,
+    range: config.range, // Range only scales via equipment & talents
   };
 }
 

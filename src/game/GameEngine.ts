@@ -12,7 +12,7 @@ import { getTalentBonus } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost } from './data/characterData';
-import { getGachaCost, rollRarity } from './data/gachaData';
+import { getGachaCost } from './data/gachaData';
 import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
@@ -112,7 +112,7 @@ export class GameEngine {
 
     const talentBonus = getTalentBonus(this.saveData.talents);
 
-    const { reachedEnd } = this.enemyManager.update(dt);
+    const { reachedEnd, dotKills } = this.enemyManager.update(dt);
     for (const enemy of reachedEnd) {
       this.state.baseHp--;
       soundManager.playBaseDamage();
@@ -183,6 +183,38 @@ export class GameEngine {
       }
     }
 
+    // Process DOT kills (Singed poison, burn effects) — award gold & score
+    for (const enemy of dotKills) {
+      const goldEarned = Math.floor(enemy.reward * talentBonus.goldMult);
+      this.state.gold += goldEarned;
+      this.state.score += enemy.reward;
+      this.state.enemiesKilled++;
+      this.state.waveEnemiesKilledThisWave++;
+      this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#44ff44', 9);
+      this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
+      this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
+      this.saveData.stats.totalKills++;
+      this.saveData.stats.totalGold += goldEarned;
+      if (enemy.type === 'boss' || enemy.type.startsWith('dragon_')) {
+        soundManager.playBossDeath();
+        this.saveData.stats.bossKills++;
+        this.saveData.stars += 1;
+        this.state.stars = this.saveData.stars;
+        this.screenShake.trigger(10, 0.5);
+        this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
+        const drop = rollBossDrop(this.state.currentWave);
+        if (drop) {
+          this.state.equipmentInventory.push(drop.id);
+          this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+          this.state.lastDrop = drop.id;
+        }
+        this.persistSave();
+      } else {
+        soundManager.playEnemyDeath();
+        this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
+      }
+    }
+
     // Projectile trails
     for (const proj of this.towerManager.projectiles) {
       if (proj.alive) {
@@ -191,9 +223,9 @@ export class GameEngine {
       }
     }
 
-    // Legendary unit auras
+    // Unit aura particles (subtle effect for all units)
     for (const unit of this.towerManager.units) {
-      if (unit.config.rarity === 'legendary' && Math.random() < 0.15) {
+      if (unit.abilityActive && Math.random() < 0.2) {
         this.particleManager.spawnLegendaryAura(unit.x, unit.y, unit.config.weaponColor);
       }
     }
@@ -290,11 +322,8 @@ export class GameEngine {
     const talentBonus = getTalentBonus(this.saveData.talents);
     this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount);
 
-    const rarity = rollRarity();
-    let pool = available.filter(c => c.rarity === rarity);
-    if (pool.length === 0) pool = available;
-
-    const config = pool[Math.floor(Math.random() * pool.length)];
+    // Random pick from all available characters (no rarity filtering)
+    const config = available[Math.floor(Math.random() * available.length)];
     const character: OwnedCharacter = {
       instanceId: nextInstanceId++,
       config,
@@ -520,7 +549,7 @@ export class GameEngine {
       mapsCompleted: this.saveData.mapsCompleted.length,
       wavesCompleted: this.saveData.stats.maxWaveReached,
       perfectMaps: this.saveData.stats.perfectMaps,
-      legendaryOwned: this.state.inventory.filter(c => c.config.rarity === 'legendary').length,
+      legendaryOwned: this.state.inventory.length,
       totalUnits: this.state.inventory.length,
       bossKills: this.saveData.stats.bossKills,
       maxWaveReached: this.saveData.stats.maxWaveReached,

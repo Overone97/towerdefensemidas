@@ -42,15 +42,19 @@ export class EnemyManager {
     });
   }
 
-  update(dt: number): { reachedEnd: Enemy[] } {
+  update(dt: number): { reachedEnd: Enemy[]; dotKills: Enemy[] } {
     const reachedEnd: Enemy[] = [];
+    const dotKills: Enemy[] = [];
 
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
       enemy.animFrame += dt * 60;
       this.processStatusEffects(enemy, dt);
-      if (!enemy.alive) continue;
+      if (!enemy.alive) {
+        dotKills.push(enemy);
+        continue;
+      }
 
       const nextIdx = enemy.waypointIndex + 1;
       if (nextIdx >= this.waypoints.length) {
@@ -88,7 +92,7 @@ export class EnemyManager {
     }
 
     this.enemies = this.enemies.filter(e => e.alive);
-    return { reachedEnd };
+    return { reachedEnd, dotKills };
   }
 
   private processStatusEffects(enemy: Enemy, dt: number): void {
