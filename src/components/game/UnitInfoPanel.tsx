@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlacedUnit, TargetPriority } from '../../game/types';
-import { getCharacterStats, getCharacterUpgradeCost, RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
+import { getCharacterStats, getCharacterUpgradeCost } from '../../game/data/characterData';
 import { ABILITIES } from '../../game/data/abilityData';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
@@ -20,6 +20,8 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
   aoe_circle: { label: 'Area (Circle)', icon: '💥', desc: 'Damages all enemies in a circle' },
   line: { label: 'Pierce (Line)', icon: '➡️', desc: 'Projectile pierces through all enemies' },
   poison: { label: 'Poison', icon: '☠️', desc: 'Applies damage over time to target' },
+  poison_trail: { label: 'Poison Trail', icon: '☠️', desc: 'Roams and leaves poison clouds' },
+  mushroom: { label: 'Mushroom Trap', icon: '🍄', desc: 'Roams and plants explosive traps' },
   slow: { label: 'Slow', icon: '❄️', desc: 'Slows enemies in target area' },
   chain: { label: 'Chain Lightning', icon: '⚡', desc: 'Bounces between nearby enemies' },
   burst: { label: 'Burst', icon: '💣', desc: 'Fires multiple projectiles in a spread' },
@@ -30,7 +32,6 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
   const nextStats = getCharacterStats(unit.config, unit.level + 1);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
   const canUpgrade = gold >= upgradeCost;
-  const rarityColor = RARITY_COLORS[unit.config.rarity];
   const dps = (stats.attack * stats.attackSpeed).toFixed(1);
   const nextDps = (nextStats.attack * nextStats.attackSpeed).toFixed(1);
   const pattern = PATTERN_LABELS[unit.config.attackPattern] || { label: unit.config.attackPattern, icon: '?', desc: '' };
@@ -48,12 +49,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
         <CharacterSprite config={unit.config} size={28} owned />
         <div className="flex-1">
           <span className="text-foreground font-bold">{unit.config.name}</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-mono font-bold" style={{ color: rarityColor }}>
-              {RARITY_LABELS[unit.config.rarity]}
-            </span>
-            <span className="text-muted-foreground text-xs">Lv.{unit.level}</span>
-          </div>
+          <div className="text-muted-foreground text-xs">Lv.{unit.level}</div>
         </div>
       </div>
 
@@ -84,10 +80,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
         </div>
         <div className="flex justify-between text-foreground">
           <span>🎯 RNG</span>
-          <span>
-            {stats.range}
-            <span className="text-xs text-green-400 ml-1">→{nextStats.range}</span>
-          </span>
+          <span>{stats.range}</span>
         </div>
         <div className="flex justify-between border-t border-border pt-1 mt-1">
           <span className="text-primary font-bold">DPS</span>
@@ -101,7 +94,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
       {/* Special abilities */}
       {(unit.config.dotDamage || unit.config.slowFactor || unit.config.aoeRadius || unit.config.chainCount || unit.config.burstCount) && (
         <div className="bg-muted/30 rounded px-2 py-1.5 mb-3 space-y-0.5">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Abilities</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Passives</span>
           {unit.config.dotDamage && (
             <div className="text-xs text-green-400">☠️ DoT: {unit.config.dotDamage}/s for {unit.config.dotDuration || 2}s</div>
           )}

@@ -48,7 +48,8 @@ export class WaveManager {
     this.spawnTimer -= dt * 1000;
 
     if (this.spawnTimer <= 0 && this.spawned < this.waveConfig.enemyCount) {
-      const isBoss = isBossWave(this.currentWave) && !this.bossSpawned && this.spawned >= this.waveConfig.enemyCount - 1;
+      const bossSpawnPoint = Math.floor(this.waveConfig.enemyCount * 0.4);
+      const isBoss = isBossWave(this.currentWave) && !this.bossSpawned && this.spawned >= bossSpawnPoint;
       
       let enemyType: EnemyType;
       if (isBoss) {

@@ -1,58 +1,49 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { OwnedCharacter, Rarity } from '../../game/types';
-import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
+import { OwnedCharacter } from '../../game/types';
 import { playGachaSounds } from '../../game/audio/gachaAudio';
+import { drawLolSprite } from '../../game/rendering/lolSprites';
 
 interface GachaRevealProps {
   character: OwnedCharacter;
   onComplete: () => void;
 }
 
-const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-const RARITY_INDEX: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
-
-const PHASE_EGG = 2000;
+const PHASE_EGG = 2500;
 const PHASE_CRACK = 600;
 const PHASE_REVEAL = 2500;
 
 const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
   const [phase, setPhase] = useState<'egg' | 'crack' | 'reveal'>('egg');
-  const [currentRarity, setCurrentRarity] = useState(0);
+  const [hatchProgress, setHatchProgress] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
   const audioRef = useRef<{ cleanup: () => void; playRevealBurst: () => void } | null>(null);
 
-  const targetRarityIndex = RARITY_INDEX[character.config.rarity];
-  const targetColor = RARITY_COLORS[character.config.rarity];
+  const accentColor = character.config.weaponColor;
 
-  // Start audio on mount
   useEffect(() => {
-    audioRef.current = playGachaSounds(targetRarityIndex);
+    audioRef.current = playGachaSounds(2);
     return () => { audioRef.current?.cleanup(); };
-  }, [targetRarityIndex]);
+  }, []);
 
-  // Egg phase: rarity glow climbs from common to target
+  // Egg phase: hatching progress bar fills up
   useEffect(() => {
     if (phase !== 'egg') return;
     const start = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - start;
-      const progress = Math.min(1, elapsed / PHASE_EGG);
-      // Climb through rarities up to target
-      const rarityProgress = Math.floor(progress * (targetRarityIndex + 1));
-      setCurrentRarity(Math.min(rarityProgress, targetRarityIndex));
-
+      const progress = Math.min(100, (elapsed / PHASE_EGG) * 100);
+      setHatchProgress(progress);
       if (elapsed >= PHASE_EGG) {
         clearInterval(interval);
-        setCurrentRarity(targetRarityIndex);
+        setHatchProgress(100);
         setPhase('crack');
       }
-    }, 60);
+    }, 30);
     return () => clearInterval(interval);
-  }, [phase, targetRarityIndex]);
+  }, [phase]);
 
-  // Crack phase
   useEffect(() => {
     if (phase !== 'crack') return;
     audioRef.current?.playRevealBurst();
@@ -60,7 +51,6 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // Reveal auto-close
   useEffect(() => {
     if (phase !== 'reveal') return;
     const timer = setTimeout(onComplete, PHASE_REVEAL);
@@ -90,78 +80,73 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
       ctx.fillRect(0, 0, w, h);
 
-      const activeColor = RARITY_COLORS[RARITY_ORDER[currentRarity]];
-
       if (phase === 'egg') {
-        // Rarity glow behind egg
-        const glowSize = 60 + currentRarity * 10;
+        // Glow behind egg (grows with progress)
+        const glowSize = 50 + (hatchProgress / 100) * 40;
         const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize);
-        grad.addColorStop(0, activeColor + '44');
+        grad.addColorStop(0, accentColor + '44');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(cx, cy, glowSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // Egg shake
-        const shake = Math.sin(t * 12) * (2 + currentRarity * 1.5);
-        const eggX = cx + shake;
-        const eggY = cy;
+        // Egg with increasing shake
+        const shakeIntensity = 1 + (hatchProgress / 100) * 5;
+        const shake = Math.sin(t * 12) * shakeIntensity;
+        drawEgg(ctx, cx + shake, cy, accentColor);
 
-        // Egg body (oval)
-        drawEgg(ctx, eggX, eggY, activeColor);
+        // Hatching progress bar
+        const barW = 120;
+        const barH = 8;
+        const barX = cx - barW / 2;
+        const barY = cy + 60;
 
-        // Rising glow bar on the side
-        const barH = 120;
-        const barX = cx - 80;
-        const barY = cy + barH / 2;
-        const fillRatio = currentRarity / 4;
-        ctx.fillStyle = '#222';
-        ctx.fillRect(barX, barY - barH, 8, barH);
-        // Fill with gradient
-        const barGrad = ctx.createLinearGradient(barX, barY, barX, barY - barH * fillRatio);
-        barGrad.addColorStop(0, activeColor);
-        barGrad.addColorStop(1, activeColor + '44');
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barW, barH);
+
+        const fillW = (hatchProgress / 100) * barW;
+        const barGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
+        barGrad.addColorStop(0, accentColor);
+        barGrad.addColorStop(1, '#ffffff');
         ctx.fillStyle = barGrad;
-        ctx.fillRect(barX, barY - barH * fillRatio, 8, barH * fillRatio);
+        ctx.fillRect(barX, barY, fillW, barH);
 
-        // Rarity labels on the bar
-        for (let i = 0; i <= 4; i++) {
-          const yy = barY - (barH * i) / 4;
-          ctx.fillStyle = i <= currentRarity ? RARITY_COLORS[RARITY_ORDER[i]] : '#444';
-          ctx.font = `${i <= currentRarity ? 'bold' : 'normal'} 9px monospace`;
-          ctx.textAlign = 'left';
-          ctx.fillText(RARITY_ORDER[i].charAt(0).toUpperCase(), barX + 14, yy + 3);
-        }
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barW, barH);
+
+        // Progress text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.floor(hatchProgress)}%`, cx, barY + barH + 18);
 
         ctx.fillStyle = '#888';
-        ctx.font = '12px monospace';
-        ctx.textAlign = 'center';
+        ctx.font = '11px monospace';
         ctx.globalAlpha = 0.5 + Math.sin(t * 4) * 0.3;
-        ctx.fillText('Hatching...', cx, cy + 80);
+        ctx.fillText('Hatching...', cx, barY + barH + 36);
         ctx.globalAlpha = 1;
       }
 
       if (phase === 'crack') {
-        // Cracking egg with light burst
         const crackProgress = Math.min(1, (timeRef.current - PHASE_EGG / 1000) * 2);
 
-        // Light burst from center
+        // Light burst
         const burstSize = 30 + crackProgress * 150;
         const burstGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, burstSize);
         burstGrad.addColorStop(0, '#ffffff');
-        burstGrad.addColorStop(0.3, targetColor + 'cc');
+        burstGrad.addColorStop(0.3, accentColor + 'cc');
         burstGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = burstGrad;
         ctx.beginPath();
         ctx.arc(cx, cy, burstSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // Egg shell fragments
+        // Shell fragments
         if (crackProgress > 0.3) {
-          const fragCount = 8;
-          for (let i = 0; i < fragCount; i++) {
-            const angle = (Math.PI * 2 * i) / fragCount + t;
+          for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8 + t;
             const dist = crackProgress * 60;
             const fx = cx + Math.cos(angle) * dist;
             const fy = cy + Math.sin(angle) * dist - crackProgress * 20;
@@ -175,9 +160,9 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
           }
         }
 
-        // Remaining egg (shrinking)
+        // Fading egg
         ctx.globalAlpha = 1 - crackProgress;
-        drawEgg(ctx, cx, cy, targetColor);
+        drawEgg(ctx, cx, cy, accentColor);
         ctx.globalAlpha = 1;
 
         // Crack lines
@@ -193,64 +178,48 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
       }
 
       if (phase === 'reveal') {
-        // Rarity glow
+        // Glow behind character
         const pulse = Math.sin(t * 3) * 0.15 + 0.85;
-        const glowSize = 60 + targetRarityIndex * 15;
+        const glowSize = 70;
         const grad = ctx.createRadialGradient(cx, cy - 10, 0, cx, cy - 10, glowSize * pulse);
-        grad.addColorStop(0, targetColor + '66');
-        grad.addColorStop(0.5, targetColor + '22');
+        grad.addColorStop(0, accentColor + '66');
+        grad.addColorStop(0.5, accentColor + '22');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(cx, cy - 10, glowSize * pulse, 0, Math.PI * 2);
         ctx.fill();
 
-        // Character body
-        const s = 28;
-        ctx.fillStyle = character.config.bodyColor;
-        ctx.fillRect(cx - s, cy - s - 10, s * 2, s * 2);
-        ctx.fillStyle = character.config.detailColor;
-        ctx.fillRect(cx - s * 0.4, cy - s * 0.6 - 10, s * 0.8, s * 0.3);
-        ctx.fillStyle = character.config.weaponColor;
-        ctx.fillRect(cx + s + 2, cy - s * 0.5 - 10, s * 0.3, s);
-
-        // Rarity border
-        ctx.strokeStyle = targetColor;
-        ctx.lineWidth = targetRarityIndex >= 3 ? 3 : 2;
-        ctx.shadowColor = targetColor;
-        ctx.shadowBlur = targetRarityIndex >= 3 ? 15 : 6;
-        ctx.strokeRect(cx - s - 2, cy - s - 12, s * 2 + 4, s * 2 + 4);
-        ctx.shadowBlur = 0;
+        // Draw actual character sprite (LoL PNG)
+        drawLolSprite(ctx, character.config.id, cx, cy - 10, 48, t * 60, false, 0);
 
         // Name
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(character.config.name, cx, cy + s + 24);
+        ctx.fillText(character.config.name, cx, cy + 50);
 
-        // Rarity label
-        ctx.fillStyle = targetColor;
-        ctx.font = 'bold 14px monospace';
-        ctx.fillText(`★ ${RARITY_LABELS[character.config.rarity]} ★`, cx, cy + s + 44);
+        // Attack pattern label
+        ctx.fillStyle = accentColor;
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText(character.config.attackPattern.replace('_', ' ').toUpperCase(), cx, cy + 68);
 
         // Stats
         ctx.fillStyle = '#aaaaaa';
         ctx.font = '11px monospace';
-        ctx.fillText(`ATK: ${character.config.attack}  SPD: ${character.config.attackSpeed}  RNG: ${character.config.range}`, cx, cy + s + 62);
+        ctx.fillText(`ATK: ${character.config.attack}  SPD: ${character.config.attackSpeed}  RNG: ${character.config.range}`, cx, cy + 86);
 
-        // Legendary sparkles
-        if (targetRarityIndex >= 4) {
-          for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8 + t;
-            const dist = 50 + Math.sin(t * 2 + i) * 10;
-            ctx.fillStyle = '#ffdd00';
-            ctx.globalAlpha = 0.5 + Math.sin(t * 4 + i) * 0.3;
-            ctx.beginPath();
-            ctx.arc(cx + Math.cos(angle) * dist, cy - 10 + Math.sin(angle) * dist, 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.globalAlpha = 1;
+        // Sparkles around character
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI * 2 * i) / 6 + t;
+          const dist = 45 + Math.sin(t * 2 + i) * 10;
+          ctx.fillStyle = accentColor;
+          ctx.globalAlpha = 0.4 + Math.sin(t * 4 + i) * 0.3;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(angle) * dist, cy - 10 + Math.sin(angle) * dist, 2, 0, Math.PI * 2);
+          ctx.fill();
         }
+        ctx.globalAlpha = 1;
       }
 
       animRef.current = requestAnimationFrame(animate);
@@ -258,14 +227,10 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
 
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-  }, [phase, currentRarity, character, targetColor, targetRarityIndex]);
-
-  const handleSkip = useCallback(() => {
-    onComplete();
-  }, [onComplete]);
+  }, [phase, hatchProgress, character, accentColor]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer" onClick={handleSkip}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer" onClick={onComplete}>
       <canvas ref={canvasRef} width={400} height={350} className="w-full h-full max-w-[400px] max-h-[350px]" />
       <div className="absolute bottom-8 text-muted-foreground text-xs font-mono animate-pulse">
         Tap to skip
@@ -275,7 +240,6 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
 };
 
 function drawEgg(ctx: CanvasRenderingContext2D, x: number, y: number, glowColor: string) {
-  // Egg shape - oval
   ctx.save();
   ctx.translate(x, y);
 
@@ -295,7 +259,6 @@ function drawEgg(ctx: CanvasRenderingContext2D, x: number, y: number, glowColor:
   ctx.fillStyle = eggGrad;
   ctx.fill();
 
-  // Egg outline
   ctx.strokeStyle = glowColor;
   ctx.lineWidth = 2;
   ctx.shadowColor = glowColor;
@@ -309,11 +272,11 @@ function drawEgg(ctx: CanvasRenderingContext2D, x: number, y: number, glowColor:
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.fill();
 
-  // Rarity rune/symbol
+  // Mystery symbol
   ctx.fillStyle = glowColor;
   ctx.font = 'bold 16px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('★', 0, 5);
+  ctx.fillText('?', 0, 5);
 
   ctx.restore();
 }

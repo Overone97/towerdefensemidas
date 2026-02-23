@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { GameState, OwnedCharacter } from '../../game/types';
-import { RARITY_COLORS, RARITY_LABELS, getCharacterStats } from '../../game/data/characterData';
-import { RARITY_RATES } from '../../game/data/gachaData';
-import { Rarity } from '../../game/types';
+import { getCharacterStats } from '../../game/data/characterData';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
 
@@ -12,6 +10,8 @@ const ATTACK_PATTERN_ICONS: Record<string, string> = {
   aoe_circle: '💥',
   line: '➡️',
   poison: '☠️',
+  poison_trail: '☠️',
+  mushroom: '🍄',
   slow: '❄️',
   chain: '⚡',
   burst: '💣',
@@ -23,6 +23,8 @@ const ATTACK_PATTERN_LABELS: Record<string, string> = {
   aoe_circle: 'AoE',
   line: 'Pierce',
   poison: 'Poison',
+  poison_trail: 'Trail',
+  mushroom: 'Trap',
   slow: 'Slow',
   chain: 'Chain',
   burst: 'Burst',
@@ -101,15 +103,13 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                         ${slotSelected
                           ? 'hover:bg-accent cursor-pointer hover:scale-105'
                           : 'opacity-50 cursor-not-allowed'
-                        }
-                      `}
-                      style={{ borderColor: RARITY_COLORS[char.config.rarity] }}
+                        } border-border`}
                     >
                       <CharacterSprite config={char.config} size={32} owned />
                       <div className="flex flex-col items-start">
                         <span className="text-xs font-mono font-semibold leading-tight text-foreground">{char.config.name}</span>
                         <div className="flex items-center gap-1">
-                          <span className="text-[10px] font-mono" style={{ color: RARITY_COLORS[char.config.rarity] }}>
+                          <span className="text-[10px] font-mono text-muted-foreground">
                             Lv.{char.level}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -126,9 +126,6 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                         <div className="bg-popover border border-border rounded-lg shadow-lg p-3 min-w-[160px]">
                           <div className="flex items-center gap-1.5 mb-1.5">
                             <span className="font-bold text-sm">{char.config.name}</span>
-                            <span className="text-xs font-mono font-bold" style={{ color: RARITY_COLORS[char.config.rarity] }}>
-                              {RARITY_LABELS[char.config.rarity]}
-                            </span>
                           </div>
                           <div className="text-xs text-muted-foreground mb-1">
                             {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {ATTACK_PATTERN_LABELS[char.config.attackPattern]}
@@ -172,27 +169,17 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
               disabled={state.gold < state.gachaCost || state.inventory.length >= 30}
               className="px-6 shrink-0"
             >
-              🎲 Summon ({state.gachaCost}g)
+              🥚 Summon ({state.gachaCost}g)
             </Button>
-            <div className="flex gap-3 text-xs flex-wrap">
-              {(Object.entries(RARITY_RATES) as [Rarity, number][]).map(([rarity, rate]) => (
-                <span key={rarity} className="font-mono" style={{ color: RARITY_COLORS[rarity] }}>
-                  {RARITY_LABELS[rarity]}: {(rate * 100).toFixed(0)}%
-                </span>
-              ))}
-            </div>
+            <span className="text-xs text-muted-foreground font-mono">
+              Random champion from pool
+            </span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {lastSummon && (
-              <div
-                className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 animate-fade-in"
-                style={{ borderColor: RARITY_COLORS[lastSummon.config.rarity] }}
-              >
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 border-border animate-fade-in">
                 <CharacterSprite config={lastSummon.config} size={20} owned />
                 <span className="text-sm font-bold">{lastSummon.config.name}</span>
-                <span className="text-xs font-bold" style={{ color: RARITY_COLORS[lastSummon.config.rarity] }}>
-                  {RARITY_LABELS[lastSummon.config.rarity]}
-                </span>
               </div>
             )}
             <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/30</span>

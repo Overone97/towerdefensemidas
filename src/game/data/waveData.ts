@@ -98,16 +98,21 @@ export function getWaveEnemyPool(waveNumber: number): WaveEnemyPool[] {
 }
 
 export function isBossWave(waveNumber: number): boolean {
-  return waveNumber === 10 || waveNumber === 20 || waveNumber === 30 || waveNumber === 40 || waveNumber === 50;
+  return waveNumber % 5 === 0; // Boss every 5 waves for variety
 }
 
 export function getBossTypeForWave(waveNumber: number): EnemyType {
   switch (waveNumber) {
-    case 10: return 'dragon_fire';
-    case 20: return 'dragon_ice';
-    case 30: return 'dragon_earth';
-    case 40: return 'dragon_air';
-    case 50: return 'boss'; // Atakhan
-    default: return 'boss';
+    case 5: return 'tank';         // Elite Brambleback
+    case 10: return 'dragon_fire'; // Dragon Infernal
+    case 15: return 'armored';     // Elite Super Minion
+    case 20: return 'dragon_ice';  // Dragon de Glace
+    case 25: return 'dragon_fire'; // 2nd Infernal
+    case 30: return 'dragon_earth';// Dragon de Terre
+    case 35: return 'dragon_ice';  // 2nd Ice Dragon
+    case 40: return 'dragon_air';  // Dragon des Airs
+    case 45: return 'boss';        // Baron Nashor
+    case 50: return 'boss';        // Atakhan (final boss)
+    default: return waveNumber % 10 === 0 ? 'boss' : 'dragon_fire';
   }
 }

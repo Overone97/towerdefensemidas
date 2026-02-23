@@ -17,6 +17,7 @@ import AchievementToast from './AchievementToast';
 import EquipmentPanel from './EquipmentPanel';
 import EquipmentDropToast from './EquipmentDropToast';
 import DailyQuestPanel from './DailyQuestPanel';
+import TeamSidebar from './TeamSidebar';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
@@ -237,6 +238,12 @@ const TowerDefenseGame: React.FC = () => {
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} onOpenEquipment={() => setScreen('equipment')} />
       <div className="flex-1 flex items-center justify-center relative p-4">
+        <TeamSidebar
+          placedUnits={state.placedUnits}
+          selectedUnitId={state.selectedUnitId}
+          onSelectUnit={(id: number) => { engine.selectPlacedUnit(id); onStateChange(); }}
+          onActivateAbility={handleActivateAbility}
+        />
         <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
         {state.activeSynergies.length > 0 && (
           <SynergyPanel synergies={state.activeSynergies} />
