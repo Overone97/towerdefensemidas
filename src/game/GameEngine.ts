@@ -141,10 +141,11 @@ export class GameEngine {
       this.enemyManager.applyStatusEffect(enemyId, effect);
     }
 
-    for (const { enemyId, damage } of damages) {
+    for (const { enemyId, damage, unitId } of damages as any[]) {
       // Find enemy before damaging to get position for particles
       const enemy = this.enemyManager.enemies.find(e => e.id === enemyId);
       const result = this.enemyManager.damageEnemy(enemyId, damage);
+      if (unitId) this.trackDamage(unitId, damage);
       if (result.killed && enemy) {
         const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
         this.state.gold += goldEarned;
@@ -304,6 +305,11 @@ export class GameEngine {
     soundManager.playWaveStart();
     this.state.waveActive = true;
     this.state.waveEnemiesKilledThisWave = 0;
+    // Reset wave damage tracking
+    for (const [, entry] of this.damageTracker) {
+      entry.waveDamage = 0;
+    }
+    this.waveStartTime = performance.now();
     this.trackDailyEvent({ type: 'complete_waves', count: 1 });
     return true;
   }
@@ -363,6 +369,57 @@ export class GameEngine {
     this.towerManager.removeUnit(unitId);
     this.state.selectedUnitId = null;
     return true;
+  }
+
+  moveUnit(unitId: number, newSlotIndex: number): boolean {
+    const unit = this.towerManager.units.find(u => u.id === unitId);
+    if (!unit) return false;
+    const newSlot = this.state.slots[newSlotIndex];
+    if (!newSlot || newSlot.unitId !== null) return false;
+
+    // Free old slot
+    const oldSlot = this.state.slots[unit.slotIndex];
+    if (oldSlot) oldSlot.unitId = null;
+
+    // Place in new slot
+    newSlot.unitId = unit.id;
+    unit.slotIndex = newSlotIndex;
+    unit.x = newSlot.x;
+    unit.y = newSlot.y;
+    unit.homeX = newSlot.x;
+    unit.homeY = newSlot.y;
+    return true;
+  }
+
+  // Damage tracking
+  damageTracker: Map<number, { totalDamage: number; waveDamage: number }> = new Map();
+  waveStartTime = 0;
+
+  getDamageStats() {
+    const elapsed = this.waveStartTime > 0 ? (performance.now() - this.waveStartTime) / 1000 : 1;
+    const stats: { unitId: number; instanceId: number; config: any; totalDamage: number; waveDamage: number; dps: number }[] = [];
+    for (const unit of this.towerManager.units) {
+      const tracker = this.damageTracker.get(unit.id) || { totalDamage: 0, waveDamage: 0 };
+      stats.push({
+        unitId: unit.id,
+        instanceId: unit.characterInstanceId,
+        config: unit.config,
+        totalDamage: tracker.totalDamage,
+        waveDamage: tracker.waveDamage,
+        dps: elapsed > 0 ? tracker.waveDamage / elapsed : 0,
+      });
+    }
+    stats.sort((a, b) => b.waveDamage - a.waveDamage);
+    return stats;
+  }
+
+  private trackDamage(unitId: number | null, damage: number) {
+    // Try to find which unit dealt this damage - for now use generic tracking
+    if (unitId === null) return;
+    let entry = this.damageTracker.get(unitId);
+    if (!entry) { entry = { totalDamage: 0, waveDamage: 0 }; this.damageTracker.set(unitId, entry); }
+    entry.totalDamage += damage;
+    entry.waveDamage += damage;
   }
 
   upgradeUnit(unitId: number): boolean {

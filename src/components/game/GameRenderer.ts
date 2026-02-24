@@ -157,8 +157,10 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
     drawGrassBackground(ctx, w, h, theme, t);
   }
 
-  // ── Path ──
+  // ── Path (semi-transparent on bg image maps) ──
+  if (bgImg) ctx.globalAlpha = 0.35;
   drawPath(ctx, waypoints, theme);
+  if (bgImg) ctx.globalAlpha = 1;
 
   // ── Decorations (skip if bg image) ──
   if (!bgImg) {

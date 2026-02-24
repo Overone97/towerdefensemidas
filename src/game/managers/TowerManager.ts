@@ -200,10 +200,10 @@ export class TowerManager {
   }
 
   update(dt: number, enemies: Enemy[]): {
-    damages: { enemyId: number; damage: number }[];
+    damages: { enemyId: number; damage: number; unitId?: number }[];
     statusEffects: { enemyId: number; effect: StatusEffect }[];
   } {
-    const damages: { enemyId: number; damage: number }[] = [];
+    const damages: { enemyId: number; damage: number; unitId?: number }[] = [];
     const statusEffects: { enemyId: number; effect: StatusEffect }[] = [];
 
     // Update animation & ability timers
@@ -354,7 +354,7 @@ export class TowerManager {
 
       switch (unit.config.attackPattern) {
         case 'rapid':
-          damages.push({ enemyId: target.id, damage: stats.attack });
+          damages.push({ enemyId: target.id, damage: stats.attack, unitId: unit.id });
           this.applyOnHitEffects(unit, target.id, statusEffects);
           break;
 
@@ -408,14 +408,14 @@ export class TowerManager {
 
 
         case 'slow':
-          damages.push({ enemyId: target.id, damage: stats.attack });
+          damages.push({ enemyId: target.id, damage: stats.attack, unitId: unit.id });
           statusEffects.push({ enemyId: target.id, effect: { type: 'slow', damagePerSecond: 0, duration: unit.config.slowDuration || 2, slowFactor: unit.config.slowFactor || 0.5 } });
           if (unit.config.aoeRadius) {
             for (const e of enemies) {
               if (!e.alive || e.id === target.id) continue;
               const dx = e.x - target.x; const dy = e.y - target.y;
               if (Math.sqrt(dx * dx + dy * dy) <= unit.config.aoeRadius) {
-                damages.push({ enemyId: e.id, damage: Math.floor(stats.attack * 0.5) });
+                damages.push({ enemyId: e.id, damage: Math.floor(stats.attack * 0.5), unitId: unit.id });
                 statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: unit.config.slowDuration || 2, slowFactor: unit.config.slowFactor || 0.5 } });
               }
             }
@@ -425,14 +425,14 @@ export class TowerManager {
         case 'chain': {
           const chainCount = unit.config.chainCount || 3;
           const hitIds: number[] = [target.id];
-          damages.push({ enemyId: target.id, damage: stats.attack });
+          damages.push({ enemyId: target.id, damage: stats.attack, unitId: unit.id });
           this.applyOnHitEffects(unit, target.id, statusEffects);
           let lastTarget = target;
           for (let c = 1; c < chainCount; c++) {
             const next = this.findChainTarget(lastTarget, enemies, 100, hitIds);
             if (!next) break;
             hitIds.push(next.id);
-            damages.push({ enemyId: next.id, damage: Math.floor(stats.attack * (1 - c * 0.15)) });
+            damages.push({ enemyId: next.id, damage: Math.floor(stats.attack * (1 - c * 0.15)), unitId: unit.id });
             this.applyOnHitEffects(unit, next.id, statusEffects);
             lastTarget = next;
           }
@@ -532,7 +532,7 @@ export class TowerManager {
         // Enemy is hit when wave front passes through them
         if (dist <= wave.currentRadius && dist >= wave.currentRadius - wave.speed * dt - e.size) {
           wave.hitEnemies.push(e.id);
-          damages.push({ enemyId: e.id, damage: wave.damage });
+          damages.push({ enemyId: e.id, damage: wave.damage, unitId: wave.unitId });
           // Apply on-hit effects
           if (wave.dotDamage) {
             statusEffects.push({ enemyId: e.id, effect: { type: 'burn', damagePerSecond: wave.dotDamage, duration: wave.dotDuration || 2, slowFactor: 1 } });

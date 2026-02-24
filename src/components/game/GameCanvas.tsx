@@ -2,29 +2,108 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { GameEngine, fishState } from '../../game/GameEngine';
 import { renderGame } from './GameRenderer';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
+import DamageStatsPanel from './DamageStatsPanel';
 
 interface GameCanvasProps {
   engine: GameEngine;
   onStateChange: () => void;
   onFishCaught?: () => void;
+  onDropUnit?: (instanceId: number, slotIndex: number) => void;
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCaught }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCaught, onDropUnit }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
   const [gameSpeed, setGameSpeed] = useState(1);
   const gameSpeedRef = useRef(1);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Drag state for slot-to-slot
+  const dragRef = useRef<{ unitId: number; startX: number; startY: number; curX: number; curY: number } | null>(null);
+
+  // Auto-scale based on container
+  useEffect(() => {
+    const updateScale = () => {
+      if (!wrapperRef.current) return;
+      const parent = wrapperRef.current.parentElement;
+      if (!parent) return;
+      const maxW = parent.clientWidth - 16;
+      const maxH = parent.clientHeight - 16;
+      const s = Math.min(maxW / CANVAS_WIDTH, maxH / CANVAS_HEIGHT, 1.5);
+      setScale(Math.max(0.5, s));
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
+  const canvasToGame = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     const scaleX = CANVAS_WIDTH / rect.width;
     const scaleY = CANVAS_HEIGHT / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  }, []);
+
+  const findNearestEmptySlot = useCallback((x: number, y: number) => {
+    let best = -1;
+    let bestDist = Infinity;
+    for (let i = 0; i < engine.state.slots.length; i++) {
+      const slot = engine.state.slots[i];
+      if (slot.unitId !== null) continue;
+      const dx = x - slot.x;
+      const dy = y - slot.y;
+      const d = dx * dx + dy * dy;
+      if (d < bestDist && d < 40 * 40) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  }, [engine]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = canvasToGame(e);
+    // Check if clicking on a placed unit
+    for (const unit of engine.state.placedUnits) {
+      const dx = x - unit.x;
+      const dy = y - unit.y;
+      if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+        dragRef.current = { unitId: unit.id, startX: unit.x, startY: unit.y, curX: x, curY: y };
+        return;
+      }
+    }
+  }, [engine, canvasToGame]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!dragRef.current) return;
+    const { x, y } = canvasToGame(e);
+    dragRef.current.curX = x;
+    dragRef.current.curY = y;
+  }, [canvasToGame]);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragRef.current) {
+      const { x, y } = canvasToGame(e);
+      const slotIdx = findNearestEmptySlot(x, y);
+      if (slotIdx >= 0) {
+        engine.moveUnit(dragRef.current.unitId, slotIdx);
+      }
+      dragRef.current = null;
+      onStateChange();
+      return;
+    }
+  }, [engine, canvasToGame, findNearestEmptySlot, onStateChange]);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragRef.current) return; // drag handled by mouseUp
+    const { x, y } = canvasToGame(e);
 
     // Check fish click first
     if (fishState.visible && !fishState.caught) {
@@ -65,7 +144,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     engine.state.selectedSlotIndex = null;
     engine.state.selectedUnitId = null;
     onStateChange();
-  }, [engine, onStateChange]);
+  }, [engine, onStateChange, onFishCaught, canvasToGame]);
+
+  // HTML5 drop from inventory
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const instanceId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (isNaN(instanceId)) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    const slotIdx = findNearestEmptySlot(x, y);
+    if (slotIdx >= 0) {
+      engine.placeUnit(slotIdx, instanceId);
+      onStateChange();
+    }
+  }, [engine, findNearestEmptySlot, onStateChange]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -81,7 +186,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
       engine.update(dt);
 
-      // Apply screen shake
       const shake = engine.screenShake;
       ctx.save();
       ctx.translate(shake.offsetX, shake.offsetY);
@@ -90,10 +194,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       engine.particleManager.render(ctx);
       engine.floatingTextManager.render(ctx);
 
+      // Draw drag ghost
+      if (dragRef.current) {
+        const unit = engine.state.placedUnits.find(u => u.id === dragRef.current!.unitId);
+        if (unit) {
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = unit.config.weaponColor;
+          ctx.beginPath();
+          ctx.arc(dragRef.current.curX, dragRef.current.curY, 16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = 'bold 10px monospace';
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.fillText(unit.config.name, dragRef.current.curX, dragRef.current.curY - 20);
+          ctx.globalAlpha = 1;
+        }
+      }
+
       ctx.restore();
-
       onStateChange();
-
       rafRef.current = requestAnimationFrame(gameLoop);
     };
 
@@ -107,27 +226,47 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     gameSpeedRef.current = next;
   }, [gameSpeed]);
 
+  const adjustScale = useCallback((delta: number) => {
+    setScale(s => Math.max(0.5, Math.min(2, s + delta)));
+  }, []);
+
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
         onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         className="w-full max-w-[800px] border border-border rounded-lg cursor-pointer"
         style={{ imageRendering: 'pixelated' }}
       />
-      <button
-        onClick={toggleSpeed}
-        className={`absolute top-2 right-2 px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
-          gameSpeed === 2
-            ? 'bg-yellow-500 text-black'
-            : 'bg-muted/80 text-muted-foreground hover:bg-accent'
-        }`}
-        title={gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
-      >
-        {gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
-      </button>
+      <div className="absolute top-2 right-2 flex gap-1">
+        <button
+          onClick={() => adjustScale(-0.1)}
+          className="px-1.5 py-0.5 rounded font-mono text-xs font-bold bg-muted/80 text-muted-foreground hover:bg-accent"
+        >−</button>
+        <button
+          onClick={() => adjustScale(0.1)}
+          className="px-1.5 py-0.5 rounded font-mono text-xs font-bold bg-muted/80 text-muted-foreground hover:bg-accent"
+        >+</button>
+        <button
+          onClick={toggleSpeed}
+          className={`px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
+            gameSpeed === 2
+              ? 'bg-yellow-500 text-black'
+              : 'bg-muted/80 text-muted-foreground hover:bg-accent'
+          }`}
+          title={gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
+        >
+          {gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
+        </button>
+      </div>
+      <DamageStatsPanel engine={engine} />
     </div>
   );
 };
