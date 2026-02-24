@@ -95,14 +95,18 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 return (
                   <div key={char.instanceId} className="relative">
                     <button
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', String(char.instanceId));
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                       onClick={() => onPlaceUnit(char.instanceId)}
                       onMouseEnter={() => setHoveredChar(char.instanceId)}
                       onMouseLeave={() => setHoveredChar(null)}
-                      disabled={!slotSelected}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all
                         ${slotSelected
                           ? 'hover:bg-accent cursor-pointer hover:scale-105'
-                          : 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-accent/50 cursor-grab'
                         } border-border`}
                     >
                       <CharacterSprite config={char.config} size={32} owned />

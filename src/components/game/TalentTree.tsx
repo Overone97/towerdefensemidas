@@ -1,5 +1,5 @@
 import React from 'react';
-import { TALENTS } from '../../game/data/talentData';
+import { TALENTS, getTalentBonus } from '../../game/data/talentData';
 import { Button } from '../ui/button';
 
 interface TalentTreeProps {
@@ -10,6 +10,15 @@ interface TalentTreeProps {
 }
 
 const TalentTree: React.FC<TalentTreeProps> = ({ talents, stars, onUpgradeTalent, onBack }) => {
+  const bonus = getTalentBonus(talents);
+  const activeBonus: string[] = [];
+  if (bonus.attackMult > 1) activeBonus.push(`⚔️ ATK +${Math.round((bonus.attackMult - 1) * 100)}%`);
+  if (bonus.speedMult > 1) activeBonus.push(`💨 SPD +${Math.round((bonus.speedMult - 1) * 100)}%`);
+  if (bonus.rangeMult > 1) activeBonus.push(`👁️ RNG +${Math.round((bonus.rangeMult - 1) * 100)}%`);
+  if (bonus.goldMult > 1) activeBonus.push(`💰 Gold +${Math.round((bonus.goldMult - 1) * 100)}%`);
+  if (bonus.extraHp > 0) activeBonus.push(`🛡️ HP +${bonus.extraHp}`);
+  if (bonus.summonDiscount < 1) activeBonus.push(`🎲 Cost -${Math.round((1 - bonus.summonDiscount) * 100)}%`);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -17,7 +26,7 @@ const TalentTree: React.FC<TalentTreeProps> = ({ talents, stars, onUpgradeTalent
         <h2 className="font-bold font-mono">🌟 Talent Tree</h2>
         <div className="text-yellow-400 font-mono font-bold">⭐ {stars}</div>
       </div>
-      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto gap-4">
         <div className="grid grid-cols-3 gap-4 max-w-lg w-full">
           {TALENTS.map(t => {
             const level = talents[t.id] || 0;
@@ -54,6 +63,14 @@ const TalentTree: React.FC<TalentTreeProps> = ({ talents, stars, onUpgradeTalent
             );
           })}
         </div>
+        {activeBonus.length > 0 && (
+          <div className="flex flex-wrap gap-2 justify-center px-4 py-2 bg-muted/30 rounded-lg border border-border">
+            <span className="text-xs font-mono text-muted-foreground">Bonus actifs:</span>
+            {activeBonus.map((b, i) => (
+              <span key={i} className="text-xs font-mono text-primary font-bold">{b}</span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
