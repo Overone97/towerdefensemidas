@@ -158,7 +158,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   }
 
   // ── Path (semi-transparent on bg image maps) ──
-  if (bgImg) ctx.globalAlpha = 0.35;
+  if (bgImg) ctx.globalAlpha = 0.5;
   drawPath(ctx, waypoints, theme);
   if (bgImg) ctx.globalAlpha = 1;
 

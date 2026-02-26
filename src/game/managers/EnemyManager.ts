@@ -42,15 +42,17 @@ export class EnemyManager {
     });
   }
 
-  update(dt: number): { reachedEnd: Enemy[]; dotKills: Enemy[] } {
+  update(dt: number): { reachedEnd: Enemy[]; dotKills: Enemy[]; dotDamages: { unitId: number; damage: number }[] } {
     const reachedEnd: Enemy[] = [];
     const dotKills: Enemy[] = [];
+    const dotDamages: { unitId: number; damage: number }[] = [];
 
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
       enemy.animFrame += dt * 60;
-      this.processStatusEffects(enemy, dt);
+      const dotResult = this.processStatusEffects(enemy, dt);
+      dotDamages.push(...dotResult.damages);
       if (!enemy.alive) {
         dotKills.push(enemy);
         continue;
@@ -92,18 +94,23 @@ export class EnemyManager {
     }
 
     this.enemies = this.enemies.filter(e => e.alive);
-    return { reachedEnd, dotKills };
+    return { reachedEnd, dotKills, dotDamages };
   }
 
-  private processStatusEffects(enemy: Enemy, dt: number): void {
+  private processStatusEffects(enemy: Enemy, dt: number): { damages: { unitId: number; damage: number }[] } {
     let slowFactor = 1;
+    const damages: { unitId: number; damage: number }[] = [];
 
     for (let i = enemy.statusEffects.length - 1; i >= 0; i--) {
       const effect = enemy.statusEffects[i];
       effect.duration -= dt;
 
       if (effect.type === 'poison' || effect.type === 'burn') {
-        enemy.hp -= effect.damagePerSecond * dt;
+        const tickDamage = effect.damagePerSecond * dt;
+        enemy.hp -= tickDamage;
+        if (effect.sourceUnitId) {
+          damages.push({ unitId: effect.sourceUnitId, damage: tickDamage });
+        }
         if (enemy.hp <= 0) {
           enemy.alive = false;
         }
@@ -120,6 +127,7 @@ export class EnemyManager {
     }
 
     enemy.speed = enemy.baseSpeed * slowFactor;
+    return { damages };
   }
 
   applyStatusEffect(enemyId: number, effect: StatusEffect): void {
@@ -132,6 +140,7 @@ export class EnemyManager {
     if (existing) {
       existing.duration = Math.max(existing.duration, effect.duration);
       existing.damagePerSecond = Math.max(existing.damagePerSecond, effect.damagePerSecond);
+      if (effect.sourceUnitId) existing.sourceUnitId = effect.sourceUnitId;
       if (effect.type === 'slow') {
         existing.slowFactor = Math.min(existing.slowFactor, effect.slowFactor);
       }

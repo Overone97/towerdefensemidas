@@ -58,9 +58,9 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 onClick={onToggleAutoWave}
-                variant={state.autoWave ? 'destructive' : 'outline'}
+                variant="outline"
                 size="sm"
-                className="shrink-0"
+                className={`shrink-0 ${state.autoWave ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:text-white' : ''}`}
               >
                 {state.autoWave ? '⏸ Auto' : '▶ Auto'}
               </Button>

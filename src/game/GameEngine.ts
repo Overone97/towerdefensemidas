@@ -112,7 +112,11 @@ export class GameEngine {
 
     const talentBonus = getTalentBonus(this.saveData.talents);
 
-    const { reachedEnd, dotKills } = this.enemyManager.update(dt);
+    const { reachedEnd, dotKills, dotDamages } = this.enemyManager.update(dt);
+    // Track DOT damages from Singed/Teemo etc.
+    for (const { unitId, damage } of dotDamages) {
+      this.trackDamage(unitId, damage);
+    }
     for (const enemy of reachedEnd) {
       this.state.baseHp--;
       soundManager.playBaseDamage();

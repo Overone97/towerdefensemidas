@@ -231,7 +231,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+    <div ref={wrapperRef} className="relative inline-block" style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
@@ -242,8 +242,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         onMouseUp={handleMouseUp}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className="w-full max-w-[800px] border border-border rounded-lg cursor-pointer"
-        style={{ imageRendering: 'pixelated' }}
+        className="border border-border rounded-lg cursor-pointer"
+        style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
       />
       <div className="absolute top-2 right-2 flex gap-1">
         <button
