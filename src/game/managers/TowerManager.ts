@@ -305,6 +305,7 @@ export class TowerManager {
             damagePerSecond: cloudDps,
             alive: true,
             color: unit.config.weaponColor,
+            sourceUnitId: unit.id,
           });
         }
       } else if (unit.config.attackPattern === 'mushroom') {
@@ -331,6 +332,7 @@ export class TowerManager {
             exploded: false,
             alive: true,
             color: '#88dd44',
+            sourceUnitId: unit.id,
           });
         }
       }
@@ -571,10 +573,10 @@ export class TowerManager {
             const d2x = e2.x - ge.x;
             const d2y = e2.y - ge.y;
             if (Math.sqrt(d2x * d2x + d2y * d2y) <= explR) {
-              damages.push({ enemyId: e2.id, damage: ge.explosionDamage || 10 });
-              statusEffects.push({ enemyId: e2.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: ge.slowDuration || 3, slowFactor: 1 } });
+              damages.push({ enemyId: e2.id, damage: ge.explosionDamage || 10, unitId: ge.sourceUnitId });
+              statusEffects.push({ enemyId: e2.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: ge.slowDuration || 3, slowFactor: 1, sourceUnitId: ge.sourceUnitId } });
               if (ge.slowFactor) {
-                statusEffects.push({ enemyId: e2.id, effect: { type: 'slow', damagePerSecond: 0, duration: ge.slowDuration || 2, slowFactor: ge.slowFactor } });
+                statusEffects.push({ enemyId: e2.id, effect: { type: 'slow', damagePerSecond: 0, duration: ge.slowDuration || 2, slowFactor: ge.slowFactor, sourceUnitId: ge.sourceUnitId } });
               }
             }
           }
@@ -599,7 +601,7 @@ export class TowerManager {
           // Apply poison DOT to enemies inside the cloud
           const hasPoisonFromCloud = e.statusEffects.some(s => s.type === 'poison' && s.damagePerSecond >= ge.damagePerSecond);
           if (!hasPoisonFromCloud) {
-            statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: 1, slowFactor: 1 } });
+            statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: ge.damagePerSecond, duration: 1, slowFactor: 1, sourceUnitId: ge.sourceUnitId } });
           }
         }
       }

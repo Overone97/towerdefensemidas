@@ -24,6 +24,7 @@ export interface StatusEffect {
   damagePerSecond: number;
   duration: number;
   slowFactor: number;
+  sourceUnitId?: number;
 }
 
 export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'dragon_fire' | 'dragon_ice' | 'dragon_earth' | 'dragon_air' | 'boss';
@@ -148,6 +149,7 @@ export interface GroundEffect {
   exploded?: boolean;
   alive: boolean;
   color: string;
+  sourceUnitId?: number;
 }
 
 export interface Projectile {
