@@ -60,7 +60,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 onClick={onToggleAutoWave}
                 variant="outline"
                 size="sm"
-                className={`shrink-0 ${state.autoWave ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:text-white' : ''}`}
+                className={`shrink-0 ${state.autoWave ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:text-white' : 'text-white border-gray-500 hover:bg-gray-700'}`}
               >
                 {state.autoWave ? '⏸ Auto' : '▶ Auto'}
               </Button>

@@ -525,6 +525,7 @@ export class GameEngine {
 
   setMap(mapId: string): void {
     this.state.currentMapId = mapId;
+    (this.saveData as any).currentMapId = mapId;
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
     this.restart();
@@ -532,6 +533,7 @@ export class GameEngine {
 
   startEndless(mapId: string): void {
     this.state.currentMapId = mapId;
+    (this.saveData as any).currentMapId = mapId;
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
     this.restart();
@@ -558,13 +560,12 @@ export class GameEngine {
   }
 
   restart(): void {
+    const currentMapId = this.state.currentMapId || (this.saveData as any).currentMapId || 'plains';
     this.enemyManager.clear();
     this.towerManager.clear();
     this.particleManager.clear();
     this.floatingTextManager.clear();
     this.waveManager = new WaveManager();
-    const map = this.getMap();
-    this.enemyManager.setWaypoints(map.waypoints);
     
     const talentBonus = getTalentBonus(this.saveData.talents);
     const inventory = this.state.inventory;
@@ -572,8 +573,11 @@ export class GameEngine {
     this.state = {
       ...this.createInitialState(),
       inventory,
-      currentMapId: map.id,
+      currentMapId,
     };
+    
+    const map = this.getMap();
+    this.enemyManager.setWaypoints(map.waypoints);
   }
 
   tryCatchFish(): OwnedCharacter | null {

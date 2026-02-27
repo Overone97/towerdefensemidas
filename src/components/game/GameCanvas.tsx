@@ -231,7 +231,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative inline-block" style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <div ref={wrapperRef} className="relative inline-block" style={{ transform: `scale(${scale})`, transformOrigin: 'center top' }}>
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
