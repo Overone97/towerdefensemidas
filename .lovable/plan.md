@@ -1,59 +1,75 @@
 
 
-# Corrections: 4 bugs a resoudre
+# Plan : 10 champions + fix chemins + layout + bouton Auto + 100 vagues
 
-## Bug 1 - Maps 2 et 3 : ennemis hors du chemin visuel
+## 1. Ajouter 10 nouveaux champions LoL
 
-Les waypoints dans `allMaps.ts` ne correspondent pas aux chemins dessines sur les images de fond. Il faut recalculer les coordonnees pour Forest et Volcano pour qu'elles suivent le trace visible sur les images `forest-bg.jpg` et `volcano-bg.jpg`.
+### Sprites (10 PNG 64x64 via imagegen)
+Generer dans `src/assets/sprites/` : `ahri.png`, `leesin.png`, `vayne.png`, `morgana.png`, `blitzcrank.png`, `katarina.png`, `twistedfate.png`, `malphite.png`, `ezreal.png`, `missfortune.png`
 
-**Fichier** : `src/game/data/allMaps.ts`
-- Redefinir tous les waypoints et slots de `forest` et `volcano`
-- S'assurer que le rendu du chemin dans `GameRenderer.ts` est assez transparent (deja a 0.35) pour que le chemin logique se fonde dans le visuel
+### `src/game/rendering/lolSprites.ts`
+- Ajouter 10 imports + 10 entrees dans `SPRITE_MAP`
 
-Pour determiner les bonnes coordonnees, je vais observer les images de fond via le navigateur pour tracer les chemins corrects, puis ajuster les waypoints en consequence. Si les images ne correspondent a aucun trace logique, on peut aussi augmenter l'opacite du chemin a 0 (invisible) et laisser uniquement l'image de fond servir de visuel.
+### `src/game/data/characterData.ts`
+Ajouter dans `ALL_CHARACTERS` :
+- **Ahri** (rare) - chain x3, range 130, attack 16, speed 1.1
+- **Lee Sin** (rare) - burst x2, range 80, attack 22, speed 0.9
+- **Vayne** (epic) - single, range 150, attack 18, speed 2.4
+- **Morgana** (epic) - slow + dot AoE, range 120, attack 14, speed 0.8
+- **Blitzcrank** (uncommon) - chain x2, range 100, attack 12, speed 0.7
+- **Katarina** (legendary) - burst x4 + AoE, range 90, attack 26, speed 1.1
+- **Twisted Fate** (rare) - line, range 180, attack 15, speed 1.0
+- **Malphite** (uncommon) - aoe_circle + slow, range 85, attack 10, speed 0.6
+- **Ezreal** (rare) - line, range 160, attack 17, speed 1.3
+- **Miss Fortune** (epic) - rapid, range 150, attack 16, speed 2.0
 
-## Bug 2 - Bouton Auto : texte noir sur fond noir
+## 2. Fix chemins maps - ennemis suivent le meme chemin partout
 
-Dans `UnitBar.tsx`, le bouton Auto utilise `variant="destructive"` quand actif. La variante `destructive` de shadcn a un texte `destructive-foreground` qui est probablement noir ou tres sombre dans le theme actuel.
+**Cause racine** : `GameEngine.restart()` appelle `createInitialState()` qui cherche `(this.saveData as any).currentMapId`. Comme `setMap()` ne met jamais a jour `saveData.currentMapId`, le restart retombe toujours sur Plains (ALL_MAPS[0]).
 
-**Fichier** : `src/components/game/UnitBar.tsx`
-- Changer le bouton Auto actif pour utiliser des classes explicites garantissant la lisibilite : `bg-red-600 text-white` au lieu de `variant="destructive"`
+### `src/game/GameEngine.ts`
+- Dans `setMap()` (ligne 526) : ajouter `(this.saveData as any).currentMapId = mapId;` avant `restart()`
+- Dans `startEndless()` (ligne 533) : meme chose
+- Dans `restart()` : s'assurer que `this.state.currentMapId` est preserve avant `createInitialState()`
 
-## Bug 3 - TeamSidebar cachee derriere le canvas scale
+### `src/game/data/allMaps.ts`
+- Redefinir les waypoints Forest et Volcano pour etre visuellement distincts et couvrir tout le canvas (entree gauche, sortie droite)
+- Forest : trace en zigzag forestier avec virages serres
+- Volcano : trace en V inversé montant puis descendant
 
-Le `GameCanvas` applique `transform: scale(X)` sur son wrapper, ce qui agrandit visuellement le canvas et peut recouvrir le `TeamSidebar` place a cote. Le probleme est que `scale` ne change pas le layout flow mais agrandit visuellement.
+## 3. Layout centre (plus colle a gauche)
 
-**Fichiers** : `src/components/game/TowerDefenseGame.tsx`, `src/components/game/GameCanvas.tsx`
-- Sortir le TeamSidebar du flux relatif au canvas
-- Fixer le TeamSidebar a gauche de l'ecran avec `fixed left-0` ou `absolute left-0` dans le conteneur parent
-- Ou bien appliquer le scale sur le canvas seul, pas sur le wrapper qui contient aussi le DPS panel
+### `src/components/game/TowerDefenseGame.tsx`
+- Ligne 240 : changer `items-start` → `items-center justify-center`
+- Retirer `sticky` du TeamSidebar wrapper
 
-## Bug 4 - DPS panel : pas de tracking pour les DOT (Singed, Teemo)
+### `src/components/game/GameCanvas.tsx`
+- Ajouter `transform-origin: center top` au lieu de `top left` sur le wrapper scale
 
-Le probleme est double :
-1. `StatusEffect` dans `types.ts` n'a pas de champ `sourceUnitId` - on ne sait pas quel personnage a applique le poison/burn
-2. Donc quand un ennemi meurt par DOT (dans `dotKills`), on ne peut pas attribuer les degats au bon personnage dans `trackDamage()`
+## 4. Bouton Auto - texte invisible quand inactif
 
-**Fichiers** :
-- `src/game/types.ts` : Ajouter `sourceUnitId?: number` a l'interface `StatusEffect`
-- `src/game/managers/TowerManager.ts` : Quand un effet de statut est cree (poison, burn), y attacher le `unitId` de la tour source
-- `src/game/managers/EnemyManager.ts` : Dans `processStatusEffects`, tracker les degats DOT tick par tick en retournant les infos de source. Modifier `dotKills` pour inclure le `sourceUnitId`
-- `src/game/GameEngine.ts` : Dans le traitement des `dotKills`, appeler `trackDamage(sourceUnitId, totalDotDamage)`. Aussi tracker les degats DOT incrementaux (pas seulement les kills)
+### `src/components/game/UnitBar.tsx`
+- Ligne 63 : ajouter `text-white border-gray-500 hover:bg-gray-700` au cas inactif (apres le ternaire)
 
-### Detail technique
+## 5. Passer a 100 vagues avec difficulte progressive
 
-Dans `EnemyManager.update()`, en plus de `dotKills`, retourner `dotDamages: { unitId: number, damage: number }[]` pour chaque tick de poison/burn. Dans `GameEngine.update()`, iterer sur `dotDamages` et appeler `trackDamage()` pour chaque.
+### `src/game/data/waveData.ts`
+- `TOTAL_WAVES = 100`
+- `getWaveConfig()` : courbe HP exponentielle plus aggressive, max 60 ennemis, vitesse croissante
+- `getWaveEnemyPool()` : ajouter paliers 50-100 avec plus de tanks/armored, moins de normals
+- `getBossTypeForWave()` : etendre switch pour vagues 55-100 (double dragons, multi-barons, Atakhan final a 100)
 
-## Fichiers modifies
+## Fichiers modifies/crees
 
-| Fichier | Changement |
+| Fichier | Action |
 |---|---|
-| `src/game/data/allMaps.ts` | Nouveaux waypoints/slots Forest & Volcano |
-| `src/components/game/UnitBar.tsx` | Couleur texte bouton Auto |
-| `src/components/game/TowerDefenseGame.tsx` | Layout TeamSidebar fixe a gauche |
-| `src/components/game/GameCanvas.tsx` | Ajuster le scale pour ne pas cacher la sidebar |
-| `src/game/types.ts` | `sourceUnitId` dans StatusEffect |
-| `src/game/managers/TowerManager.ts` | Attacher sourceUnitId aux effets |
-| `src/game/managers/EnemyManager.ts` | Retourner dotDamages avec sourceUnitId |
-| `src/game/GameEngine.ts` | Tracker les DOT damages |
+| 10x `src/assets/sprites/*.png` | **Nouveaux** - sprites pixel art |
+| `src/game/rendering/lolSprites.ts` | 10 imports + SPRITE_MAP |
+| `src/game/data/characterData.ts` | 10 champions dans ALL_CHARACTERS |
+| `src/game/GameEngine.ts` | Fix saveData.currentMapId |
+| `src/game/data/allMaps.ts` | Nouveaux waypoints Forest & Volcano |
+| `src/components/game/TowerDefenseGame.tsx` | Centrer layout |
+| `src/components/game/GameCanvas.tsx` | transform-origin center |
+| `src/components/game/UnitBar.tsx` | Couleur bouton Auto inactif |
+| `src/game/data/waveData.ts` | 100 vagues + scaling |
 
