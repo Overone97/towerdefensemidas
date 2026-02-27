@@ -1,14 +1,14 @@
 import { WaveConfig, EnemyConfig, EnemyType } from '../types';
 
-export const TOTAL_WAVES = 50;
+export const TOTAL_WAVES = 100;
 
 export function getWaveConfig(waveNumber: number): WaveConfig {
-  // Non-linear exponential-soft difficulty curve
-  const hpMult = 1 + (waveNumber - 1) * 0.25 + Math.pow(waveNumber / 10, 1.5);
-  const enemyCount = Math.min(40, 5 + Math.floor(waveNumber * 0.75));
-  const spawnInterval = Math.max(300, 1000 - waveNumber * 14);
-  const speedMult = 1 + (waveNumber - 1) * 0.04;
-  const rewardMult = 1 + (waveNumber - 1) * 0.12;
+  // Progressive exponential difficulty over 100 waves
+  const hpMult = 1 + (waveNumber - 1) * 0.3 + Math.pow(waveNumber / 8, 1.7);
+  const enemyCount = Math.min(60, 5 + Math.floor(waveNumber * 0.6));
+  const spawnInterval = Math.max(200, 1000 - waveNumber * 10);
+  const speedMult = 1 + (waveNumber - 1) * 0.035;
+  const rewardMult = 1 + (waveNumber - 1) * 0.1;
 
   return {
     waveNumber,
@@ -93,26 +93,50 @@ export function getWaveEnemyPool(waveNumber: number): WaveEnemyPool[] {
   if (waveNumber >= 20) pool[0].weight = 7;
   if (waveNumber >= 30) pool[0].weight = 5;
   if (waveNumber >= 40) pool[0].weight = 3;
+  if (waveNumber >= 50) {
+    pool.push({ type: 'fast', weight: 3 });
+    pool[0].weight = 2;
+  }
+  if (waveNumber >= 60) {
+    pool.find(p => p.type === 'tank')!.weight = 5;
+    pool.find(p => p.type === 'armored')!.weight = 4;
+  }
+  if (waveNumber >= 70) {
+    pool[0].weight = 1;
+  }
+  if (waveNumber >= 80) {
+    pool.find(p => p.type === 'armored')!.weight = 6;
+  }
 
   return pool;
 }
 
 export function isBossWave(waveNumber: number): boolean {
-  return waveNumber % 5 === 0; // Boss every 5 waves for variety
+  return waveNumber % 5 === 0;
 }
 
 export function getBossTypeForWave(waveNumber: number): EnemyType {
   switch (waveNumber) {
-    case 5: return 'tank';         // Elite Brambleback
-    case 10: return 'dragon_fire'; // Dragon Infernal
-    case 15: return 'armored';     // Elite Super Minion
-    case 20: return 'dragon_ice';  // Dragon de Glace
-    case 25: return 'dragon_fire'; // 2nd Infernal
-    case 30: return 'dragon_earth';// Dragon de Terre
-    case 35: return 'dragon_ice';  // 2nd Ice Dragon
-    case 40: return 'dragon_air';  // Dragon des Airs
-    case 45: return 'boss';        // Baron Nashor
-    case 50: return 'boss';        // Atakhan (final boss)
+    case 5: return 'tank';
+    case 10: return 'dragon_fire';
+    case 15: return 'armored';
+    case 20: return 'dragon_ice';
+    case 25: return 'dragon_fire';
+    case 30: return 'dragon_earth';
+    case 35: return 'dragon_ice';
+    case 40: return 'dragon_air';
+    case 45: return 'boss';
+    case 50: return 'boss';
+    case 55: return 'dragon_fire';
+    case 60: return 'dragon_earth';
+    case 65: return 'dragon_ice';
+    case 70: return 'boss';
+    case 75: return 'dragon_air';
+    case 80: return 'boss';
+    case 85: return 'dragon_earth';
+    case 90: return 'boss';
+    case 95: return 'boss';
+    case 100: return 'boss'; // Atakhan final
     default: return waveNumber % 10 === 0 ? 'boss' : 'dragon_fire';
   }
 }

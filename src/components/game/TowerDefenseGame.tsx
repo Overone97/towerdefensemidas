@@ -237,8 +237,8 @@ const TowerDefenseGame: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} onOpenEquipment={() => setScreen('equipment')} />
-      <div className="flex-1 flex items-start relative p-4 overflow-auto">
-        <div className="sticky top-0 left-0 z-10 shrink-0">
+      <div className="flex-1 flex items-center justify-center relative p-4 overflow-auto">
+        <div className="z-10 shrink-0">
           <TeamSidebar
             placedUnits={state.placedUnits}
             selectedUnitId={state.selectedUnitId}

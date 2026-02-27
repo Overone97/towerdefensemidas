@@ -25,6 +25,16 @@ import aniviaImg from '@/assets/sprites/anivia.png';
 import kassadinImg from '@/assets/sprites/kassadin.png';
 import sonaImg from '@/assets/sprites/sona.png';
 import fizzImg from '@/assets/sprites/fizz.png';
+import ahriImg from '@/assets/sprites/ahri.png';
+import leesinImg from '@/assets/sprites/leesin.png';
+import vayneImg from '@/assets/sprites/vayne.png';
+import morganaImg from '@/assets/sprites/morgana.png';
+import blitzcrankImg from '@/assets/sprites/blitzcrank.png';
+import katarinaImg from '@/assets/sprites/katarina.png';
+import twistedfateImg from '@/assets/sprites/twistedfate.png';
+import malphiteImg from '@/assets/sprites/malphite.png';
+import ezrealImg from '@/assets/sprites/ezreal.png';
+import missfortuneImg from '@/assets/sprites/missfortune.png';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
@@ -52,6 +62,16 @@ const SPRITE_MAP: Record<string, string> = {
   alistar: alistarImg,
   brand: brandImg,
   jinx: jinxImg,
+  ahri: ahriImg,
+  leesin: leesinImg,
+  vayne: vayneImg,
+  morgana: morganaImg,
+  blitzcrank: blitzcrankImg,
+  katarina: katarinaImg,
+  twistedfate: twistedfateImg,
+  malphite: malphiteImg,
+  ezreal: ezrealImg,
+  missfortune: missfortuneImg,
 };
 
 // Image cache (cleaned versions without background)
