@@ -35,43 +35,82 @@ import twistedfateImg from '@/assets/sprites/twistedfate.png';
 import malphiteImg from '@/assets/sprites/malphite.png';
 import ezrealImg from '@/assets/sprites/ezreal.png';
 import missfortuneImg from '@/assets/sprites/missfortune.png';
+// New 50 champions
+import dravenImg from '@/assets/sprites/draven.png';
+import fioraImg from '@/assets/sprites/fiora.png';
+import gravesImg from '@/assets/sprites/graves.png';
+import ireliaImg from '@/assets/sprites/irelia.png';
+import jaxImg from '@/assets/sprites/jax.png';
+import jayceImg from '@/assets/sprites/jayce.png';
+import khazixImg from '@/assets/sprites/khazix.png';
+import leblancImg from '@/assets/sprites/leblanc.png';
+import lucianImg from '@/assets/sprites/lucian.png';
+import luluImg from '@/assets/sprites/lulu.png';
+import masteryiImg from '@/assets/sprites/masteryi.png';
+import namiImg from '@/assets/sprites/nami.png';
+import nasusImg from '@/assets/sprites/nasus.png';
+import nautilusImg from '@/assets/sprites/nautilus.png';
+import nidaleeImg from '@/assets/sprites/nidalee.png';
+import oriannaImg from '@/assets/sprites/orianna.png';
+import pantheonImg from '@/assets/sprites/pantheon.png';
+import renektonImg from '@/assets/sprites/renekton.png';
+import rengarImg from '@/assets/sprites/rengar.png';
+import sejuaniImg from '@/assets/sprites/sejuani.png';
+import shacoImg from '@/assets/sprites/shaco.png';
+import shenImg from '@/assets/sprites/shen.png';
+import sivirImg from '@/assets/sprites/sivir.png';
+import sorakaImg from '@/assets/sprites/soraka.png';
+import swainImg from '@/assets/sprites/swain.png';
+import syndraImg from '@/assets/sprites/syndra.png';
+import talonImg from '@/assets/sprites/talon.png';
+import tristanaImg from '@/assets/sprites/tristana.png';
+import tryndamereImg from '@/assets/sprites/tryndamere.png';
+import udyrImg from '@/assets/sprites/udyr.png';
+import urgotImg from '@/assets/sprites/urgot.png';
+import varusImg from '@/assets/sprites/varus.png';
+import veigarImg from '@/assets/sprites/veigar.png';
+import viImg from '@/assets/sprites/vi.png';
+import viktorImg from '@/assets/sprites/viktor.png';
+import vladimirImg from '@/assets/sprites/vladimir.png';
+import warwickImg from '@/assets/sprites/warwick.png';
+import wukongImg from '@/assets/sprites/wukong.png';
+import xerathImg from '@/assets/sprites/xerath.png';
+import xinzhaoImg from '@/assets/sprites/xinzhao.png';
+import yorickImg from '@/assets/sprites/yorick.png';
+import ziggsImg from '@/assets/sprites/ziggs.png';
+import zileanImg from '@/assets/sprites/zilean.png';
+import zyraImg from '@/assets/sprites/zyra.png';
+import dianaImg from '@/assets/sprites/diana.png';
+import ekkoImg from '@/assets/sprites/ekko.png';
+import eliseImg from '@/assets/sprites/elise.png';
+import evelynnImg from '@/assets/sprites/evelynn.png';
+import gangplankImg from '@/assets/sprites/gangplank.png';
+import hecarimImg from '@/assets/sprites/hecarim.png';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
-  garen: garenImg,
-  ashe: asheImg,
-  leona: leonaImg,
-  teemo: teemoImg,
-  lux: luxImg,
-  annie: annieImg,
-  jarvan: jarvanImg,
-  singed: singedImg,
-  darius: dariusImg,
-  lissandra: lissandraImg,
-  yasuo: yasuoImg,
-  rumble: rumbleImg,
-  caitlyn: caitlynImg,
-  thresh: threshImg,
-  riven: rivenImg,
-  zed: zedImg,
-  volibear: volibearImg,
-  anivia: aniviaImg,
-  kassadin: kassadinImg,
-  sona: sonaImg,
-  fizz: fizzImg,
-  alistar: alistarImg,
-  brand: brandImg,
-  jinx: jinxImg,
-  ahri: ahriImg,
-  leesin: leesinImg,
-  vayne: vayneImg,
-  morgana: morganaImg,
-  blitzcrank: blitzcrankImg,
-  katarina: katarinaImg,
-  twistedfate: twistedfateImg,
-  malphite: malphiteImg,
-  ezreal: ezrealImg,
-  missfortune: missfortuneImg,
+  garen: garenImg, ashe: asheImg, leona: leonaImg, teemo: teemoImg, lux: luxImg,
+  annie: annieImg, jarvan: jarvanImg, singed: singedImg, darius: dariusImg, lissandra: lissandraImg,
+  yasuo: yasuoImg, rumble: rumbleImg, caitlyn: caitlynImg, thresh: threshImg,
+  riven: rivenImg, zed: zedImg, volibear: volibearImg, anivia: aniviaImg,
+  kassadin: kassadinImg, sona: sonaImg, fizz: fizzImg, alistar: alistarImg,
+  brand: brandImg, jinx: jinxImg, ahri: ahriImg, leesin: leesinImg,
+  vayne: vayneImg, morgana: morganaImg, blitzcrank: blitzcrankImg, katarina: katarinaImg,
+  twistedfate: twistedfateImg, malphite: malphiteImg, ezreal: ezrealImg, missfortune: missfortuneImg,
+  // New 50
+  draven: dravenImg, fiora: fioraImg, graves: gravesImg, irelia: ireliaImg,
+  jax: jaxImg, jayce: jayceImg, khazix: khazixImg, leblanc: leblancImg,
+  lucian: lucianImg, lulu: luluImg, masteryi: masteryiImg, nami: namiImg,
+  nasus: nasusImg, nautilus: nautilusImg, nidalee: nidaleeImg, orianna: oriannaImg,
+  pantheon: pantheonImg, renekton: renektonImg, rengar: rengarImg, sejuani: sejuaniImg,
+  shaco: shacoImg, shen: shenImg, sivir: sivirImg, soraka: sorakaImg,
+  swain: swainImg, syndra: syndraImg, talon: talonImg, tristana: tristanaImg,
+  tryndamere: tryndamereImg, udyr: udyrImg, urgot: urgotImg, varus: varusImg,
+  veigar: veigarImg, vi: viImg, viktor: viktorImg, vladimir: vladimirImg,
+  warwick: warwickImg, wukong: wukongImg, xerath: xerathImg, xinzhao: xinzhaoImg,
+  yorick: yorickImg, ziggs: ziggsImg, zilean: zileanImg, zyra: zyraImg,
+  diana: dianaImg, ekko: ekkoImg, elise: eliseImg, evelynn: evelynnImg,
+  gangplank: gangplankImg, hecarim: hecarimImg,
 };
 
 // Image cache (cleaned versions without background)
@@ -86,7 +125,6 @@ function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
   ctx.drawImage(img, 0, 0);
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const d = data.data;
-  // Sample corner pixel as background color
   const bgR = d[0], bgG = d[1], bgB = d[2];
   const threshold = 40;
   for (let i = 0; i < d.length; i += 4) {
@@ -122,17 +160,14 @@ function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
   return null;
 }
 
-// Preload all sprites
 export function preloadLolSprites() {
   for (const [key, src] of Object.entries(SPRITE_MAP)) {
     getOrLoadImage(src, key);
   }
 }
 
-// Call preload immediately
 preloadLolSprites();
 
-// Universal sprite drawer for all LoL characters
 export function drawLolSprite(
   ctx: CanvasRenderingContext2D,
   charId: string,
@@ -144,15 +179,13 @@ export function drawLolSprite(
   attackAnimTimer: number
 ) {
   const src = SPRITE_MAP[charId];
-  if (!src) return false; // not a LoL sprite
+  if (!src) return false;
 
   const img = getOrLoadImage(src, charId);
   const drawSize = size * 2.2;
 
-  // Idle bob animation
   const bob = Math.sin(animFrame * 0.08) * 1.5;
 
-  // Attack animation
   let swing = 0;
   let pulse = 1;
   let tilt = 0;
@@ -170,7 +203,6 @@ export function drawLolSprite(
     ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
     ctx.restore();
   } else {
-    // Fallback: colored circle while loading
     ctx.fillStyle = '#666';
     ctx.beginPath();
     ctx.arc(x, y, size / 2, 0, Math.PI * 2);
@@ -180,12 +212,10 @@ export function drawLolSprite(
   return true;
 }
 
-// Check if a character ID has a LoL sprite
 export function hasLolSprite(charId: string): boolean {
   return charId in SPRITE_MAP;
 }
 
-// Legacy exports for backwards compat
 export function drawAlistarSprite(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, animFrame: number, isAttacking: boolean, attackAnimTimer: number) {
   drawLolSprite(ctx, 'alistar', x, y, size, animFrame, isAttacking, attackAnimTimer);
 }
