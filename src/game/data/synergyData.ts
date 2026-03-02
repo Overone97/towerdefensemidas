@@ -3,48 +3,42 @@ import { SynergyBonus } from '../types';
 export type Element = 'fire' | 'ice' | 'shadow' | 'nature' | 'light' | 'storm';
 
 export const CHARACTER_ELEMENTS: Record<string, Element> = {
-  garen: 'light',
-  ashe: 'ice',
-  leona: 'light',
-  teemo: 'nature',
-  lux: 'light',
-  annie: 'fire',
-  jarvan: 'storm',
-  singed: 'nature',
-  darius: 'fire',
-  lissandra: 'ice',
-  yasuo: 'storm',
-  rumble: 'fire',
-  caitlyn: 'storm',
-  thresh: 'shadow',
-  riven: 'light',
-  zed: 'shadow',
-  volibear: 'storm',
-  alistar: 'nature',
-  brand: 'fire',
-  jinx: 'storm',
-  anivia: 'ice',
-  kassadin: 'shadow',
-  sona: 'light',
-  fizz: 'ice',
+  // Original roster
+  garen: 'light', ashe: 'ice', leona: 'light', teemo: 'nature', lux: 'light',
+  annie: 'fire', jarvan: 'storm', singed: 'nature', darius: 'fire', lissandra: 'ice',
+  yasuo: 'storm', rumble: 'fire', caitlyn: 'storm', thresh: 'shadow',
+  riven: 'light', zed: 'shadow', volibear: 'storm', alistar: 'nature',
+  brand: 'fire', jinx: 'storm', anivia: 'ice', kassadin: 'shadow',
+  sona: 'light', fizz: 'ice',
+  // Batch 2
+  ahri: 'fire', leesin: 'storm', vayne: 'shadow', morgana: 'shadow',
+  blitzcrank: 'storm', katarina: 'fire', twistedfate: 'shadow', malphite: 'nature',
+  ezreal: 'light', missfortune: 'fire',
+  // Batch 3 - 50 new
+  sivir: 'light', soraka: 'light', warwick: 'nature', nasus: 'nature',
+  xinzhao: 'storm', tristana: 'fire', pantheon: 'fire', shen: 'shadow',
+  udyr: 'nature', yorick: 'shadow',
+  graves: 'fire', nami: 'ice', nautilus: 'ice', renekton: 'fire',
+  sejuani: 'ice', varus: 'shadow', wukong: 'storm', ziggs: 'fire',
+  zyra: 'nature', diana: 'shadow', gangplank: 'fire', hecarim: 'shadow',
+  draven: 'fire', irelia: 'light', jayce: 'storm', lucian: 'light',
+  nidalee: 'nature', orianna: 'storm', talon: 'shadow', vi: 'storm',
+  xerath: 'storm', zilean: 'light', ekko: 'storm', elise: 'shadow',
+  fiora: 'light', jax: 'fire', khazix: 'shadow', leblanc: 'shadow',
+  lulu: 'nature', rengar: 'nature', swain: 'shadow', syndra: 'shadow',
+  viktor: 'storm', vladimir: 'shadow',
+  masteryi: 'storm', shaco: 'shadow', tryndamere: 'fire', veigar: 'shadow',
+  evelynn: 'shadow', urgot: 'nature',
 };
 
 export const ELEMENT_COLORS: Record<Element, string> = {
-  fire: '#ff6633',
-  ice: '#66ccff',
-  shadow: '#8844cc',
-  nature: '#44bb44',
-  light: '#ffdd66',
-  storm: '#4488ff',
+  fire: '#ff6633', ice: '#66ccff', shadow: '#8844cc',
+  nature: '#44bb44', light: '#ffdd66', storm: '#4488ff',
 };
 
 export const ELEMENT_LABELS: Record<Element, string> = {
-  fire: '🔥 Fire',
-  ice: '❄️ Ice',
-  shadow: '🌑 Shadow',
-  nature: '🌿 Nature',
-  light: '✨ Light',
-  storm: '⚡ Storm',
+  fire: '🔥 Fire', ice: '❄️ Ice', shadow: '🌑 Shadow',
+  nature: '🌿 Nature', light: '✨ Light', storm: '⚡ Storm',
 };
 
 export interface PairSynergyDef {
@@ -62,6 +56,7 @@ export interface ElementSynergyDef {
 }
 
 export const PAIR_SYNERGIES: PairSynergyDef[] = [
+  // Original synergies
   { id: 'inferno_duo', name: '🔥 Inferno Duo', char1Id: 'annie', char2Id: 'rumble', description: '+20% ATK', bonus: { attackMult: 1.2 } },
   { id: 'blizzard', name: '❄️ Blizzard', char1Id: 'lissandra', char2Id: 'anivia', description: '+25% Slow', bonus: { slowMult: 1.25 } },
   { id: 'death_pact', name: '🌑 Death Pact', char1Id: 'zed', char2Id: 'thresh', description: '+20% ATK Speed', bonus: { speedMult: 1.2 } },
@@ -80,12 +75,25 @@ export const PAIR_SYNERGIES: PairSynergyDef[] = [
   { id: 'thunder_strike', name: '⚡ Thunder Strike', char1Id: 'volibear', char2Id: 'yasuo', description: '+25% SPD & Range', bonus: { speedMult: 1.25, rangeMult: 1.15 } },
   { id: 'mushroom_trap', name: '🍄 Mushroom Trap', char1Id: 'teemo', char2Id: 'singed', description: '+35% DoT', bonus: { dotMult: 1.35 } },
   { id: 'light_binding', name: '💫 Light Binding', char1Id: 'lux', char2Id: 'sona', description: '+20% All', bonus: { attackMult: 1.2, speedMult: 1.2, rangeMult: 1.2 } },
+  // New synergies for batch 3
+  { id: 'void_predator', name: '🕷️ Void Predator', char1Id: 'khazix', char2Id: 'kassadin', description: '+30% ATK & SPD', bonus: { attackMult: 1.3, speedMult: 1.3 } },
+  { id: 'arcane_sisters', name: '✨ Arcane Sisters', char1Id: 'lux', char2Id: 'morgana', description: '+25% All', bonus: { attackMult: 1.25, speedMult: 1.15, rangeMult: 1.15 } },
+  { id: 'blade_dancers', name: '⚔️ Blade Dancers', char1Id: 'irelia', char2Id: 'fiora', description: '+30% ATK & SPD', bonus: { attackMult: 1.3, speedMult: 1.3 } },
+  { id: 'piltover', name: '🔧 Piltover', char1Id: 'vi', char2Id: 'jayce', description: '+25% ATK & Range', bonus: { attackMult: 1.25, rangeMult: 1.2 } },
+  { id: 'shadow_order', name: '🗡️ Shadow Order', char1Id: 'talon', char2Id: 'katarina', description: '+30% ATK & SPD', bonus: { attackMult: 1.3, speedMult: 1.3 } },
+  { id: 'wuju_style', name: '🏯 Wuju Style', char1Id: 'masteryi', char2Id: 'wukong', description: '+35% ATK SPD', bonus: { speedMult: 1.35 } },
+  { id: 'freljord', name: '❄️ Freljord', char1Id: 'sejuani', char2Id: 'lissandra', description: '+30% Slow', bonus: { slowMult: 1.3 } },
+  { id: 'gunslinger', name: '🔫 Gunslinger', char1Id: 'lucian', char2Id: 'graves', description: '+25% ATK & SPD', bonus: { attackMult: 1.25, speedMult: 1.25 } },
+  { id: 'ocean_tide', name: '🌊 Ocean Tide', char1Id: 'nami', char2Id: 'nautilus', description: '+25% Slow & +2HP', bonus: { slowMult: 1.25, extraHp: 2 } },
+  { id: 'dark_magic', name: '🌙 Dark Magic', char1Id: 'veigar', char2Id: 'syndra', description: '+35% ATK', bonus: { attackMult: 1.35 } },
+  { id: 'zaun_toxic', name: '☣️ Zaun Toxic', char1Id: 'singed', char2Id: 'viktor', description: '+30% DoT & Range', bonus: { dotMult: 1.3, rangeMult: 1.2 } },
 ];
 
 export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
   { element: 'fire', thresholds: [
     { count: 2, name: 'Ember', description: '+10% ATK', bonus: { attackMult: 1.1 } },
     { count: 3, name: 'Inferno', description: '+20% ATK', bonus: { attackMult: 1.2 } },
+    { count: 5, name: 'Wildfire', description: '+30% ATK', bonus: { attackMult: 1.3 } },
   ]},
   { element: 'ice', thresholds: [
     { count: 2, name: 'Frost', description: '+20% Slow', bonus: { slowMult: 1.2 } },
@@ -94,6 +102,7 @@ export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
   { element: 'shadow', thresholds: [
     { count: 2, name: 'Dusk', description: '+15% SPD', bonus: { speedMult: 1.15 } },
     { count: 3, name: 'Eclipse', description: '+25% SPD', bonus: { speedMult: 1.25 } },
+    { count: 5, name: 'Abyss', description: '+35% SPD', bonus: { speedMult: 1.35 } },
   ]},
   { element: 'nature', thresholds: [
     { count: 2, name: 'Growth', description: '+15% Range', bonus: { rangeMult: 1.15 } },
@@ -102,9 +111,11 @@ export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
   { element: 'light', thresholds: [
     { count: 2, name: 'Radiance', description: '+10% All', bonus: { attackMult: 1.1, speedMult: 1.1, rangeMult: 1.1 } },
     { count: 3, name: 'Divine', description: '+15% All', bonus: { attackMult: 1.15, speedMult: 1.15, rangeMult: 1.15 } },
+    { count: 5, name: 'Ascended', description: '+20% All', bonus: { attackMult: 1.2, speedMult: 1.2, rangeMult: 1.2 } },
   ]},
   { element: 'storm', thresholds: [
     { count: 2, name: 'Gale', description: '+15% SPD', bonus: { speedMult: 1.15 } },
     { count: 3, name: 'Tempest', description: '+25% SPD & Range', bonus: { speedMult: 1.25, rangeMult: 1.15 } },
+    { count: 5, name: 'Hurricane', description: '+35% SPD & Range', bonus: { speedMult: 1.35, rangeMult: 1.25 } },
   ]},
 ];

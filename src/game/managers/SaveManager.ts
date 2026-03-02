@@ -12,17 +12,17 @@ export interface LeaderboardEntry {
 
 export interface SaveData {
   inventory: { configId: string; level: number; equipment?: EquippedItems }[];
-  equipmentInventory: string[];  // unequipped equipment ids
+  equipmentInventory: string[];
   totalSummons: number;
   talents: Record<string, number>;
   stars: number;
   highScore: number;
   mapsCompleted: string[];
-  questsCompleted: string[];  // completed quest ids
-  // Achievement tracking
+  questsCompleted: string[];
   achievementsUnlocked: string[];
-  // Endless mode leaderboard
   endlessLeaderboard: LeaderboardEntry[];
+  mapDeployments: Record<string, { slotIndex: number; instanceId: number }[]>;
+  gameSpeed: number;
   stats: {
     totalKills: number;
     totalGold: number;
@@ -45,6 +45,8 @@ function defaultSave(): SaveData {
     questsCompleted: [],
     achievementsUnlocked: [],
     endlessLeaderboard: [],
+    mapDeployments: {},
+    gameSpeed: 1,
     stats: {
       totalKills: 0,
       totalGold: 0,

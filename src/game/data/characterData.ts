@@ -25,6 +25,7 @@ const RARITY_UPGRADE_BASE: Record<Rarity, number> = {
 };
 
 export const ALL_CHARACTERS: CharacterConfig[] = [
+  // === ORIGINAL ROSTER ===
   // COMMON (5)
   { id: 'garen', name: 'Garen', rarity: 'common', attack: 12, attackSpeed: 1.2, range: 100, attackPattern: 'single', bodyColor: '#7a8b9a', detailColor: '#5a6b7a', weaponColor: '#c0c8d0' },
   { id: 'ashe', name: 'Ashe', rarity: 'common', attack: 10, attackSpeed: 1.8, range: 140, attackPattern: 'single', bodyColor: '#6b8e5a', detailColor: '#4a6e3a', weaponColor: '#8b6b3a' },
@@ -55,7 +56,7 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'sona', name: 'Sona', rarity: 'legendary', attack: 20, attackSpeed: 1.2, range: 170, attackPattern: 'chain', chainCount: 5, bodyColor: '#ffdd88', detailColor: '#ddbb66', weaponColor: '#ffffff' },
   // SECRET LEGENDARY
   { id: 'fizz', name: 'Fizz', rarity: 'legendary', attack: 28, attackSpeed: 1.0, range: 180, attackPattern: 'chain', chainCount: 6, slowFactor: 0.3, slowDuration: 3, bodyColor: '#1a6688', detailColor: '#0e4466', weaponColor: '#44ddff' },
-  // NEW CHAMPIONS
+  // BATCH 2 (10)
   { id: 'ahri', name: 'Ahri', rarity: 'rare', attack: 16, attackSpeed: 1.1, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#bb88dd', detailColor: '#9966bb', weaponColor: '#44ccff' },
   { id: 'leesin', name: 'Lee Sin', rarity: 'rare', attack: 22, attackSpeed: 0.9, range: 80, attackPattern: 'burst', burstCount: 2, bodyColor: '#cc8844', detailColor: '#aa6622', weaponColor: '#ffcc66' },
   { id: 'vayne', name: 'Vayne', rarity: 'epic', attack: 18, attackSpeed: 2.4, range: 150, attackPattern: 'single', bodyColor: '#442266', detailColor: '#331155', weaponColor: '#aa66dd' },
@@ -66,13 +67,70 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'malphite', name: 'Malphite', rarity: 'uncommon', attack: 10, attackSpeed: 0.6, range: 85, attackPattern: 'aoe_circle', aoeRadius: 50, slowFactor: 0.5, slowDuration: 2, bodyColor: '#556677', detailColor: '#334455', weaponColor: '#88aacc' },
   { id: 'ezreal', name: 'Ezreal', rarity: 'rare', attack: 17, attackSpeed: 1.3, range: 160, attackPattern: 'line', bodyColor: '#4488bb', detailColor: '#226699', weaponColor: '#66ccff' },
   { id: 'missfortune', name: 'Miss Fortune', rarity: 'epic', attack: 16, attackSpeed: 2.0, range: 150, attackPattern: 'rapid', bodyColor: '#cc3344', detailColor: '#aa1122', weaponColor: '#ff6677' },
+
+  // === BATCH 3: 50 NEW CHAMPIONS ===
+  // COMMON (10)
+  { id: 'sivir', name: 'Sivir', rarity: 'common', attack: 11, attackSpeed: 1.6, range: 130, attackPattern: 'single', bodyColor: '#8866aa', detailColor: '#664488', weaponColor: '#aaccee' },
+  { id: 'soraka', name: 'Soraka', rarity: 'common', attack: 6, attackSpeed: 1.3, range: 120, attackPattern: 'slow', slowFactor: 0.7, slowDuration: 2, bodyColor: '#66bb88', detailColor: '#449966', weaponColor: '#aaffcc' },
+  { id: 'warwick', name: 'Warwick', rarity: 'common', attack: 13, attackSpeed: 1.4, range: 80, attackPattern: 'single', bodyColor: '#556644', detailColor: '#334422', weaponColor: '#88aa66' },
+  { id: 'nasus', name: 'Nasus', rarity: 'common', attack: 14, attackSpeed: 0.7, range: 85, attackPattern: 'single', bodyColor: '#887744', detailColor: '#665522', weaponColor: '#bbaa66' },
+  { id: 'xinzhao', name: 'Xin Zhao', rarity: 'common', attack: 12, attackSpeed: 1.1, range: 90, attackPattern: 'single', bodyColor: '#4466aa', detailColor: '#224488', weaponColor: '#6688cc' },
+  { id: 'tristana', name: 'Tristana', rarity: 'common', attack: 9, attackSpeed: 2.0, range: 140, attackPattern: 'rapid', bodyColor: '#88aa44', detailColor: '#668822', weaponColor: '#bbcc66' },
+  { id: 'pantheon', name: 'Pantheon', rarity: 'common', attack: 15, attackSpeed: 0.8, range: 95, attackPattern: 'single', bodyColor: '#886644', detailColor: '#664422', weaponColor: '#ccaa88' },
+  { id: 'shen', name: 'Shen', rarity: 'common', attack: 10, attackSpeed: 1.0, range: 90, attackPattern: 'single', bodyColor: '#445566', detailColor: '#223344', weaponColor: '#6688aa' },
+  { id: 'udyr', name: 'Udyr', rarity: 'common', attack: 14, attackSpeed: 1.0, range: 80, attackPattern: 'burst', burstCount: 2, bodyColor: '#556644', detailColor: '#334422', weaponColor: '#88aa66' },
+  { id: 'yorick', name: 'Yorick', rarity: 'common', attack: 11, attackSpeed: 0.9, range: 85, attackPattern: 'single', bodyColor: '#556655', detailColor: '#334433', weaponColor: '#778877' },
+  // UNCOMMON (12)
+  { id: 'graves', name: 'Graves', rarity: 'uncommon', attack: 20, attackSpeed: 0.6, range: 100, attackPattern: 'aoe_circle', aoeRadius: 40, bodyColor: '#665544', detailColor: '#443322', weaponColor: '#998877' },
+  { id: 'nami', name: 'Nami', rarity: 'uncommon', attack: 8, attackSpeed: 1.0, range: 130, attackPattern: 'slow', slowFactor: 0.5, slowDuration: 2.5, bodyColor: '#4488bb', detailColor: '#226699', weaponColor: '#66ccee' },
+  { id: 'nautilus', name: 'Nautilus', rarity: 'uncommon', attack: 12, attackSpeed: 0.6, range: 90, attackPattern: 'slow', slowFactor: 0.4, slowDuration: 3, bodyColor: '#334466', detailColor: '#112244', weaponColor: '#5566aa' },
+  { id: 'renekton', name: 'Renekton', rarity: 'uncommon', attack: 18, attackSpeed: 0.8, range: 85, attackPattern: 'burst', burstCount: 2, bodyColor: '#448822', detailColor: '#226600', weaponColor: '#66aa44' },
+  { id: 'sejuani', name: 'Sejuani', rarity: 'uncommon', attack: 11, attackSpeed: 0.7, range: 100, attackPattern: 'aoe_circle', aoeRadius: 45, slowFactor: 0.5, slowDuration: 2, bodyColor: '#5577aa', detailColor: '#335588', weaponColor: '#88aacc' },
+  { id: 'varus', name: 'Varus', rarity: 'uncommon', attack: 16, attackSpeed: 1.2, range: 160, attackPattern: 'line', bodyColor: '#553366', detailColor: '#331144', weaponColor: '#8855aa' },
+  { id: 'wukong', name: 'Wukong', rarity: 'uncommon', attack: 16, attackSpeed: 0.9, range: 90, attackPattern: 'burst', burstCount: 2, bodyColor: '#886644', detailColor: '#664422', weaponColor: '#ccaa88' },
+  { id: 'ziggs', name: 'Ziggs', rarity: 'uncommon', attack: 14, attackSpeed: 0.8, range: 140, attackPattern: 'aoe_circle', aoeRadius: 50, bodyColor: '#ccaa22', detailColor: '#aa8800', weaponColor: '#ffdd44' },
+  { id: 'zyra', name: 'Zyra', rarity: 'uncommon', attack: 10, attackSpeed: 0.9, range: 130, attackPattern: 'slow', slowFactor: 0.5, slowDuration: 2, dotDamage: 5, dotDuration: 3, bodyColor: '#44aa44', detailColor: '#228822', weaponColor: '#66cc66' },
+  { id: 'diana', name: 'Diana', rarity: 'uncommon', attack: 17, attackSpeed: 0.9, range: 95, attackPattern: 'burst', burstCount: 2, bodyColor: '#6666aa', detailColor: '#444488', weaponColor: '#aabbee' },
+  { id: 'gangplank', name: 'Gangplank', rarity: 'uncommon', attack: 18, attackSpeed: 0.7, range: 110, attackPattern: 'aoe_circle', aoeRadius: 45, bodyColor: '#886644', detailColor: '#664422', weaponColor: '#ccaa88' },
+  { id: 'hecarim', name: 'Hecarim', rarity: 'uncommon', attack: 15, attackSpeed: 1.0, range: 95, attackPattern: 'single', bodyColor: '#556688', detailColor: '#334466', weaponColor: '#88aacc' },
+  // RARE (12)
+  { id: 'draven', name: 'Draven', rarity: 'rare', attack: 24, attackSpeed: 0.8, range: 130, attackPattern: 'single', bodyColor: '#aa4422', detailColor: '#882200', weaponColor: '#dd6644' },
+  { id: 'irelia', name: 'Irelia', rarity: 'rare', attack: 18, attackSpeed: 1.0, range: 110, attackPattern: 'burst', burstCount: 3, bodyColor: '#4466aa', detailColor: '#224488', weaponColor: '#66aaff' },
+  { id: 'jayce', name: 'Jayce', rarity: 'rare', attack: 20, attackSpeed: 0.9, range: 140, attackPattern: 'line', bodyColor: '#5577aa', detailColor: '#335588', weaponColor: '#88aacc' },
+  { id: 'lucian', name: 'Lucian', rarity: 'rare', attack: 14, attackSpeed: 2.0, range: 140, attackPattern: 'rapid', bodyColor: '#445544', detailColor: '#223322', weaponColor: '#88aa88' },
+  { id: 'nidalee', name: 'Nidalee', rarity: 'rare', attack: 22, attackSpeed: 0.7, range: 180, attackPattern: 'single', bodyColor: '#667744', detailColor: '#445522', weaponColor: '#99aa66' },
+  { id: 'orianna', name: 'Orianna', rarity: 'rare', attack: 14, attackSpeed: 1.0, range: 140, attackPattern: 'aoe_circle', aoeRadius: 50, bodyColor: '#666688', detailColor: '#444466', weaponColor: '#aaaacc' },
+  { id: 'talon', name: 'Talon', rarity: 'rare', attack: 20, attackSpeed: 1.1, range: 90, attackPattern: 'burst', burstCount: 3, bodyColor: '#554433', detailColor: '#332211', weaponColor: '#887766' },
+  { id: 'vi', name: 'Vi', rarity: 'rare', attack: 22, attackSpeed: 0.8, range: 90, attackPattern: 'burst', burstCount: 2, aoeRadius: 35, bodyColor: '#cc4488', detailColor: '#aa2266', weaponColor: '#ff66aa' },
+  { id: 'xerath', name: 'Xerath', rarity: 'rare', attack: 16, attackSpeed: 0.8, range: 200, attackPattern: 'line', bodyColor: '#4466cc', detailColor: '#2244aa', weaponColor: '#66aaff' },
+  { id: 'zilean', name: 'Zilean', rarity: 'rare', attack: 12, attackSpeed: 1.0, range: 150, attackPattern: 'aoe_circle', aoeRadius: 45, slowFactor: 0.4, slowDuration: 3, bodyColor: '#6666aa', detailColor: '#444488', weaponColor: '#aabbee' },
+  { id: 'ekko', name: 'Ekko', rarity: 'rare', attack: 18, attackSpeed: 1.2, range: 100, attackPattern: 'burst', burstCount: 3, bodyColor: '#448866', detailColor: '#226644', weaponColor: '#66cc88' },
+  { id: 'elise', name: 'Elise', rarity: 'rare', attack: 14, attackSpeed: 1.3, range: 120, attackPattern: 'poison', dotDamage: 8, dotDuration: 3, bodyColor: '#663355', detailColor: '#441133', weaponColor: '#aa5588' },
+  // EPIC (10)
+  { id: 'fiora', name: 'Fiora', rarity: 'epic', attack: 24, attackSpeed: 1.0, range: 90, attackPattern: 'burst', burstCount: 4, bodyColor: '#aa4466', detailColor: '#882244', weaponColor: '#ee6688' },
+  { id: 'jax', name: 'Jax', rarity: 'epic', attack: 22, attackSpeed: 1.1, range: 85, attackPattern: 'single', bodyColor: '#665588', detailColor: '#443366', weaponColor: '#aa88cc' },
+  { id: 'khazix', name: "Kha'Zix", rarity: 'epic', attack: 20, attackSpeed: 1.3, range: 95, attackPattern: 'poison', dotDamage: 8, dotDuration: 3, bodyColor: '#553388', detailColor: '#331166', weaponColor: '#8855cc' },
+  { id: 'leblanc', name: 'LeBlanc', rarity: 'epic', attack: 18, attackSpeed: 1.0, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#554466', detailColor: '#332244', weaponColor: '#aa88cc' },
+  { id: 'lulu', name: 'Lulu', rarity: 'epic', attack: 10, attackSpeed: 1.4, range: 140, attackPattern: 'slow', slowFactor: 0.3, slowDuration: 3, bodyColor: '#8844aa', detailColor: '#662288', weaponColor: '#cc88ee' },
+  { id: 'rengar', name: 'Rengar', rarity: 'epic', attack: 26, attackSpeed: 0.9, range: 85, attackPattern: 'burst', burstCount: 3, bodyColor: '#886644', detailColor: '#664422', weaponColor: '#ccaa88' },
+  { id: 'swain', name: 'Swain', rarity: 'epic', attack: 16, attackSpeed: 0.8, range: 130, attackPattern: 'aoe_circle', aoeRadius: 55, dotDamage: 6, dotDuration: 3, bodyColor: '#553333', detailColor: '#331111', weaponColor: '#884444' },
+  { id: 'syndra', name: 'Syndra', rarity: 'epic', attack: 22, attackSpeed: 0.7, range: 150, attackPattern: 'aoe_circle', aoeRadius: 55, bodyColor: '#553377', detailColor: '#331155', weaponColor: '#8855bb' },
+  { id: 'viktor', name: 'Viktor', rarity: 'epic', attack: 18, attackSpeed: 0.9, range: 160, attackPattern: 'line', bodyColor: '#666688', detailColor: '#444466', weaponColor: '#ffaa44' },
+  { id: 'vladimir', name: 'Vladimir', rarity: 'epic', attack: 16, attackSpeed: 0.8, range: 120, attackPattern: 'aoe_circle', aoeRadius: 45, dotDamage: 8, dotDuration: 3, bodyColor: '#aa2222', detailColor: '#880000', weaponColor: '#ff4444' },
+  // LEGENDARY (6)
+  { id: 'masteryi', name: 'Master Yi', rarity: 'legendary', attack: 30, attackSpeed: 1.5, range: 85, attackPattern: 'burst', burstCount: 5, bodyColor: '#4466aa', detailColor: '#224488', weaponColor: '#66ccff' },
+  { id: 'shaco', name: 'Shaco', rarity: 'legendary', attack: 22, attackSpeed: 1.8, range: 100, attackPattern: 'poison', dotDamage: 12, dotDuration: 4, bodyColor: '#884488', detailColor: '#662266', weaponColor: '#cc88cc' },
+  { id: 'tryndamere', name: 'Tryndamere', rarity: 'legendary', attack: 35, attackSpeed: 0.8, range: 90, attackPattern: 'burst', burstCount: 3, aoeRadius: 40, bodyColor: '#666688', detailColor: '#444466', weaponColor: '#aaccee' },
+  { id: 'veigar', name: 'Veigar', rarity: 'legendary', attack: 28, attackSpeed: 0.7, range: 160, attackPattern: 'aoe_circle', aoeRadius: 65, bodyColor: '#443366', detailColor: '#221144', weaponColor: '#8866cc' },
+  { id: 'evelynn', name: 'Evelynn', rarity: 'legendary', attack: 24, attackSpeed: 1.4, range: 100, attackPattern: 'poison', dotDamage: 14, dotDuration: 4, bodyColor: '#883388', detailColor: '#661166', weaponColor: '#cc66cc' },
+  { id: 'urgot', name: 'Urgot', rarity: 'legendary', attack: 20, attackSpeed: 1.0, range: 150, attackPattern: 'chain', chainCount: 5, dotDamage: 6, dotDuration: 2, bodyColor: '#558844', detailColor: '#336622', weaponColor: '#88cc66' },
 ];
 
 export function getCharacterStats(config: CharacterConfig, level: number) {
   return {
     attack: Math.floor(config.attack * (1 + (level - 1) * 0.3)),
     attackSpeed: config.attackSpeed * (1 + (level - 1) * 0.1),
-    range: config.range, // Range only scales via equipment & talents
+    range: config.range,
   };
 }
 
