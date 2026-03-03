@@ -296,6 +296,7 @@ const TowerDefenseGame: React.FC = () => {
         onSummon={handleSummon}
         onStartWave={handleStartWave}
         onToggleAutoWave={handleToggleAutoWave}
+        onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
       />
     </div>
   );

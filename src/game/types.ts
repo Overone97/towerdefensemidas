@@ -218,4 +218,5 @@ export interface GameState {
   waveEnemiesSpawned: number;
   waveEnemiesTotal: number;
   waveEnemiesKilledThisWave: number;
+  gameSpeed: number;
 }

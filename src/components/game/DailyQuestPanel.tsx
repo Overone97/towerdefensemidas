@@ -50,7 +50,7 @@ const DailyQuestPanel: React.FC<DailyQuestPanelProps> = ({ engine, onStateChange
           return (
             <div key={quest.id} className={`p-2 rounded-lg border ${quest.claimed ? 'border-green-500/30 bg-green-500/5' : quest.completed ? 'border-yellow-400/50 bg-yellow-400/10' : 'border-border'}`}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-mono">{quest.icon} {quest.description}</span>
+                <span className="text-xs font-mono text-gray-200">{quest.icon} {quest.description}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -65,7 +65,7 @@ const DailyQuestPanel: React.FC<DailyQuestPanelProps> = ({ engine, onStateChange
                 <span className="text-xs font-mono text-muted-foreground">{progress}/{quest.target}</span>
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-300">
                   +{quest.reward.stars}⭐ +{quest.reward.gold}💰
                 </span>
                 {quest.completed && !quest.claimed && (
