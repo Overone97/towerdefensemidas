@@ -191,9 +191,9 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {lastSummon && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 border-border animate-fade-in">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 border-amber-500/50 bg-amber-900/30 animate-fade-in">
                 <CharacterSprite config={lastSummon.config} size={20} owned />
-                <span className="text-sm font-bold">{lastSummon.config.name}</span>
+                <span className="text-sm font-bold text-amber-200">{lastSummon.config.name}</span>
               </div>
             )}
             <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/80</span>
