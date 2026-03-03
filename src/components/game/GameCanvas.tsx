@@ -15,8 +15,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
-  const [gameSpeed, setGameSpeed] = useState(1);
-  const gameSpeedRef = useRef(1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -70,7 +68,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = canvasToGame(e);
-    // Check if clicking on a placed unit
     for (const unit of engine.state.placedUnits) {
       const dx = x - unit.x;
       const dy = y - unit.y;
@@ -94,6 +91,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       const slotIdx = findNearestEmptySlot(x, y);
       if (slotIdx >= 0) {
         engine.moveUnit(dragRef.current.unitId, slotIdx);
+      } else if (y > CANVAS_HEIGHT - 50 || x < 10 || x > CANVAS_WIDTH - 10) {
+        // Drag out of bounds = remove unit
+        engine.removeUnit(dragRef.current.unitId);
       }
       dragRef.current = null;
       onStateChange();
@@ -102,10 +102,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   }, [engine, canvasToGame, findNearestEmptySlot, onStateChange]);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (dragRef.current) return; // drag handled by mouseUp
+    if (dragRef.current) return;
     const { x, y } = canvasToGame(e);
 
-    // Check fish click first
     if (fishState.visible && !fishState.caught) {
       const fdx = x - fishState.x;
       const fdy = y - fishState.y;
@@ -182,7 +181,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
       const rawDt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05);
       lastTimeRef.current = timestamp;
-      const dt = rawDt * gameSpeedRef.current;
+      const dt = rawDt * (engine.state.gameSpeed || 1);
 
       engine.update(dt);
 
@@ -221,10 +220,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   }, [engine, onStateChange]);
 
   const toggleSpeed = useCallback(() => {
-    const next = gameSpeed === 1 ? 2 : 1;
-    setGameSpeed(next);
-    gameSpeedRef.current = next;
-  }, [gameSpeed]);
+    const next = engine.state.gameSpeed === 1 ? 2 : 1;
+    engine.setGameSpeed(next);
+    onStateChange();
+  }, [engine, onStateChange]);
 
   const adjustScale = useCallback((delta: number) => {
     setScale(s => Math.max(0.5, Math.min(2, s + delta)));
@@ -257,13 +256,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         <button
           onClick={toggleSpeed}
           className={`px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
-            gameSpeed === 2
+            engine.state.gameSpeed === 2
               ? 'bg-yellow-500 text-black'
               : 'bg-muted/80 text-muted-foreground hover:bg-accent'
           }`}
-          title={gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
+          title={engine.state.gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
         >
-          {gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
+          {engine.state.gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
         </button>
       </div>
       <DamageStatsPanel engine={engine} />

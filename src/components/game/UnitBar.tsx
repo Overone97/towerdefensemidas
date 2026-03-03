@@ -38,9 +38,10 @@ interface UnitBarProps {
   onSummon: () => void;
   onStartWave: () => void;
   onToggleAutoWave: () => void;
+  onAutoDeploy: () => void;
 }
 
-const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave }) => {
+const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave, onAutoDeploy }) => {
   const [hoveredChar, setHoveredChar] = useState<number | null>(null);
   const canStartWave = !state.waveActive && !state.gameOver && !state.victory;
   const slotSelected = state.selectedSlotIndex !== null;
@@ -56,6 +57,15 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
               {slotSelected ? '👆 Select a unit to deploy' : '📍 Click a slot on the map first'}
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <Button
+                onClick={onAutoDeploy}
+                variant="outline"
+                size="sm"
+                className="shrink-0 text-white border-gray-500 hover:bg-gray-700"
+                disabled={unplacedCharacters.length === 0}
+              >
+                🤖 Auto
+              </Button>
               <Button
                 onClick={onToggleAutoWave}
                 variant="outline"
@@ -170,7 +180,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
           <div className="flex items-center gap-4">
             <Button
               onClick={onSummon}
-              disabled={state.gold < state.gachaCost || state.inventory.length >= 30}
+              disabled={state.gold < state.gachaCost || state.inventory.length >= 80}
               className="px-6 shrink-0"
             >
               🥚 Summon ({state.gachaCost}g)
@@ -186,7 +196,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                 <span className="text-sm font-bold">{lastSummon.config.name}</span>
               </div>
             )}
-            <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/30</span>
+            <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/80</span>
           </div>
         </div>
       )}

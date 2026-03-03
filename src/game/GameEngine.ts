@@ -11,7 +11,7 @@ import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
 import { getTalentBonus } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
-import { ALL_CHARACTERS, getCharacterUpgradeCost } from './data/characterData';
+import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
 import { getGachaCost } from './data/gachaData';
 import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
@@ -102,6 +102,7 @@ export class GameEngine {
       waveEnemiesKilledThisWave: 0,
       equipmentInventory: this.saveData.equipmentInventory || [],
       lastDrop: null,
+      gameSpeed: this.saveData.gameSpeed || 1,
     };
   }
 
@@ -524,14 +525,19 @@ export class GameEngine {
   }
 
   setMap(mapId: string): void {
+    // Save current deployments
+    this.saveDeployments();
     this.state.currentMapId = mapId;
     (this.saveData as any).currentMapId = mapId;
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
     this.restart();
+    // Restore deployments for new map
+    this.restoreDeployments(mapId);
   }
 
   startEndless(mapId: string): void {
+    this.saveDeployments();
     this.state.currentMapId = mapId;
     (this.saveData as any).currentMapId = mapId;
     const map = this.getMap();
@@ -540,6 +546,54 @@ export class GameEngine {
     this.state.endlessMode = true;
     this.state.totalWaves = Infinity;
     this.waveManager.endlessMode = true;
+    this.restoreDeployments(mapId);
+  }
+
+  private saveDeployments(): void {
+    const deployments = this.towerManager.units.map(u => ({
+      slotIndex: u.slotIndex,
+      instanceId: u.characterInstanceId,
+    }));
+    this.saveData.mapDeployments[this.state.currentMapId] = deployments;
+    this.persistSave();
+  }
+
+  private restoreDeployments(mapId: string): void {
+    const deployments = this.saveData.mapDeployments[mapId];
+    if (!deployments || deployments.length === 0) return;
+    for (const dep of deployments) {
+      const char = this.state.inventory.find(c => c.instanceId === dep.instanceId);
+      if (!char) continue;
+      const slot = this.state.slots[dep.slotIndex];
+      if (!slot || slot.unitId !== null) continue;
+      const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === dep.instanceId);
+      if (alreadyPlaced) continue;
+      const unit = this.towerManager.placeUnit(char.config, slot, dep.slotIndex, dep.instanceId, char.level, char.equipment);
+      slot.unitId = unit.id;
+    }
+  }
+
+  autoDeploy(): void {
+    const placedIds = new Set(this.towerManager.units.map(u => u.characterInstanceId));
+    const unplaced = this.state.inventory
+      .filter(c => !placedIds.has(c.instanceId))
+      .map(c => {
+        const stats = getCharacterStats(c.config, c.level);
+        return { char: c, dps: stats.attack * stats.attackSpeed };
+      })
+      .sort((a, b) => b.dps - a.dps);
+
+    for (const { char } of unplaced) {
+      const emptySlotIdx = this.state.slots.findIndex(s => s.unitId === null);
+      if (emptySlotIdx === -1) break;
+      this.placeUnit(emptySlotIdx, char.instanceId);
+    }
+  }
+
+  setGameSpeed(speed: number): void {
+    this.state.gameSpeed = speed;
+    this.saveData.gameSpeed = speed;
+    this.persistSave();
   }
 
   submitEndlessScore(): void {

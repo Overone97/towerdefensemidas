@@ -918,46 +918,54 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
 
 function drawBase(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
   const last = waypoints[waypoints.length - 1];
+  // Shift left if too close to edge
+  const bx = last.x >= 780 ? last.x - 30 : last.x;
+  const by = last.y;
 
-  // Stone platform
+  // Stone platform (larger)
   ctx.fillStyle = '#666666';
   ctx.beginPath();
-  ctx.ellipse(last.x, last.y + 8, 20, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(bx, by + 12, 36, 14, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#888888';
   ctx.beginPath();
-  ctx.ellipse(last.x, last.y + 6, 18, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(bx, by + 9, 32, 11, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Castle/tower base
+  // Castle/tower base (2x bigger)
   ctx.fillStyle = '#4477aa';
-  ctx.fillRect(last.x - 10, last.y - 16, 20, 22);
+  ctx.fillRect(bx - 20, by - 32, 40, 44);
   // Battlements
   ctx.fillStyle = '#5588bb';
-  ctx.fillRect(last.x - 12, last.y - 20, 6, 6);
-  ctx.fillRect(last.x - 2, last.y - 22, 4, 8);
-  ctx.fillRect(last.x + 6, last.y - 20, 6, 6);
+  ctx.fillRect(bx - 24, by - 40, 12, 12);
+  ctx.fillRect(bx - 4, by - 44, 8, 16);
+  ctx.fillRect(bx + 12, by - 40, 12, 12);
   // Door
   ctx.fillStyle = '#2a4a6a';
-  ctx.fillRect(last.x - 4, last.y - 2, 8, 8);
+  ctx.fillRect(bx - 8, by - 4, 16, 16);
+  // Windows
+  ctx.fillStyle = '#ffdd44';
+  ctx.fillRect(bx - 14, by - 22, 6, 6);
+  ctx.fillRect(bx + 8, by - 22, 6, 6);
   // Flag
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(last.x, last.y - 22);
-  ctx.lineTo(last.x, last.y - 32);
+  ctx.moveTo(bx, by - 44);
+  ctx.lineTo(bx, by - 62);
   ctx.stroke();
   ctx.fillStyle = '#ff4444';
   ctx.beginPath();
-  ctx.moveTo(last.x, last.y - 32);
-  ctx.lineTo(last.x + 8, last.y - 29);
-  ctx.lineTo(last.x, last.y - 26);
+  ctx.moveTo(bx, by - 62);
+  ctx.lineTo(bx + 14, by - 57);
+  ctx.lineTo(bx, by - 52);
   ctx.fill();
 
+  // Label
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 7px monospace';
+  ctx.font = 'bold 10px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('BASE', last.x, last.y + 20);
+  ctx.fillText('🏰 BASE', bx, by + 30);
 }
 
 // ── Pond & Fish Easter Egg ──

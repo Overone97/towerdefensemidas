@@ -28,7 +28,7 @@ export const ALL_MAPS: MapDef[] = [
       { x: 100, y: 320 },
       { x: 700, y: 320 },
       { x: 700, y: 440 },
-      { x: 800, y: 440 },
+      { x: 770, y: 440 },
     ],
     slots: [
       { x: 200, y: 130, unitId: null },
@@ -60,7 +60,7 @@ export const ALL_MAPS: MapDef[] = [
       { x: 550, y: 200 },
       { x: 700, y: 200 },
       { x: 700, y: 350 },
-      { x: 800, y: 350 },
+      { x: 770, y: 350 },
     ],
     slots: [
       { x: 80, y: 170, unitId: null },
@@ -91,7 +91,7 @@ export const ALL_MAPS: MapDef[] = [
       { x: 500, y: 250 },
       { x: 650, y: 250 },
       { x: 650, y: 420 },
-      { x: 800, y: 420 },
+      { x: 770, y: 420 },
     ],
     slots: [
       { x: 100, y: 340, unitId: null },
