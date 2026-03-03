@@ -3,6 +3,8 @@ import { GameEngine, fishState } from '../../game/GameEngine';
 import { renderGame } from './GameRenderer';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import DamageStatsPanel from './DamageStatsPanel';
+import EnemyInfoPanel from './EnemyInfoPanel';
+import { Enemy } from '../../game/types';
 
 interface GameCanvasProps {
   engine: GameEngine;
@@ -17,6 +19,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   const lastTimeRef = useRef<number>(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
 
   // Drag state for slot-to-slot
   const dragRef = useRef<{ unitId: number; startX: number; startY: number; curX: number; curY: number } | null>(null);
@@ -118,11 +121,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       }
     }
 
+    // Check enemy click
+    for (const enemy of engine.state.enemies) {
+      if (!enemy.alive) continue;
+      const dx = x - enemy.x;
+      const dy = y - enemy.y;
+      if (dx * dx + dy * dy < (enemy.size + 8) * (enemy.size + 8)) {
+        setSelectedEnemy(enemy);
+        engine.state.selectedSlotIndex = null;
+        engine.state.selectedUnitId = null;
+        onStateChange();
+        return;
+      }
+    }
+
     for (const unit of engine.state.placedUnits) {
       const dx = x - unit.x;
       const dy = y - unit.y;
       if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
         engine.selectPlacedUnit(unit.id);
+        setSelectedEnemy(null);
         onStateChange();
         return;
       }
@@ -135,6 +153,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       const dy = y - slot.y;
       if (dx * dx + dy * dy < 400) {
         engine.selectSlot(i);
+        setSelectedEnemy(null);
         onStateChange();
         return;
       }
@@ -142,6 +161,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
     engine.state.selectedSlotIndex = null;
     engine.state.selectedUnitId = null;
+    setSelectedEnemy(null);
     onStateChange();
   }, [engine, onStateChange, onFishCaught, canvasToGame]);
 
@@ -211,6 +231,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       }
 
       ctx.restore();
+
+      // Update selected enemy reference live
+      if (selectedEnemy) {
+        const liveEnemy = engine.state.enemies.find(e => e.id === selectedEnemy.id);
+        if (liveEnemy && liveEnemy.alive) {
+          setSelectedEnemy({ ...liveEnemy });
+        } else {
+          setSelectedEnemy(null);
+        }
+      }
+
       onStateChange();
       rafRef.current = requestAnimationFrame(gameLoop);
     };
@@ -266,6 +297,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         </button>
       </div>
       <DamageStatsPanel engine={engine} />
+      {selectedEnemy && (
+        <EnemyInfoPanel enemy={selectedEnemy} onClose={() => setSelectedEnemy(null)} />
+      )}
     </div>
   );
 };
