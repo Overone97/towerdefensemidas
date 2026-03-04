@@ -23,15 +23,51 @@ const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   boss: baronSprite,
 };
 
-const imageCache: Map<string, HTMLImageElement> = new Map();
+// Cache cleaned (background-removed) sprites
+const cleanedCache: Map<string, HTMLCanvasElement> = new Map();
+const loadingSet: Set<string> = new Set();
 
-function getOrLoadImage(src: string): HTMLImageElement | null {
-  const cached = imageCache.get(src);
-  if (cached) return cached.complete ? cached : null;
-  const img = new Image();
-  img.src = src;
-  imageCache.set(src, img);
-  return img.complete ? img : null;
+function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const ctx = c.getContext('2d')!;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  const d = data.data;
+  // Sample top-left pixel as background color
+  const bgR = d[0], bgG = d[1], bgB = d[2];
+  const threshold = 40;
+  for (let i = 0; i < d.length; i += 4) {
+    const dr = Math.abs(d[i] - bgR);
+    const dg = Math.abs(d[i + 1] - bgG);
+    const db = Math.abs(d[i + 2] - bgB);
+    if (dr < threshold && dg < threshold && db < threshold) {
+      d[i + 3] = 0;
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  return c;
+}
+
+function getOrLoadCleanedImage(src: string, key: string): HTMLCanvasElement | null {
+  const cached = cleanedCache.get(key);
+  if (cached) return cached;
+
+  if (!loadingSet.has(key)) {
+    loadingSet.add(key);
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      const cleaned = removeBackground(img);
+      cleanedCache.set(key, cleaned);
+      loadingSet.delete(key);
+    };
+    img.onerror = () => {
+      loadingSet.delete(key);
+    };
+  }
+  return null;
 }
 
 export function drawEnemySprite(
@@ -45,30 +81,25 @@ export function drawEnemySprite(
   strokeColor: string
 ): void {
   const spriteSrc = ENEMY_SPRITE_MAP[type];
-  const img = spriteSrc ? getOrLoadImage(spriteSrc) : null;
+  const img = spriteSrc ? getOrLoadCleanedImage(spriteSrc, type) : null;
 
   ctx.save();
   const bob = Math.sin(animFrame * 0.1) * 1.5;
   const cy = y + bob;
 
   if (img) {
-    // Draw PNG sprite with background removal
-    const drawSize = size * 2.2;
     const isBoss = type === 'boss';
     const isDragon = type.startsWith('dragon_');
     const scale = isBoss ? 3.0 : isDragon ? 2.6 : 2.2;
     const s = size * scale;
-
     ctx.drawImage(img, x - s / 2, cy - s / 2, s, s);
   } else {
-    // Fallback to procedural drawing
     drawFallbackSprite(ctx, type, x, cy, size, animFrame, bodyColor, strokeColor);
   }
 
   ctx.restore();
 }
 
-// Simple procedural fallback if images fail to load
 function drawFallbackSprite(
   ctx: CanvasRenderingContext2D,
   type: EnemyType,
@@ -84,7 +115,6 @@ function drawFallbackSprite(
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Eyes
   ctx.fillStyle = '#FFD700';
   ctx.beginPath();
   ctx.arc(x - size * 0.25, y - size * 0.15, size * 0.12, 0, Math.PI * 2);
@@ -95,5 +125,8 @@ function drawFallbackSprite(
 }
 
 export function preloadEnemySprites(): void {
-  Object.values(ENEMY_SPRITE_MAP).forEach(src => getOrLoadImage(src));
+  Object.entries(ENEMY_SPRITE_MAP).forEach(([key, src]) => getOrLoadCleanedImage(src, key));
 }
+
+// Preload on import
+preloadEnemySprites();

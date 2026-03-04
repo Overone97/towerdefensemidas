@@ -229,6 +229,24 @@ export class GameEngine {
       }
     }
 
+    // Auto-activate abilities when enemies are in range and cooldown is ready
+    const aliveEnemies = this.enemyManager.getAliveEnemies();
+    if (aliveEnemies.length > 0) {
+      for (const unit of this.towerManager.units) {
+        if (unit.abilityCooldown <= 0 && !unit.abilityActive) {
+          const stats = getCharacterStats(unit.config, unit.level);
+          const hasEnemyInRange = aliveEnemies.some(e => {
+            const dx = e.x - unit.x;
+            const dy = e.y - unit.y;
+            return Math.sqrt(dx * dx + dy * dy) <= stats.range * 1.5;
+          });
+          if (hasEnemyInRange) {
+            this.activateAbility(unit.id);
+          }
+        }
+      }
+    }
+
     // Unit aura particles (subtle effect for all units)
     for (const unit of this.towerManager.units) {
       if (unit.abilityActive && Math.random() < 0.2) {
@@ -404,7 +422,11 @@ export class GameEngine {
     const elapsed = this.waveStartTime > 0 ? (performance.now() - this.waveStartTime) / 1000 : 1;
     const stats: { unitId: number; instanceId: number; config: any; totalDamage: number; waveDamage: number; dps: number }[] = [];
     for (const unit of this.towerManager.units) {
-      const tracker = this.damageTracker.get(unit.id) || { totalDamage: 0, waveDamage: 0 };
+      // Ensure every placed unit has a tracker entry
+      if (!this.damageTracker.has(unit.id)) {
+        this.damageTracker.set(unit.id, { totalDamage: 0, waveDamage: 0 });
+      }
+      const tracker = this.damageTracker.get(unit.id)!;
       stats.push({
         unitId: unit.id,
         instanceId: unit.characterInstanceId,
