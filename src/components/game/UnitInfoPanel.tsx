@@ -28,8 +28,8 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
 };
 
 const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority, onActivateAbility }) => {
-  const stats = getCharacterStats(unit.config, unit.level);
-  const nextStats = getCharacterStats(unit.config, unit.level + 1);
+  const stats = getCharacterStats(unit.config, unit.level, unit.stars);
+  const nextStats = getCharacterStats(unit.config, unit.level + 1, unit.stars);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
   const canUpgrade = gold >= upgradeCost;
   const dps = (stats.attack * stats.attackSpeed).toFixed(1);

@@ -15,6 +15,7 @@ import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './da
 import { getGachaCost } from './data/gachaData';
 import { TALENTS } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
+import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
 import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
@@ -234,7 +235,7 @@ export class GameEngine {
     if (aliveEnemies.length > 0) {
       for (const unit of this.towerManager.units) {
         if (unit.abilityCooldown <= 0 && !unit.abilityActive) {
-          const stats = getCharacterStats(unit.config, unit.level);
+          const stats = getCharacterStats(unit.config, unit.level, unit.stars);
           const hasEnemyInRange = aliveEnemies.some(e => {
             const dx = e.x - unit.x;
             const dy = e.y - unit.y;
@@ -341,8 +342,8 @@ export class GameEngine {
     const cost = this.state.gachaCost;
     if (this.state.gold < cost) return null;
 
-    const ownedIds = new Set(this.state.inventory.map(c => c.config.id));
-    const available = ALL_CHARACTERS.filter(c => !ownedIds.has(c.id) && c.id !== 'fizz');
+    // Allow duplicates for merging - only exclude fizz
+    const available = ALL_CHARACTERS.filter(c => c.id !== 'fizz');
     if (available.length === 0) return null;
 
     this.state.gold -= cost;
@@ -351,17 +352,69 @@ export class GameEngine {
     const talentBonus = getTalentBonus(this.saveData.talents);
     this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount);
 
-    // Random pick from all available characters (no rarity filtering)
+    // Random pick from all available characters
     const config = available[Math.floor(Math.random() * available.length)];
     const character: OwnedCharacter = {
       instanceId: nextInstanceId++,
       config,
       level: 1,
       equipment: {},
+      stars: 1,
     };
     this.state.inventory.push(character);
     this.persistSave();
     return character;
+  }
+
+  /** Merge 3 same-champion units at same star level → next star level */
+  mergeCharacters(configId: string, starLevel: number): OwnedCharacter | null {
+    // Find 3 unplaced copies of same champ at same star level
+    const placedIds = new Set(this.towerManager.units.map(u => u.characterInstanceId));
+    const candidates = this.state.inventory.filter(
+      c => c.config.id === configId && c.stars === starLevel && !placedIds.has(c.instanceId)
+    );
+    if (candidates.length < 3 || starLevel >= 3) return null;
+
+    // Keep the first, remove the other two
+    const kept = candidates[0];
+    const toRemove = [candidates[1], candidates[2]];
+    
+    // Transfer best level
+    const maxLevel = Math.max(kept.level, ...toRemove.map(c => c.level));
+    kept.level = maxLevel;
+    kept.stars = starLevel + 1;
+
+    // Remove sacrificed units from inventory
+    for (const rem of toRemove) {
+      const idx = this.state.inventory.findIndex(c => c.instanceId === rem.instanceId);
+      if (idx !== -1) {
+        // Return equipment to inventory
+        for (const slot of ['weapon', 'armor', 'accessory'] as const) {
+          if (rem.equipment[slot]) {
+            this.state.equipmentInventory.push(rem.equipment[slot]!);
+          }
+        }
+        this.state.inventory.splice(idx, 1);
+      }
+    }
+
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.persistSave();
+    return kept;
+  }
+
+  /** Get mergeable groups: configId → { starLevel → count } */
+  getMergeableGroups(): Map<string, Map<number, number>> {
+    const placedIds = new Set(this.towerManager.units.map(u => u.characterInstanceId));
+    const groups = new Map<string, Map<number, number>>();
+    for (const c of this.state.inventory) {
+      if (placedIds.has(c.instanceId)) continue;
+      if (c.stars >= 3) continue;
+      if (!groups.has(c.config.id)) groups.set(c.config.id, new Map());
+      const starMap = groups.get(c.config.id)!;
+      starMap.set(c.stars, (starMap.get(c.stars) || 0) + 1);
+    }
+    return groups;
   }
 
   placeUnit(slotIndex: number, characterInstanceId: number): boolean {
@@ -374,7 +427,7 @@ export class GameEngine {
     const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
     if (alreadyPlaced) return false;
 
-    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment);
+    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment, character.stars);
     slot.unitId = unit.id;
     soundManager.playPlaceUnit();
     this.trackDailyEvent({ type: 'place_units', count: 1 });
@@ -590,7 +643,7 @@ export class GameEngine {
       if (!slot || slot.unitId !== null) continue;
       const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === dep.instanceId);
       if (alreadyPlaced) continue;
-      const unit = this.towerManager.placeUnit(char.config, slot, dep.slotIndex, dep.instanceId, char.level, char.equipment);
+      const unit = this.towerManager.placeUnit(char.config, slot, dep.slotIndex, dep.instanceId, char.level, char.equipment, char.stars);
       slot.unitId = unit.id;
     }
   }
@@ -600,7 +653,7 @@ export class GameEngine {
     const unplaced = this.state.inventory
       .filter(c => !placedIds.has(c.instanceId))
       .map(c => {
-        const stats = getCharacterStats(c.config, c.level);
+        const stats = getCharacterStats(c.config, c.level, c.stars);
         return { char: c, dps: stats.attack * stats.attackSpeed };
       })
       .sort((a, b) => b.dps - a.dps);
@@ -673,6 +726,7 @@ export class GameEngine {
       config: fizz,
       level: 1,
       equipment: {},
+      stars: 1,
     };
     this.state.inventory.push(character);
     this.persistSave();
@@ -789,6 +843,69 @@ export class GameEngine {
 
   clearLastDrop(): void {
     this.state.lastDrop = null;
+  }
+
+  /** Craft a composite equipment from 2 base items */
+  craftEquipment(recipeId: string): EquipmentItem | null {
+    const recipe = COMPOSITE_RECIPES.find(r => r.id === recipeId);
+    if (!recipe) return null;
+    
+    const inv = [...this.state.equipmentInventory];
+    for (const ingredient of recipe.ingredients) {
+      const idx = inv.indexOf(ingredient);
+      if (idx === -1) return null;
+      inv.splice(idx, 1);
+    }
+    
+    // Remove ingredients from inventory
+    this.state.equipmentInventory = inv;
+    // Add crafted item
+    this.state.equipmentInventory.push(recipe.result.id);
+    this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.persistSave();
+    return recipe.result;
+  }
+
+  getAvailableRecipes() {
+    return findAvailableRecipes(this.state.equipmentInventory);
+  }
+
+  /** Prestige: reset progress for permanent bonuses */
+  canPrestige(): boolean {
+    return this.saveData.stats.maxWaveReached >= 20 && !this.state.waveActive;
+  }
+
+  getPrestigeLevel(): number {
+    return this.saveData.prestige || 0;
+  }
+
+  getPrestigeBonus(): number {
+    return 1 + (this.saveData.prestige || 0) * 0.1;
+  }
+
+  prestige(): boolean {
+    if (!this.canPrestige()) return false;
+    
+    this.saveData.prestige = (this.saveData.prestige || 0) + 1;
+    // Keep: stars, talents, equipment, achievements, prestige count
+    // Reset: inventory, maps completed, stats
+    this.saveData.inventory = [];
+    this.saveData.mapsCompleted = [];
+    this.saveData.mapDeployments = {};
+    this.saveData.totalSummons = 0;
+    this.saveData.stats = {
+      totalKills: 0, totalGold: 0, bossKills: 0,
+      perfectMaps: 0, maxWaveReached: 0, fishCaught: this.saveData.stats.fishCaught,
+    };
+    this.persistSave();
+    
+    // Full restart
+    this.state = this.createInitialState();
+    this.enemyManager.clear();
+    this.towerManager.clear();
+    this.particleManager.clear();
+    this.waveManager = new WaveManager();
+    return true;
   }
 
   trackDailyEvent(event: DailyQuestEvent): void {

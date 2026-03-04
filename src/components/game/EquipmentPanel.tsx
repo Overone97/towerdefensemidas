@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { OwnedCharacter } from '../../game/types';
 import { ALL_EQUIPMENT, EquipmentItem, EquipmentSlotType } from '../../game/data/equipmentData';
+import { CompositeRecipe } from '../../game/data/compositeEquipmentData';
 import { RARITY_COLORS, RARITY_LABELS } from '../../game/data/characterData';
 import CharacterSprite from './CharacterSprite';
 import { Button } from '../ui/button';
@@ -13,6 +14,8 @@ interface EquipmentPanelProps {
   onEquip: (characterInstanceId: number, equipmentId: string) => void;
   onUnequip: (characterInstanceId: number, slot: EquipmentSlotType) => void;
   onSummonEquipment: () => void;
+  onCraft?: (recipeId: string) => void;
+  availableRecipes?: { recipe: CompositeRecipe; canCraft: boolean }[];
   onBack: () => void;
 }
 
@@ -22,14 +25,27 @@ const SLOT_ICONS: Record<EquipmentSlotType, string> = {
   accessory: '💍',
 };
 
-const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInventory, stars, gachaCost, onEquip, onUnequip, onSummonEquipment, onBack }) => {
+const STAR_DISPLAY = ['', '★', '★★', '★★★'];
+
+const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInventory, stars, gachaCost, onEquip, onUnequip, onSummonEquipment, onCraft, availableRecipes, onBack }) => {
   const [selectedChar, setSelectedChar] = useState<number | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotType | null>(null);
+  const [showCraft, setShowCraft] = useState(false);
 
   const char = selectedChar !== null ? inventory.find(c => c.instanceId === selectedChar) : null;
 
+  // Merge ALL_EQUIPMENT with composite items for lookup
+  const allItems = [...ALL_EQUIPMENT];
+  if (availableRecipes) {
+    for (const { recipe } of availableRecipes) {
+      if (!allItems.find(e => e.id === recipe.result.id)) {
+        allItems.push(recipe.result);
+      }
+    }
+  }
+
   const availableItems = equipmentInventory
-    .map(id => ALL_EQUIPMENT.find(e => e.id === id))
+    .map(id => allItems.find(e => e.id === id))
     .filter(Boolean) as EquipmentItem[];
 
   const filteredItems = selectedSlot
@@ -41,14 +57,18 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-bold">🎒 Equipment</h2>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onSummonEquipment}
-            disabled={stars < gachaCost}
-          >
+          <Button variant="default" size="sm" onClick={onSummonEquipment} disabled={stars < gachaCost}>
             🎲 Summon ({gachaCost} ⭐)
           </Button>
+          {onCraft && (
+            <Button
+              variant={showCraft ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowCraft(!showCraft)}
+            >
+              🔨 Craft
+            </Button>
+          )}
           <span className="text-xs text-muted-foreground font-mono">⭐ {stars}</span>
         </div>
         <Button variant="outline" size="sm" onClick={onBack}>← Back</Button>
@@ -63,14 +83,17 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
             return (
               <button
                 key={c.instanceId}
-                onClick={() => { setSelectedChar(c.instanceId); setSelectedSlot(null); }}
+                onClick={() => { setSelectedChar(c.instanceId); setSelectedSlot(null); setShowCraft(false); }}
                 className={`w-full flex items-center gap-2 px-2 py-2 rounded text-sm transition-colors ${
                   selectedChar === c.instanceId ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
                 }`}
               >
                 <CharacterSprite config={c.config} size={24} owned />
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-xs">{c.config.name}</div>
+                  <div className="font-semibold text-xs">
+                    {c.config.name}
+                    {c.stars > 1 && <span className={`ml-1 ${c.stars === 3 ? 'text-amber-400' : 'text-cyan-400'}`}>{STAR_DISPLAY[c.stars]}</span>}
+                  </div>
                   <div className="text-[10px]" style={{ color: RARITY_COLORS[c.config.rarity] }}>
                     {RARITY_LABELS[c.config.rarity]} Lv.{c.level}
                   </div>
@@ -83,14 +106,61 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
           })}
         </div>
 
-        {/* Equipment details */}
+        {/* Equipment details or Craft panel */}
         <div className="flex-1 p-4 overflow-y-auto">
-          {char ? (
+          {showCraft && availableRecipes ? (
+            <div>
+              <h3 className="text-lg font-bold text-foreground mb-4">🔨 Craft Composite Items</h3>
+              <p className="text-xs text-muted-foreground mb-4">Combine 2 base items to create powerful composite equipment!</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {availableRecipes.map(({ recipe, canCraft }) => (
+                  <div
+                    key={recipe.id}
+                    className={`border rounded-lg p-4 transition-all ${
+                      canCraft ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{recipe.icon}</span>
+                      <div>
+                        <div className="font-bold text-sm" style={{ color: RARITY_COLORS[recipe.result.rarity] }}>
+                          {recipe.result.name}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{recipe.result.description}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                      {recipe.ingredients.map((ing, i) => {
+                        const item = ALL_EQUIPMENT.find(e => e.id === ing);
+                        const hasItem = equipmentInventory.includes(ing);
+                        return (
+                          <React.Fragment key={i}>
+                            <span className={hasItem ? 'text-green-400' : 'text-destructive'}>
+                              {item?.icon} {item?.name || ing}
+                            </span>
+                            {i < recipe.ingredients.length - 1 && <span>+</span>}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                    {canCraft && (
+                      <Button size="sm" onClick={() => onCraft?.(recipe.id)} className="w-full">
+                        🔨 Craft!
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : char ? (
             <>
               <div className="flex items-center gap-3 mb-4">
                 <CharacterSprite config={char.config} size={40} owned />
                 <div>
-                  <h3 className="font-bold text-foreground">{char.config.name}</h3>
+                  <h3 className="font-bold text-foreground">
+                    {char.config.name}
+                    {char.stars > 1 && <span className={`ml-1 ${char.stars === 3 ? 'text-amber-400' : 'text-cyan-400'}`}>{STAR_DISPLAY[char.stars]}</span>}
+                  </h3>
                   <span className="text-xs" style={{ color: RARITY_COLORS[char.config.rarity] }}>
                     {RARITY_LABELS[char.config.rarity]} Lv.{char.level}
                   </span>
@@ -101,7 +171,7 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {(['weapon', 'armor', 'accessory'] as EquipmentSlotType[]).map(slot => {
                   const eqId = char.equipment[slot];
-                  const item = eqId ? ALL_EQUIPMENT.find(e => e.id === eqId) : null;
+                  const item = eqId ? allItems.find(e => e.id === eqId) : null;
                   const isSelected = selectedSlot === slot;
 
                   return (
@@ -142,7 +212,7 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
                     Available {selectedSlot}s ({filteredItems.length})
                   </h4>
                   {filteredItems.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No {selectedSlot}s available. Kill bosses to get drops!</p>
+                    <p className="text-xs text-muted-foreground">No {selectedSlot}s available. Kill bosses or craft items!</p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       {filteredItems.map((item, idx) => (
@@ -170,7 +240,7 @@ const EquipmentPanel: React.FC<EquipmentPanelProps> = ({ inventory, equipmentInv
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              Select a character to manage equipment
+              Select a character to manage equipment, or click 🔨 Craft to combine items
             </div>
           )}
         </div>

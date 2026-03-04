@@ -126,10 +126,17 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'urgot', name: 'Urgot', rarity: 'legendary', attack: 20, attackSpeed: 1.0, range: 150, attackPattern: 'chain', chainCount: 5, dotDamage: 6, dotDuration: 2, bodyColor: '#558844', detailColor: '#336622', weaponColor: '#88cc66' },
 ];
 
-export function getCharacterStats(config: CharacterConfig, level: number) {
+export function getStarMultiplier(stars: number): number {
+  if (stars === 3) return 2.5;
+  if (stars === 2) return 1.5;
+  return 1;
+}
+
+export function getCharacterStats(config: CharacterConfig, level: number, stars: number = 1) {
+  const starMult = getStarMultiplier(stars);
   return {
-    attack: Math.floor(config.attack * (1 + (level - 1) * 0.3)),
-    attackSpeed: config.attackSpeed * (1 + (level - 1) * 0.1),
+    attack: Math.floor(config.attack * (1 + (level - 1) * 0.3) * starMult),
+    attackSpeed: config.attackSpeed * (1 + (level - 1) * 0.1) * (1 + (starMult - 1) * 0.3),
     range: config.range,
   };
 }
