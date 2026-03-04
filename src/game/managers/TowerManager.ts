@@ -43,7 +43,7 @@ export class TowerManager {
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
 
-  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems): PlacedUnit {
+  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems, stars: number = 1): PlacedUnit {
     const isRoamer = config.attackPattern === 'poison_trail' || config.attackPattern === 'mushroom';
     const unit: PlacedUnit = {
       id: nextUnitId++,
@@ -53,6 +53,7 @@ export class TowerManager {
       x: slot.x,
       y: slot.y,
       level,
+      stars,
       attackCooldown: 0,
       targetId: null,
       targetPriority: 'closest',
@@ -83,7 +84,7 @@ export class TowerManager {
   }
 
   private getEffectiveStats(unit: PlacedUnit) {
-    const base = getCharacterStats(unit.config, unit.level);
+    const base = getCharacterStats(unit.config, unit.level, unit.stars);
     const syn = this.synergyBonuses.get(unit.id);
     
     // Equipment bonuses

@@ -10,7 +10,8 @@ export function drawCharacterSprite(
   size: number,
   animFrame: number,
   isAttacking: boolean,
-  attackAnimTimer: number
+  attackAnimTimer: number,
+  stars: number = 1
 ): void {
   ctx.save();
   const bob = Math.sin(animFrame * 0.08) * 1.5;
@@ -20,6 +21,23 @@ export function drawCharacterSprite(
   const rarityColor = RARITY_COLORS[config.rarity];
   ctx.shadowColor = rarityColor;
   ctx.shadowBlur = config.rarity === 'legendary' ? 12 : config.rarity === 'epic' ? 8 : 4;
+
+  // Star-based glow effect
+  if (stars >= 2) {
+    const glowColor = stars === 3 ? '#ffaa00' : '#44ccff';
+    const glowSize = stars === 3 ? 20 : 14;
+    const pulse = 1 + Math.sin(animFrame * 0.05) * 0.15;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = glowSize * pulse;
+    
+    // Draw glow circle underneath
+    ctx.globalAlpha = 0.15 + Math.sin(animFrame * 0.04) * 0.05;
+    ctx.fillStyle = glowColor;
+    ctx.beginPath();
+    ctx.arc(x, cy, size * (stars === 3 ? 1.2 : 1.0), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 
   // All characters use LoL sprite renderer
   if (hasLolSprite(config.id)) {
@@ -38,11 +56,24 @@ export function drawCharacterSprite(
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
 
+    // Draw star indicators above the unit
+    if (stars >= 2) {
+      const starY = cy - size - 6;
+      ctx.font = `${stars === 3 ? 9 : 8}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = stars === 3 ? '#ffcc00' : '#66ddff';
+      ctx.shadowColor = stars === 3 ? '#ff8800' : '#0088ff';
+      ctx.shadowBlur = 6;
+      const starText = stars === 3 ? '★★★' : '★★';
+      ctx.fillText(starText, x, starY);
+      ctx.shadowBlur = 0;
+    }
+
     ctx.restore();
     return;
   }
 
-  // Fallback: simple colored square (should not happen with full roster)
+  // Fallback: simple colored square
   ctx.fillStyle = config.bodyColor;
   ctx.fillRect(x - hs, cy - hs, size, size);
 

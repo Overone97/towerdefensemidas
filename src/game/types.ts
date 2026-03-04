@@ -106,6 +106,7 @@ export interface OwnedCharacter {
   config: CharacterConfig;
   level: number;
   equipment: EquippedItems;
+  stars: number; // 1★ → 2★ → 3★ merge evolution
 }
 
 export interface PlacedUnit {
@@ -116,6 +117,7 @@ export interface PlacedUnit {
   x: number;
   y: number;
   level: number;
+  stars: number;
   attackCooldown: number;
   targetId: number | null;
   targetPriority: TargetPriority;

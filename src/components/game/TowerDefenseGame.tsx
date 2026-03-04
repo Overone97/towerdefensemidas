@@ -18,6 +18,7 @@ import EquipmentPanel from './EquipmentPanel';
 import EquipmentDropToast from './EquipmentDropToast';
 import DailyQuestPanel from './DailyQuestPanel';
 import TeamSidebar from './TeamSidebar';
+import TutorialOverlay from './TutorialOverlay';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
@@ -158,6 +159,35 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleMerge = useCallback((configId: string, starLevel: number) => {
+    const result = engine.mergeCharacters(configId, starLevel);
+    if (result) {
+      setRevealChar(result);
+    }
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handleCraft = useCallback((recipeId: string) => {
+    const result = engine.craftEquipment(recipeId);
+    if (result) {
+      setDropToast(result.id);
+    }
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handlePrestige = useCallback(() => {
+    if (engine.prestige()) {
+      setLastSummon(null);
+      onStateChange();
+    }
+  }, [engine, onStateChange]);
+
+  const handleTutorialComplete = useCallback(() => {
+    const sd = engine.getSaveData();
+    sd.tutorialCompleted = true;
+    onStateChange();
+  }, [engine, onStateChange]);
+
   // Poll for equipment drops
   const [dropToast, setDropToast] = useState<string | null>(null);
   useEffect(() => {
@@ -169,6 +199,7 @@ const TowerDefenseGame: React.FC = () => {
     }, 300);
     return () => clearInterval(interval);
   }, [engine, state]);
+
   if (screen === 'talents') {
     return (
       <TalentTree
@@ -222,6 +253,8 @@ const TowerDefenseGame: React.FC = () => {
         onEquip={handleEquip}
         onUnequip={handleUnequip}
         onSummonEquipment={handleSummonEquipment}
+        onCraft={handleCraft}
+        availableRecipes={engine.getAvailableRecipes()}
         onBack={() => setScreen('game')}
       />
     );
@@ -234,9 +267,22 @@ const TowerDefenseGame: React.FC = () => {
   const placedInstanceIds = new Set(state.placedUnits.map(u => u.characterInstanceId));
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
+  const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0;
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <HUD state={state} onSetTab={handleSetTab} onOpenTalents={() => setScreen('talents')} onOpenMaps={() => setScreen('maps')} onOpenWiki={() => setScreen('wiki')} onOpenAchievements={() => setScreen('achievements')} onOpenEquipment={() => setScreen('equipment')} />
+      <HUD
+        state={state}
+        onSetTab={handleSetTab}
+        onOpenTalents={() => setScreen('talents')}
+        onOpenMaps={() => setScreen('maps')}
+        onOpenWiki={() => setScreen('wiki')}
+        onOpenAchievements={() => setScreen('achievements')}
+        onOpenEquipment={() => setScreen('equipment')}
+        prestigeLevel={engine.getPrestigeLevel()}
+        canPrestige={engine.canPrestige()}
+        onPrestige={handlePrestige}
+      />
       <div className="flex-1 flex items-center justify-center relative p-4 overflow-auto">
         <div className="z-10 shrink-0">
           <TeamSidebar
@@ -297,7 +343,12 @@ const TowerDefenseGame: React.FC = () => {
         onStartWave={handleStartWave}
         onToggleAutoWave={handleToggleAutoWave}
         onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
+        onMerge={handleMerge}
+        mergeableGroups={engine.getMergeableGroups()}
       />
+      {showTutorial && (
+        <TutorialOverlay onComplete={handleTutorialComplete} />
+      )}
     </div>
   );
 };

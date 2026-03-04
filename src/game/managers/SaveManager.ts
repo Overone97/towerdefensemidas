@@ -11,7 +11,7 @@ export interface LeaderboardEntry {
 }
 
 export interface SaveData {
-  inventory: { configId: string; level: number; equipment?: EquippedItems }[];
+  inventory: { configId: string; level: number; equipment?: EquippedItems; stars?: number }[];
   equipmentInventory: string[];
   totalSummons: number;
   talents: Record<string, number>;
@@ -23,6 +23,8 @@ export interface SaveData {
   endlessLeaderboard: LeaderboardEntry[];
   mapDeployments: Record<string, { slotIndex: number; instanceId: number }[]>;
   gameSpeed: number;
+  prestige: number;
+  tutorialCompleted: boolean;
   stats: {
     totalKills: number;
     totalGold: number;
@@ -47,6 +49,8 @@ function defaultSave(): SaveData {
     endlessLeaderboard: [],
     mapDeployments: {},
     gameSpeed: 1,
+    prestige: 0,
+    tutorialCompleted: false,
     stats: {
       totalKills: 0,
       totalGold: 0,
@@ -89,11 +93,11 @@ export function saveDataToInventory(data: SaveData): OwnedCharacter[] {
     .map(item => {
       const config = ALL_CHARACTERS.find(c => c.id === item.configId);
       if (!config) return null;
-      return { instanceId: id++, config, level: item.level, equipment: item.equipment || {} } as OwnedCharacter;
+      return { instanceId: id++, config, level: item.level, equipment: item.equipment || {}, stars: item.stars || 1 } as OwnedCharacter;
     })
     .filter(Boolean) as OwnedCharacter[];
 }
 
-export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number; equipment?: EquippedItems }[] {
-  return inventory.map(c => ({ configId: c.config.id, level: c.level, equipment: c.equipment }));
+export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number; equipment?: EquippedItems; stars?: number }[] {
+  return inventory.map(c => ({ configId: c.config.id, level: c.level, equipment: c.equipment, stars: c.stars }));
 }

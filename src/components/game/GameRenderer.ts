@@ -727,7 +727,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
   const now = performance.now() / 1000;
 
   for (const unit of units) {
-    const stats = getCharacterStats(unit.config, unit.level);
+    const stats = getCharacterStats(unit.config, unit.level, unit.stars);
     const isSelected = selectedId === unit.id;
 
     // ── Range circle (enhanced) ──
@@ -864,7 +864,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       }
     }
 
-    drawCharacterSprite(ctx, unit.config, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer);
+    drawCharacterSprite(ctx, unit.config, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer, unit.stars);
 
     // Selection indicator (subtle glow instead of box)
     if (isSelected) {

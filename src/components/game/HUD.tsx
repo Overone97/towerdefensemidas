@@ -2,7 +2,7 @@ import React from 'react';
 import { GameState } from '../../game/types';
 import { soundManager } from '../../game/audio/SoundManager';
 
-interface HUDProps {
+export interface HUDProps {
   state: GameState;
   onSetTab: (tab: 'game' | 'gacha') => void;
   onOpenTalents: () => void;
@@ -10,9 +10,12 @@ interface HUDProps {
   onOpenWiki: () => void;
   onOpenAchievements: () => void;
   onOpenEquipment: () => void;
+  prestigeLevel?: number;
+  canPrestige?: boolean;
+  onPrestige?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, prestigeLevel = 0, canPrestige = false, onPrestige }) => {
   const waveProgress = state.waveActive && state.waveEnemiesTotal > 0
     ? (state.waveEnemiesKilledThisWave / state.waveEnemiesTotal) * 100
     : 0;
@@ -35,6 +38,12 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
               {state.endlessMode ? `Wave ${state.currentWave} ♾️` : `${state.currentWave} / ${state.totalWaves}`}
             </span>
           </div>
+          {prestigeLevel > 0 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-900/30 border border-amber-500/40">
+              <span className="text-amber-400 text-xs font-bold">🏅 P{prestigeLevel}</span>
+              <span className="text-[10px] text-amber-300/70">×{(1 + prestigeLevel * 0.1).toFixed(1)}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
@@ -88,6 +97,14 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
           >
             🎒
           </button>
+          {canPrestige && (
+            <button
+              onClick={onPrestige}
+              className="px-3 py-1 rounded text-sm font-bold transition-colors bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 animate-pulse"
+            >
+              🏅 Prestige
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

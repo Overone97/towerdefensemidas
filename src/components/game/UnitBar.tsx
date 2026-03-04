@@ -14,6 +14,8 @@ const RARITY_ORDER: Record<string, number> = {
   legendary: 5, epic: 4, rare: 3, uncommon: 2, common: 1,
 };
 
+const STAR_DISPLAY = ['', '★', '★★', '★★★'];
+
 type SortMode = 'dps' | 'rarity' | 'name';
 
 interface UnitBarProps {
@@ -25,9 +27,11 @@ interface UnitBarProps {
   onStartWave: () => void;
   onToggleAutoWave: () => void;
   onAutoDeploy: () => void;
+  onMerge?: (configId: string, starLevel: number) => void;
+  mergeableGroups?: Map<string, Map<number, number>>;
 }
 
-const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave, onAutoDeploy }) => {
+const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon, onPlaceUnit, onSummon, onStartWave, onToggleAutoWave, onAutoDeploy, onMerge, mergeableGroups }) => {
   const [hoveredChar, setHoveredChar] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('dps');
   const [collapsed, setCollapsed] = useState(false);
@@ -40,8 +44,8 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
     switch (sortMode) {
       case 'dps':
         return chars.sort((a, b) => {
-          const sa = getCharacterStats(a.config, a.level);
-          const sb = getCharacterStats(b.config, b.level);
+          const sa = getCharacterStats(a.config, a.level, a.stars);
+          const sb = getCharacterStats(b.config, b.level, b.stars);
           return (sb.attack * sb.attackSpeed) - (sa.attack * sa.attackSpeed);
         });
       case 'rarity':
@@ -52,6 +56,23 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
         return chars;
     }
   }, [unplacedCharacters, sortMode]);
+
+  // Find mergeable champions
+  const mergeButtons = useMemo(() => {
+    if (!mergeableGroups) return [];
+    const buttons: { configId: string; name: string; starLevel: number }[] = [];
+    for (const [configId, starMap] of mergeableGroups) {
+      for (const [starLevel, count] of starMap) {
+        if (count >= 3) {
+          const char = unplacedCharacters.find(c => c.config.id === configId);
+          if (char) {
+            buttons.push({ configId, name: char.config.name, starLevel });
+          }
+        }
+      }
+    }
+    return buttons;
+  }, [mergeableGroups, unplacedCharacters]);
 
   return (
     <div className="px-4 py-2 bg-card border-t border-border">
@@ -83,6 +104,16 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                   ))}
                 </div>
               )}
+              {/* Merge buttons */}
+              {mergeButtons.map(mb => (
+                <button
+                  key={`${mb.configId}-${mb.starLevel}`}
+                  onClick={() => onMerge?.(mb.configId, mb.starLevel)}
+                  className="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-600 text-white hover:bg-amber-500 animate-pulse transition-colors"
+                >
+                  ⬆ Merge {mb.name} {STAR_DISPLAY[mb.starLevel]}→{STAR_DISPLAY[mb.starLevel + 1]}
+                </button>
+              ))}
               <span className="text-xs text-muted-foreground font-mono">
                 {slotSelected ? '👆 Select unit' : '📍 Click slot first'}
               </span>
@@ -116,14 +147,18 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                   </span>
                 ) : (
                   sortedChars.map(char => {
-                    const stats = getCharacterStats(char.config, char.level);
+                    const stats = getCharacterStats(char.config, char.level, char.stars);
                     const dps = (stats.attack * stats.attackSpeed).toFixed(0);
                     const isHovered = hoveredChar === char.instanceId;
-                    const rarityColor = char.config.rarity === 'legendary' ? 'border-amber-500/60' 
+                    const starColor = char.stars === 3 ? 'border-amber-400 bg-amber-950/30' 
+                      : char.stars === 2 ? 'border-cyan-400 bg-cyan-950/20' : '';
+                    const rarityColor = starColor || (
+                      char.config.rarity === 'legendary' ? 'border-amber-500/60' 
                       : char.config.rarity === 'epic' ? 'border-purple-500/60'
                       : char.config.rarity === 'rare' ? 'border-blue-500/60'
                       : char.config.rarity === 'uncommon' ? 'border-green-500/60'
-                      : 'border-border';
+                      : 'border-border'
+                    );
 
                     return (
                       <div key={char.instanceId} className="relative">
@@ -142,7 +177,14 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                         >
                           <CharacterSprite config={char.config} size={24} owned />
                           <div className="flex flex-col items-start leading-none">
-                            <span className="text-[10px] font-mono font-semibold text-foreground">{char.config.name}</span>
+                            <span className="text-[10px] font-mono font-semibold text-foreground">
+                              {char.config.name}
+                              {char.stars > 1 && (
+                                <span className={`ml-0.5 ${char.stars === 3 ? 'text-amber-400' : 'text-cyan-400'}`}>
+                                  {STAR_DISPLAY[char.stars]}
+                                </span>
+                              )}
+                            </span>
                             <span className="text-[9px] font-mono text-muted-foreground">
                               Lv.{char.level} {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {dps}dps
                             </span>
@@ -152,7 +194,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                         {isHovered && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 pointer-events-none">
                             <div className="bg-popover border border-border rounded-lg shadow-lg p-2 min-w-[140px]">
-                              <div className="font-bold text-xs text-foreground">{char.config.name}</div>
+                              <div className="font-bold text-xs text-foreground">{char.config.name} {STAR_DISPLAY[char.stars]}</div>
                               <div className="space-y-0.5 text-[10px] font-mono mt-1">
                                 <div className="flex justify-between"><span className="text-muted-foreground">ATK</span><span>{stats.attack}</span></div>
                                 <div className="flex justify-between"><span className="text-muted-foreground">SPD</span><span>{stats.attackSpeed.toFixed(1)}/s</span></div>
@@ -178,7 +220,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
           <div className="flex items-center gap-4">
             <Button
               onClick={onSummon}
-              disabled={state.gold < state.gachaCost || state.inventory.length >= 80}
+              disabled={state.gold < state.gachaCost}
               className="px-6 shrink-0"
             >
               🥚 Summon ({state.gachaCost}g)
