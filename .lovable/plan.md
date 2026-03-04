@@ -1,93 +1,61 @@
 
 
-# Plan: 7 ameliorations majeures
+# Suggestions d'ameliorations pour le Tower Defense
 
-## 1. Sauvegarde des positions par map + auto-deploy
+Voici les axes d'amelioration les plus impactants pour le jeu, classes par priorite :
 
-**Probleme** : Quand on change de map, les positions des unites sont perdues.
+---
 
-**Solution** :
-- `SaveManager.ts` : Ajouter `mapDeployments: Record<string, { slotIndex: number; instanceId: number }[]>` dans `SaveData`
-- `GameEngine.ts` : Dans `setMap()` et `startEndless()`, sauvegarder les positions actuelles dans `saveData.mapDeployments[currentMapId]` avant de changer. Au chargement d'une map, restaurer les positions depuis `mapDeployments[newMapId]` si elles existent
-- Ajouter une methode `autoDeploy()` qui place automatiquement les unites les plus fortes sur les slots disponibles (tri par DPS decroissant)
-- Bouton "Auto Deploy" dans `UnitBar.tsx`
+## 1. Systeme de fusion / evolution de champions (Merge)
+Fusionner 3 copies du meme champion pour creer une version etoilee (1★ → 2★ → 3★) avec des stats multipliees. C'est le systeme classique des auto-battlers (TFT, Auto Chess).
 
-## 2. Conserver le x2 entre les ecrans
+- Ajouter un champ `stars` (1-3) a `OwnedCharacter`
+- Bouton "Merge" dans l'inventaire quand 3 copies existent
+- Stats x1.5 a 2★, x2.5 a 3★, sprite avec effet lumineux
 
-**Probleme** : Le composant `GameCanvas` est remonte quand on change d'ecran (talents, maps...), ce qui reinitialise le state local `gameSpeed`.
+## 2. Equipements LoL iconiques (items composites)
+Permettre de combiner 2 equipements de base pour creer un item legendaire (comme dans TFT : BF Sword + Recurve Bow = Guinsoo).
 
-**Solution** :
-- `GameEngine.ts` : Ajouter `gameSpeed: number` au state du moteur (pas au composant)
-- `GameCanvas.tsx` : Lire `engine.state.gameSpeed` au lieu du state local. Le `toggleSpeed` modifie `engine.state.gameSpeed`
-- Ajouter `gameSpeed` a `GameState` dans `types.ts`
+- Ajouter une table de recettes dans `equipmentData.ts`
+- UI de craft dans `EquipmentPanel`
+- ~15 items composites avec effets speciaux (Infinity Edge: +crit, Warmog: regen HP base, etc.)
 
-## 3. Contraste quetes (noir sur bleu fonce)
+## 3. Mode multijoueur PvP asynchrone
+Les joueurs envoient des vagues personnalisees aux autres. Classement ELO.
 
-**Probleme** : Dans `DailyQuestPanel.tsx`, les textes utilisent `text-xs font-mono` sans couleur explicite, ce qui donne du texte sombre sur fond sombre.
+- Table backend `pvp_challenges` avec la composition d'equipe
+- Systeme de "fantome" : jouer contre la compo d'un autre joueur
+- Leaderboard ELO
 
-**Solution** :
-- `DailyQuestPanel.tsx` : Ajouter `text-white` ou `text-gray-200` aux descriptions de quetes et aux labels de recompenses pour garantir la lisibilite
+## 4. Evenements saisonniers / boss raids
+Boss temporaires avec des recompenses exclusives (skins, equipements uniques).
 
-## 4. Chateau visible a la fin du parcours
+- Systeme d'evenements avec dates dans la base de donnees
+- Boss raid avec barre de vie partagee entre tous les joueurs
+- Recompenses exclusives limitees dans le temps
 
-**Probleme** : Le chateau (drawBase) est dessine au dernier waypoint, souvent a x=800 (bord droit), donc a moitie hors ecran.
+## 5. Amelioration visuelle - effets de particules et animations
+Ajouter des effets visuels pour les attaques, les critiques, les sorts, et les synergies actives.
 
-**Solution** :
-- `GameRenderer.ts` dans `drawBase()` : Decaler le chateau de 20-30px vers la gauche si le dernier waypoint est a x >= 780. Agrandir le chateau (x2 la taille actuelle) pour le rendre plus visible. Ajouter un label "🏰" plus grand
-- Modifier les waypoints dans `allMaps.ts` pour que le dernier point soit a x=770 au lieu de x=800
+- Particules de feu/glace/poison plus elaborees
+- Animation de critique (flash + nombre plus gros)
+- Aura visuelle pour les synergies actives sur les champions
 
-## 5. Carte plein ecran + UI flottante
+## 6. Systeme de prestige / New Game+
+Apres avoir termine les 100 vagues, debloquer un mode "Prestige" qui reset la progression mais donne des bonus permanents multiplicatifs.
 
-**Probleme** : La carte ne prend pas toute la fenetre, et le zoom affecte l'interface.
+- Compteur de prestiges dans SaveData
+- Bonus permanents (x1.1 ATK par prestige, etc.)
+- Nouveaux talents debloques au prestige
 
-**Solution** :
-- `GameCanvas.tsx` : Le canvas doit remplir tout l'espace disponible via CSS (`width: 100%; height: 100%; object-fit: cover`). Supprimer le `transform: scale()` du wrapper. A la place, calculer le scale pour que le canvas remplisse le conteneur et appliquer le scale uniquement sur l'element `<canvas>` via CSS
-- `TowerDefenseGame.tsx` : Le conteneur principal du jeu utilise `relative w-full h-full`. La `UnitBar` et le `HUD` deviennent `fixed` ou `absolute` par-dessus le canvas
-- Les boutons zoom (+/-/x2) et le DPS panel restent en `absolute` sur le canvas
-- `UnitBar.tsx` : Ajouter un bouton pour replier/deplier le panneau de personnages pour ne pas encombrer la vue
+## 7. Tutoriel interactif pour les nouveaux joueurs
+Guide pas-a-pas qui explique le summon, le placement, les vagues, les synergies.
 
-## 6. Drag & drop bidirectionnel (retirer des unites)
+- Overlay transparent avec fleches pointant les elements
+- Progression en 5-6 etapes
+- Se declenche automatiquement au premier lancement
 
-**Probleme** : On ne peut pas retirer un personnage deploye par drag & drop (seulement via le bouton "Remove").
+---
 
-**Solution** :
-- `GameCanvas.tsx` : Quand on drag un unite placee et qu'on la relache hors d'un slot (pas pres d'un slot vide), retirer l'unite du terrain et la remettre dans l'inventaire. Modifier `handleMouseUp` pour appeler `engine.removeUnit()` si `findNearestEmptySlot` retourne -1 et que la position de drop est hors de la zone de slots
-- Aussi supporter le drop vers le bas (zone UnitBar) comme signal de retrait : si `curY > CANVAS_HEIGHT - 40`, retirer l'unite
-- `UnitBar.tsx` : Ajouter une zone de drop visuelle "Drop ici pour retirer" quand un drag est en cours sur le canvas
-
-## 7. Ajouter 50 champions LoL supplementaires
-
-**Fichiers** :
-- Generer 50 sprites PNG 64x64 dans `src/assets/sprites/`
-- `lolSprites.ts` : 50 imports + entrees SPRITE_MAP
-- `characterData.ts` : 50 nouvelles entrees dans ALL_CHARACTERS avec stats equilibrees
-- `synergyData.ts` : Ajouter les elements pour les 50 nouveaux champions + nouvelles synergies de paire
-
-Champions proposes (50) :
-Draven, Fiora, Graves, Irelia, Jax, Jayce, Kha'Zix, LeBlanc, Lucian, Lulu, Master Yi, Nami, Nasus, Nautilus, Nidalee, Orianna, Pantheon, Renekton, Rengar, Sejuani, Shaco, Shen, Sivir, Soraka, Swain, Syndra, Talon, Tristana, Tryndamere, Udyr, Urgot, Varus, Veigar, Vi, Viktor, Vladimir, Warwick, Wukong, Xerath, Xin Zhao, Yorick, Ziggs, Zilean, Zyra, Diana, Ekko, Elise, Evelynn, Gangplank, Hecarim
-
-Repartition :
-- Common (10) : Sivir, Soraka, Warwick, Nasus, Xin Zhao, Tristana, Pantheon, Shen, Udyr, Yorick
-- Uncommon (12) : Graves, Nami, Nautilus, Renekton, Sejuani, Varus, Wukong, Ziggs, Zyra, Diana, Gangplank, Hecarim
-- Rare (12) : Draven, Irelia, Jayce, Lucian, Nidalee, Orianna, Talon, Vi, Xerath, Zilean, Ekko, Elise
-- Epic (10) : Fiora, Jax, Kha'Zix, LeBlanc, Lulu, Rengar, Swain, Syndra, Viktor, Vladimir
-- Legendary (6) : Master Yi, Shaco, Tryndamere, Veigar, Evelynn, Urgot
-
-## Fichiers modifies/crees
-
-| Fichier | Action |
-|---|---|
-| 50x `src/assets/sprites/*.png` | Nouveaux sprites |
-| `src/game/rendering/lolSprites.ts` | 50 imports + SPRITE_MAP |
-| `src/game/data/characterData.ts` | 50 champions |
-| `src/game/data/synergyData.ts` | Elements + synergies pour 50 nouveaux |
-| `src/game/managers/SaveManager.ts` | `mapDeployments` dans SaveData |
-| `src/game/types.ts` | `gameSpeed` dans GameState |
-| `src/game/GameEngine.ts` | Sauvegarde positions, autoDeploy, gameSpeed persistant |
-| `src/components/game/GameCanvas.tsx` | Canvas plein ecran, drag-out pour retirer, gameSpeed depuis engine |
-| `src/components/game/TowerDefenseGame.tsx` | Layout plein ecran, UI flottante |
-| `src/components/game/UnitBar.tsx` | Bouton autoDeploy, zone drop retrait, repliable |
-| `src/components/game/DailyQuestPanel.tsx` | Contraste texte |
-| `src/components/game/GameRenderer.ts` | Chateau plus grand et visible |
-| `src/game/data/allMaps.ts` | Dernier waypoint a x=770 |
+**Recommandation** : Les ameliorations 1 (Merge/Evolution) et 5 (Effets visuels) auraient le plus grand impact sur l'engagement joueur avec un effort raisonnable. Le systeme de fusion ajoute une couche strategique majeure, et les effets visuels rendent le jeu beaucoup plus satisfaisant.
 
