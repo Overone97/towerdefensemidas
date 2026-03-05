@@ -270,21 +270,33 @@ const TowerDefenseGame: React.FC = () => {
   const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0;
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <HUD
-        state={state}
-        onSetTab={handleSetTab}
-        onOpenTalents={() => setScreen('talents')}
-        onOpenMaps={() => setScreen('maps')}
-        onOpenWiki={() => setScreen('wiki')}
-        onOpenAchievements={() => setScreen('achievements')}
-        onOpenEquipment={() => setScreen('equipment')}
-        prestigeLevel={engine.getPrestigeLevel()}
-        canPrestige={engine.canPrestige()}
-        onPrestige={handlePrestige}
-      />
-      <div className="flex-1 flex items-center justify-center relative p-4 overflow-auto">
-        <div className="z-10 shrink-0">
+    <div className="relative w-screen h-screen overflow-hidden bg-black">
+      {/* Canvas fills entire background */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
+      </div>
+
+      {/* Floating HUD - top */}
+      <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
+        <div className="pointer-events-auto">
+          <HUD
+            state={state}
+            onSetTab={handleSetTab}
+            onOpenTalents={() => setScreen('talents')}
+            onOpenMaps={() => setScreen('maps')}
+            onOpenWiki={() => setScreen('wiki')}
+            onOpenAchievements={() => setScreen('achievements')}
+            onOpenEquipment={() => setScreen('equipment')}
+            prestigeLevel={engine.getPrestigeLevel()}
+            canPrestige={engine.canPrestige()}
+            onPrestige={handlePrestige}
+          />
+        </div>
+      </div>
+
+      {/* Floating Team Sidebar - left */}
+      {state.placedUnits.length > 0 && (
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
           <TeamSidebar
             placedUnits={state.placedUnits}
             selectedUnitId={state.selectedUnitId}
@@ -292,13 +304,18 @@ const TowerDefenseGame: React.FC = () => {
             onActivateAbility={handleActivateAbility}
           />
         </div>
-        <div className="flex flex-col items-start">
-          <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
-        </div>
-        {state.activeSynergies.length > 0 && (
+      )}
+
+      {/* Floating Synergy Panel - right */}
+      {state.activeSynergies.length > 0 && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
           <SynergyPanel synergies={state.activeSynergies} />
-        )}
-        {selectedUnit && (
+        </div>
+      )}
+
+      {/* Floating Unit Info Panel */}
+      {selectedUnit && (
+        <div className="absolute right-2 bottom-24 z-30 pointer-events-auto">
           <UnitInfoPanel
             unit={selectedUnit}
             gold={state.gold}
@@ -307,8 +324,30 @@ const TowerDefenseGame: React.FC = () => {
             onSetPriority={handleSetPriority}
             onActivateAbility={handleActivateAbility}
           />
-        )}
-        {(state.gameOver || state.victory) && (
+        </div>
+      )}
+
+      {/* Floating UnitBar - bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+        <div className="pointer-events-auto">
+          <UnitBar
+            state={state}
+            unplacedCharacters={unplacedCharacters}
+            lastSummon={lastSummon}
+            onPlaceUnit={handlePlaceUnit}
+            onSummon={handleSummon}
+            onStartWave={handleStartWave}
+            onToggleAutoWave={handleToggleAutoWave}
+            onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
+            onMerge={handleMerge}
+            mergeableGroups={engine.getMergeableGroups()}
+          />
+        </div>
+      </div>
+
+      {/* Game Over / Victory overlay */}
+      {(state.gameOver || state.victory) && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-auto">
           <GameOverScreen
             victory={state.victory}
             score={state.score}
@@ -319,11 +358,17 @@ const TowerDefenseGame: React.FC = () => {
             mapId={state.currentMapId}
             onRestart={handleRestart}
           />
-        )}
-        {revealChar && (
+        </div>
+      )}
+
+      {/* Gacha reveal */}
+      {revealChar && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto">
           <GachaReveal character={revealChar} onComplete={handleRevealComplete} />
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Toasts */}
       {dropToast && (
         <EquipmentDropToast equipmentId={dropToast} onDone={() => setDropToast(null)} />
       )}
@@ -333,19 +378,9 @@ const TowerDefenseGame: React.FC = () => {
           onDone={() => setAchievementQueue(prev => prev.slice(1))}
         />
       )}
+
       <DailyQuestPanel engine={engine} onStateChange={onStateChange} />
-      <UnitBar
-        state={state}
-        unplacedCharacters={unplacedCharacters}
-        lastSummon={lastSummon}
-        onPlaceUnit={handlePlaceUnit}
-        onSummon={handleSummon}
-        onStartWave={handleStartWave}
-        onToggleAutoWave={handleToggleAutoWave}
-        onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
-        onMerge={handleMerge}
-        mergeableGroups={engine.getMergeableGroups()}
-      />
+
       {showTutorial && (
         <TutorialOverlay onComplete={handleTutorialComplete} />
       )}
