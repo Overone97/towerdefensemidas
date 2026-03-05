@@ -75,7 +75,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
   }, [mergeableGroups, unplacedCharacters]);
 
   return (
-    <div className="px-4 py-2 bg-card border-t border-border">
+    <div className="px-4 py-2 bg-card/90 backdrop-blur-sm border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
       {isGameTab ? (
         <div className="flex flex-col gap-1.5">
           {/* Action row */}

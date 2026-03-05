@@ -21,119 +21,95 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
     : 0;
 
   return (
-    <div className="flex flex-col bg-card border-b border-border">
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col bg-card/90 backdrop-blur-sm border-b border-border/50 shadow-lg">
+      <div className="flex items-center justify-between px-4 py-1.5">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <span className="text-yellow-400 font-bold">💰</span>
-            <span className="text-foreground font-mono font-bold">{state.gold}</span>
+            <span className="text-yellow-400 font-bold text-sm">💰</span>
+            <span className="text-foreground font-mono font-bold text-sm">{state.gold}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-yellow-400">⭐</span>
-            <span className="text-foreground font-mono">{state.stars}</span>
+            <span className="text-yellow-400 text-sm">⭐</span>
+            <span className="text-foreground font-mono text-sm">{state.stars}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-blue-400 font-bold">🌊</span>
-            <span className="text-foreground font-mono">
-              {state.endlessMode ? `Wave ${state.currentWave} ♾️` : `${state.currentWave} / ${state.totalWaves}`}
+            <span className="text-blue-400 font-bold text-sm">🌊</span>
+            <span className="text-foreground font-mono text-sm">
+              {state.endlessMode ? `W${state.currentWave} ♾️` : `${state.currentWave}/${state.totalWaves}`}
             </span>
           </div>
           {prestigeLevel > 0 && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-900/30 border border-amber-500/40">
-              <span className="text-amber-400 text-xs font-bold">🏅 P{prestigeLevel}</span>
-              <span className="text-[10px] text-amber-300/70">×{(1 + prestigeLevel * 0.1).toFixed(1)}</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-900/30 border border-amber-500/40">
+              <span className="text-amber-400 text-[10px] font-bold">🏅P{prestigeLevel}</span>
+              <span className="text-[9px] text-amber-300/70">×{(1 + prestigeLevel * 0.1).toFixed(1)}</span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onSetTab('game')}
-            className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
-              state.activeTab === 'game'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
-            }`}
-          >
-            Deploy
-          </button>
-          <button
-            onClick={() => onSetTab('gacha')}
-            className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
-              state.activeTab === 'gacha'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
-            }`}
-          >
-            Summon
-          </button>
-          <button
-            onClick={onOpenTalents}
-            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-          >
-            Talents
-          </button>
-          <button
-            onClick={onOpenMaps}
-            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-          >
-            Maps
-          </button>
-          <button
-            onClick={onOpenWiki}
-            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-          >
-            📖 Wiki
-          </button>
-          <button
-            onClick={onOpenAchievements}
-            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-          >
-            🏆
-          </button>
-          <button
-            onClick={onOpenEquipment}
-            className="px-3 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-          >
-            🎒
-          </button>
+          {[
+            { key: 'game', label: 'Deploy', active: state.activeTab === 'game', onClick: () => onSetTab('game') },
+            { key: 'gacha', label: 'Summon', active: state.activeTab === 'gacha', onClick: () => onSetTab('gacha') },
+          ].map(btn => (
+            <button
+              key={btn.key}
+              onClick={btn.onClick}
+              className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                btn.active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/70 text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              {btn.label}
+            </button>
+          ))}
+          {[
+            { label: 'Talents', onClick: onOpenTalents },
+            { label: 'Maps', onClick: onOpenMaps },
+            { label: '📖', onClick: onOpenWiki },
+            { label: '🏆', onClick: onOpenAchievements },
+            { label: '🎒', onClick: onOpenEquipment },
+          ].map(btn => (
+            <button
+              key={btn.label}
+              onClick={btn.onClick}
+              className="px-2.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
+            >
+              {btn.label}
+            </button>
+          ))}
           {canPrestige && (
             <button
               onClick={onPrestige}
-              className="px-3 py-1 rounded text-sm font-bold transition-colors bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 animate-pulse"
+              className="px-2.5 py-1 rounded text-xs font-bold transition-colors bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 animate-pulse"
             >
               🏅 Prestige
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => { soundManager.toggleMute(); }}
-            className="px-2 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-            title={soundManager.muted ? 'Unmute' : 'Mute'}
+            className="px-1.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
           >
             {soundManager.muted ? '🔇' : '🔊'}
           </button>
           <button
             onClick={() => {
               soundManager.toggleMusic();
-              if (!soundManager.musicMuted) {
-                soundManager.startMusic();
-              } else {
-                soundManager.stopMusic();
-              }
+              if (!soundManager.musicMuted) soundManager.startMusic();
+              else soundManager.stopMusic();
             }}
-            className="px-2 py-1 rounded text-sm font-mono transition-colors bg-muted text-muted-foreground hover:bg-accent"
-            title={soundManager.musicMuted ? 'Music On' : 'Music Off'}
+            className="px-1.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
           >
             {soundManager.musicMuted ? '🎵' : '🎶'}
           </button>
-          <span className="text-red-400 font-bold">❤️</span>
-          <span className="text-foreground font-mono font-bold">
-            {state.baseHp} / {state.maxBaseHp}
+          <span className="text-red-400 font-bold text-sm">❤️</span>
+          <span className="text-foreground font-mono font-bold text-sm">
+            {state.baseHp}/{state.maxBaseHp}
           </span>
-          <div className="w-24 h-2 bg-muted rounded-full overflow-hidden ml-1">
+          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-destructive transition-all"
               style={{ width: `${(state.baseHp / state.maxBaseHp) * 100}%` }}
@@ -142,14 +118,13 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         </div>
       </div>
 
-      {/* Wave progress bar */}
       {state.waveActive && (
-        <div className="px-4 pb-1.5">
+        <div className="px-4 pb-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+            <span className="text-[10px] text-muted-foreground font-mono">
               ⚔️ {state.waveEnemiesKilledThisWave}/{state.waveEnemiesTotal}
             </span>
-            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
@@ -158,9 +133,6 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
                 }}
               />
             </div>
-            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-              {state.waveEnemiesSpawned}/{state.waveEnemiesTotal} spawned
-            </span>
           </div>
         </div>
       )}

@@ -14,7 +14,7 @@ const TeamSidebar: React.FC<TeamSidebarProps> = ({ placedUnits, selectedUnitId, 
   if (placedUnits.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1 mr-2 max-h-[500px] overflow-y-auto shrink-0">
+    <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto bg-card/80 backdrop-blur-sm rounded-lg border border-border/50 p-1 shadow-lg">
       {placedUnits.map(unit => {
         const isSelected = unit.id === selectedUnitId;
         const ability = ABILITIES[unit.config.attackPattern];
@@ -23,24 +23,24 @@ const TeamSidebar: React.FC<TeamSidebarProps> = ({ placedUnits, selectedUnitId, 
         return (
           <div
             key={unit.id}
-            className={`relative flex flex-col items-center p-1.5 rounded-lg border-2 cursor-pointer transition-all w-16 ${
+            className={`relative flex flex-col items-center p-1 rounded-lg border cursor-pointer transition-all w-14 ${
               isSelected
                 ? 'border-primary bg-primary/20 scale-105'
-                : 'border-border bg-card/80 hover:bg-accent/50'
+                : 'border-border/50 hover:bg-accent/50'
             }`}
             onClick={() => onSelectUnit(unit.id)}
           >
-            <CharacterSprite config={unit.config} size={32} owned />
-            <span className="text-[9px] font-mono font-bold text-foreground leading-tight mt-0.5 truncate w-full text-center">
+            <CharacterSprite config={unit.config} size={28} owned />
+            <span className="text-[8px] font-mono font-bold text-foreground leading-tight mt-0.5 truncate w-full text-center">
               {unit.config.name}
             </span>
-            <span className="text-[8px] font-mono text-muted-foreground">Lv.{unit.level}</span>
+            <span className="text-[7px] font-mono text-muted-foreground">Lv.{unit.level}</span>
 
             {ability && (
               <button
                 onClick={(e) => { e.stopPropagation(); onActivateAbility(unit.id); }}
                 disabled={onCooldown}
-                className={`w-full mt-0.5 px-1 py-0.5 rounded text-[8px] font-bold transition-colors ${
+                className={`w-full mt-0.5 px-1 py-0.5 rounded text-[7px] font-bold transition-colors ${
                   onCooldown
                     ? 'bg-muted text-muted-foreground'
                     : unit.abilityActive

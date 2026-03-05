@@ -21,19 +21,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   const [scale, setScale] = useState(1);
   const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
 
-  // Drag state for slot-to-slot
   const dragRef = useRef<{ unitId: number; startX: number; startY: number; curX: number; curY: number } | null>(null);
 
-  // Auto-scale based on container
+  // Fill entire viewport
   useEffect(() => {
     const updateScale = () => {
-      if (!wrapperRef.current) return;
-      const parent = wrapperRef.current.parentElement;
-      if (!parent) return;
-      const maxW = parent.clientWidth - 16;
-      const maxH = parent.clientHeight - 16;
-      const s = Math.min(maxW / CANVAS_WIDTH, maxH / CANVAS_HEIGHT, 1.5);
-      setScale(Math.max(0.5, s));
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const s = Math.max(vw / CANVAS_WIDTH, vh / CANVAS_HEIGHT);
+      setScale(s);
     };
     updateScale();
     window.addEventListener('resize', updateScale);
@@ -95,7 +91,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       if (slotIdx >= 0) {
         engine.moveUnit(dragRef.current.unitId, slotIdx);
       } else if (y > CANVAS_HEIGHT - 50 || x < 10 || x > CANVAS_WIDTH - 10) {
-        // Drag out of bounds = remove unit
         engine.removeUnit(dragRef.current.unitId);
       }
       dragRef.current = null;
@@ -121,7 +116,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       }
     }
 
-    // Check enemy click
     for (const enemy of engine.state.enemies) {
       if (!enemy.alive) continue;
       const dx = x - enemy.x;
@@ -165,7 +159,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     onStateChange();
   }, [engine, onStateChange, onFishCaught, canvasToGame]);
 
-  // HTML5 drop from inventory
   const handleDragOver = useCallback((e: React.DragEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -213,7 +206,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       engine.particleManager.render(ctx);
       engine.floatingTextManager.render(ctx);
 
-      // Draw drag ghost
       if (dragRef.current) {
         const unit = engine.state.placedUnits.find(u => u.id === dragRef.current!.unitId);
         if (unit) {
@@ -232,7 +224,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
 
       ctx.restore();
 
-      // Update selected enemy reference live
       if (selectedEnemy) {
         const liveEnemy = engine.state.enemies.find(e => e.id === selectedEnemy.id);
         if (liveEnemy && liveEnemy.alive) {
@@ -256,12 +247,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     onStateChange();
   }, [engine, onStateChange]);
 
-  const adjustScale = useCallback((delta: number) => {
-    setScale(s => Math.max(0.5, Math.min(2, s + delta)));
-  }, []);
-
   return (
-    <div ref={wrapperRef} className="relative inline-block" style={{ transform: `scale(${scale})`, transformOrigin: 'center top' }}>
+    <div ref={wrapperRef} className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
@@ -272,18 +259,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         onMouseUp={handleMouseUp}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className="border border-border rounded-lg cursor-pointer"
+        className="cursor-pointer"
         style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
       />
-      <div className="absolute top-2 right-2 flex gap-1">
-        <button
-          onClick={() => adjustScale(-0.1)}
-          className="px-1.5 py-0.5 rounded font-mono text-xs font-bold bg-muted/80 text-muted-foreground hover:bg-accent"
-        >−</button>
-        <button
-          onClick={() => adjustScale(0.1)}
-          className="px-1.5 py-0.5 rounded font-mono text-xs font-bold bg-muted/80 text-muted-foreground hover:bg-accent"
-        >+</button>
+      {/* Speed toggle floats on canvas */}
+      <div className="absolute top-2 right-2 flex gap-1" style={{ transform: `scale(${1/scale})`, transformOrigin: 'top right' }}>
         <button
           onClick={toggleSpeed}
           className={`px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
