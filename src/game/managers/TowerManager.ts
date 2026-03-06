@@ -467,7 +467,17 @@ export class TowerManager {
           break;
       }
 
-      unit.attackCooldown = 1 / stats.attackSpeed;
+      // Ice dragon aura: slow tower attack speed by 30%
+      let atkSpeedMod = 1;
+      for (const aura of this.iceDragonAuras) {
+        const dx = unit.x - aura.x;
+        const dy = unit.y - aura.y;
+        if (dx * dx + dy * dy <= aura.radius * aura.radius) {
+          atkSpeedMod = 0.7;
+          break;
+        }
+      }
+      unit.attackCooldown = 1 / (stats.attackSpeed * atkSpeedMod);
     }
 
     // Update projectiles
