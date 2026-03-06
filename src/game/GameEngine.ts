@@ -269,6 +269,7 @@ export class GameEngine {
     this.state.waveActive = this.waveManager.waveActive;
     this.state.waveEnemiesSpawned = this.waveManager.spawned;
     this.state.waveEnemiesTotal = this.waveManager.enemyCount;
+    this.state.waveModifier = this.waveManager.currentModifier;
 
     // Track max wave
     if (this.state.currentWave > this.saveData.stats.maxWaveReached) {
