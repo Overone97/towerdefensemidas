@@ -10,12 +10,17 @@ import dragonIceSprite from '../../assets/sprites/enemy-dragon-ice.png';
 import dragonEarthSprite from '../../assets/sprites/enemy-dragon-earth.png';
 import dragonAirSprite from '../../assets/sprites/enemy-dragon-air.png';
 import baronSprite from '../../assets/sprites/enemy-baron.png';
+import sorakaSprite from '../../assets/sprites/soraka.png';
+import evelynnSprite from '../../assets/sprites/evelynn.png';
 
 const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   normal: minionSprite,
   fast: scuttlerSprite,
   tank: bramblebackSprite,
   armored: superminionSprite,
+  healer: sorakaSprite,
+  stealth: evelynnSprite,
+  splitter: superminionSprite, // reuse super minion sprite with different color
   dragon_fire: dragonFireSprite,
   dragon_ice: dragonIceSprite,
   dragon_earth: dragonEarthSprite,
