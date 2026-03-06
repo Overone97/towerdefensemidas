@@ -96,6 +96,13 @@ export interface Enemy {
   alive: boolean;
   statusEffects: StatusEffect[];
   animFrame: number;
+  stealthed?: boolean;
+  shieldHp?: number;
+  shieldMaxHp?: number;
+  shieldRegenTimer?: number;
+  bossAbilityCooldown?: number;
+  hasDashed?: boolean;
+  healAuraTimer?: number;
 }
 
 export interface EquippedItems {
