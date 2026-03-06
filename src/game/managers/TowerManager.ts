@@ -42,6 +42,7 @@ export class TowerManager {
   synergyBonuses: Map<number, SynergyBonus> = new Map();
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
+  iceDragonAuras: { x: number; y: number; radius: number }[] = [];
 
   placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems, stars: number = 1): PlacedUnit {
     const isRoamer = config.attackPattern === 'poison_trail' || config.attackPattern === 'mushroom';
