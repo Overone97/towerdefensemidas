@@ -19,9 +19,9 @@ const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   fast: scuttlerSprite,
   tank: bramblebackSprite,
   armored: superminionSprite,
-  healer: sorakaSprite,
-  stealth: evelynnSprite,
-  splitter: superminionSprite, // reuse super minion sprite with different color
+  healer: healerSprite,
+  stealth: stealthSprite,
+  splitter: splitterSprite,
   dragon_fire: dragonFireSprite,
   dragon_ice: dragonIceSprite,
   dragon_earth: dragonEarthSprite,
