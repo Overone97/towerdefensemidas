@@ -10,8 +10,9 @@ import dragonIceSprite from '../../assets/sprites/enemy-dragon-ice.png';
 import dragonEarthSprite from '../../assets/sprites/enemy-dragon-earth.png';
 import dragonAirSprite from '../../assets/sprites/enemy-dragon-air.png';
 import baronSprite from '../../assets/sprites/enemy-baron.png';
-import sorakaSprite from '../../assets/sprites/soraka.png';
-import evelynnSprite from '../../assets/sprites/evelynn.png';
+import healerSprite from '../../assets/sprites/enemy-healer.png';
+import stealthSprite from '../../assets/sprites/enemy-stealth.png';
+import splitterSprite from '../../assets/sprites/enemy-splitter.png';
 
 const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   normal: minionSprite,
