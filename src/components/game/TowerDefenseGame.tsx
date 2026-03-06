@@ -315,7 +315,7 @@ const TowerDefenseGame: React.FC = () => {
 
       {/* Floating Unit Info Panel */}
       {selectedUnit && (
-        <div className="absolute right-2 bottom-24 z-30 pointer-events-auto">
+        <div className="absolute right-2 bottom-40 z-30 pointer-events-auto">
           <UnitInfoPanel
             unit={selectedUnit}
             gold={state.gold}
