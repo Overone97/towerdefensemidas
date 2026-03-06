@@ -43,7 +43,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
   ];
 
   return (
-    <div className="absolute top-16 right-4 bg-card border border-border rounded-lg p-4 w-64 shadow-xl">
+    <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-4 w-64 shadow-xl max-h-[62vh] overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <CharacterSprite config={unit.config} size={28} owned />
