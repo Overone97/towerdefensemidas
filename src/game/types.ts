@@ -72,6 +72,7 @@ export interface WaveConfig {
   enemyHpMultiplier: number;
   enemySpeedMultiplier: number;
   enemyRewardMultiplier: number;
+  modifier?: WaveModifier;
 }
 
 export interface Enemy {
