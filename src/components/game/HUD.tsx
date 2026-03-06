@@ -1,6 +1,7 @@
 import React from 'react';
-import { GameState } from '../../game/types';
+import { GameState, WaveModifier } from '../../game/types';
 import { soundManager } from '../../game/audio/SoundManager';
+import { WAVE_MODIFIER_INFO } from '../../game/data/waveData';
 
 export interface HUDProps {
   state: GameState;
