@@ -235,7 +235,7 @@ export class GameEngine {
     }
 
     // Auto-activate abilities when enemies are in range and cooldown is ready
-    const aliveEnemies = this.enemyManager.getAliveEnemies();
+    const aliveEnemies = this.enemyManager.getTargetableEnemies();
     if (aliveEnemies.length > 0) {
       for (const unit of this.towerManager.units) {
         if (unit.abilityCooldown <= 0 && !unit.abilityActive) {
