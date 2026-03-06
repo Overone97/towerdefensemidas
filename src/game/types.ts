@@ -231,4 +231,5 @@ export interface GameState {
   waveEnemiesTotal: number;
   waveEnemiesKilledThisWave: number;
   gameSpeed: number;
+  waveModifier?: WaveModifier;
 }
