@@ -114,7 +114,7 @@ export class GameEngine {
 
     const talentBonus = getTalentBonus(this.saveData.talents);
 
-    const { reachedEnd, dotKills, dotDamages } = this.enemyManager.update(dt);
+    const { reachedEnd, dotKills, dotDamages, splitSpawns } = this.enemyManager.update(dt);
     // Track DOT damages from Singed/Teemo etc.
     for (const { unitId, damage } of dotDamages) {
       this.trackDamage(unitId, damage);
