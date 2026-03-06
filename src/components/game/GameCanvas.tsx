@@ -28,7 +28,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     const updateScale = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const s = Math.max(vw / CANVAS_WIDTH, vh / CANVAS_HEIGHT);
+      const s = Math.min(vw / CANVAS_WIDTH, vh / CANVAS_HEIGHT);
       setScale(s);
     };
     updateScale();
