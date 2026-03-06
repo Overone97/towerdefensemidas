@@ -10,12 +10,18 @@ import dragonIceSprite from '../../assets/sprites/enemy-dragon-ice.png';
 import dragonEarthSprite from '../../assets/sprites/enemy-dragon-earth.png';
 import dragonAirSprite from '../../assets/sprites/enemy-dragon-air.png';
 import baronSprite from '../../assets/sprites/enemy-baron.png';
+import healerSprite from '../../assets/sprites/enemy-healer.png';
+import stealthSprite from '../../assets/sprites/enemy-stealth.png';
+import splitterSprite from '../../assets/sprites/enemy-splitter.png';
 
 const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   normal: minionSprite,
   fast: scuttlerSprite,
   tank: bramblebackSprite,
   armored: superminionSprite,
+  healer: healerSprite,
+  stealth: stealthSprite,
+  splitter: splitterSprite,
   dragon_fire: dragonFireSprite,
   dragon_ice: dragonIceSprite,
   dragon_earth: dragonEarthSprite,
@@ -78,7 +84,8 @@ export function drawEnemySprite(
   size: number,
   animFrame: number,
   bodyColor: string,
-  strokeColor: string
+  strokeColor: string,
+  stealthed?: boolean
 ): void {
   const spriteSrc = ENEMY_SPRITE_MAP[type];
   const img = spriteSrc ? getOrLoadCleanedImage(spriteSrc, type) : null;
@@ -86,6 +93,11 @@ export function drawEnemySprite(
   ctx.save();
   const bob = Math.sin(animFrame * 0.1) * 1.5;
   const cy = y + bob;
+
+  // Stealth: render semi-transparent
+  if (stealthed) {
+    ctx.globalAlpha = 0.25;
+  }
 
   if (img) {
     const isBoss = type === 'boss';
@@ -95,6 +107,18 @@ export function drawEnemySprite(
     ctx.drawImage(img, x - s / 2, cy - s / 2, s, s);
   } else {
     drawFallbackSprite(ctx, type, x, cy, size, animFrame, bodyColor, strokeColor);
+  }
+
+  // Healer aura glow
+  if (type === 'healer') {
+    ctx.globalAlpha = 0.15 + Math.sin(animFrame * 0.05) * 0.1;
+    const grad = ctx.createRadialGradient(x, cy, 0, x, cy, 60);
+    grad.addColorStop(0, '#44ff4466');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, cy, 60, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   ctx.restore();

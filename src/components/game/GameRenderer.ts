@@ -524,13 +524,47 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
     }
 
     const bodyColor = isSlowed ? '#4488ff' : enemy.bodyColor;
-    drawEnemySprite(ctx, enemy.type, enemy.x, enemy.y, enemy.size, enemy.animFrame, bodyColor, enemy.strokeColor);
+    drawEnemySprite(ctx, enemy.type, enemy.x, enemy.y, enemy.size, enemy.animFrame, bodyColor, enemy.strokeColor, enemy.stealthed);
+
+    // Shield visual (Earth Dragon)
+    if (enemy.shieldHp && enemy.shieldHp > 0 && enemy.shieldMaxHp) {
+      ctx.save();
+      ctx.strokeStyle = '#66bbff';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6 + Math.sin(enemy.animFrame * 0.08) * 0.2;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.size + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      // Shield HP as arc
+      const shieldPct = enemy.shieldHp / enemy.shieldMaxHp;
+      ctx.strokeStyle = '#88ddff';
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.size + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * shieldPct);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     if (enemy.type === 'boss') {
       ctx.fillStyle = '#ff88ff';
       ctx.font = 'bold 7px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('BOSS', enemy.x, enemy.y - enemy.size - 14);
+    }
+
+    // Special labels
+    if (enemy.type === 'healer') {
+      ctx.fillStyle = '#44ff44';
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('HEAL', enemy.x, enemy.y - enemy.size - 10);
+    }
+    if (enemy.stealthed) {
+      ctx.fillStyle = '#aa44ff';
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('👁️', enemy.x, enemy.y - enemy.size - 10);
     }
 
     if (enemy.armor > 0 && enemy.type !== 'boss') {

@@ -114,7 +114,7 @@ export class GameEngine {
 
     const talentBonus = getTalentBonus(this.saveData.talents);
 
-    const { reachedEnd, dotKills, dotDamages } = this.enemyManager.update(dt);
+    const { reachedEnd, dotKills, dotDamages, splitSpawns } = this.enemyManager.update(dt);
     // Track DOT damages from Singed/Teemo etc.
     for (const { unitId, damage } of dotDamages) {
       this.trackDamage(unitId, damage);
@@ -141,7 +141,11 @@ export class GameEngine {
     this.towerManager.talentBonus = talentBonus;
     this.towerManager.setWaypoints(this.getWaypoints());
 
-    const { damages, statusEffects } = this.towerManager.update(dt, this.enemyManager.getAliveEnemies());
+    // Use targetable enemies (excludes stealthed) for tower targeting
+    const targetableEnemies = this.enemyManager.getTargetableEnemies();
+    // Pass ice dragon auras for tower slow effect
+    this.towerManager.iceDragonAuras = this.enemyManager.getIceDragonAuras();
+    const { damages, statusEffects } = this.towerManager.update(dt, targetableEnemies);
 
     for (const { enemyId, effect } of statusEffects) {
       this.enemyManager.applyStatusEffect(enemyId, effect);
@@ -231,7 +235,7 @@ export class GameEngine {
     }
 
     // Auto-activate abilities when enemies are in range and cooldown is ready
-    const aliveEnemies = this.enemyManager.getAliveEnemies();
+    const aliveEnemies = this.enemyManager.getTargetableEnemies();
     if (aliveEnemies.length > 0) {
       for (const unit of this.towerManager.units) {
         if (unit.abilityCooldown <= 0 && !unit.abilityActive) {
@@ -269,6 +273,7 @@ export class GameEngine {
     this.state.waveActive = this.waveManager.waveActive;
     this.state.waveEnemiesSpawned = this.waveManager.spawned;
     this.state.waveEnemiesTotal = this.waveManager.enemyCount;
+    this.state.waveModifier = this.waveManager.currentModifier;
 
     // Track max wave
     if (this.state.currentWave > this.saveData.stats.maxWaveReached) {

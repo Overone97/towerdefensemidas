@@ -27,7 +27,9 @@ export interface StatusEffect {
   sourceUnitId?: number;
 }
 
-export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'dragon_fire' | 'dragon_ice' | 'dragon_earth' | 'dragon_air' | 'boss';
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'armored' | 'dragon_fire' | 'dragon_ice' | 'dragon_earth' | 'dragon_air' | 'boss' | 'healer' | 'stealth' | 'splitter';
+
+export type WaveModifier = 'rush' | 'tank_parade' | 'speed_blitz' | 'healing_wave' | 'dark_wave' | null;
 
 export interface EnemyConfig {
   type: EnemyType;
@@ -70,6 +72,7 @@ export interface WaveConfig {
   enemyHpMultiplier: number;
   enemySpeedMultiplier: number;
   enemyRewardMultiplier: number;
+  modifier?: WaveModifier;
 }
 
 export interface Enemy {
@@ -93,6 +96,13 @@ export interface Enemy {
   alive: boolean;
   statusEffects: StatusEffect[];
   animFrame: number;
+  stealthed?: boolean;
+  shieldHp?: number;
+  shieldMaxHp?: number;
+  shieldRegenTimer?: number;
+  bossAbilityCooldown?: number;
+  hasDashed?: boolean;
+  healAuraTimer?: number;
 }
 
 export interface EquippedItems {
@@ -221,4 +231,5 @@ export interface GameState {
   waveEnemiesTotal: number;
   waveEnemiesKilledThisWave: number;
   gameSpeed: number;
+  waveModifier?: WaveModifier;
 }

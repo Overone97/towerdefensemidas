@@ -1,5 +1,5 @@
-import { WaveConfig, EnemyType } from '../types';
-import { getWaveConfig, ENEMY_CONFIGS, TOTAL_WAVES, getWaveEnemyPool, isBossWave, getBossTypeForWave, WaveEnemyPool } from '../data/waveData';
+import { WaveConfig, EnemyType, WaveModifier } from '../types';
+import { getWaveConfig, ENEMY_CONFIGS, TOTAL_WAVES, getWaveEnemyPool, isBossWave, getBossTypeForWave, WaveEnemyPool, getWaveModifier } from '../data/waveData';
 import { EnemyManager } from './EnemyManager';
 
 export class WaveManager {
@@ -7,6 +7,7 @@ export class WaveManager {
   waveActive: boolean = false;
   totalWaves: number = TOTAL_WAVES;
   endlessMode: boolean = false;
+  currentModifier: WaveModifier = null;
   
   private waveConfig: WaveConfig | null = null;
   private spawnTimer: number = 0;
@@ -20,18 +21,20 @@ export class WaveManager {
     if (!this.endlessMode && this.currentWave >= this.totalWaves) return null;
     this.currentWave++;
     this.waveConfig = this.endlessMode ? this.getEndlessWaveConfig(this.currentWave) : getWaveConfig(this.currentWave);
+    this.currentModifier = this.waveConfig.modifier || null;
     this.waveActive = true;
     this.spawnTimer = 0;
     this.spawned = 0;
     this.enemyCount = this.waveConfig.enemyCount;
     this.bossSpawned = false;
-    this.enemyPool = getWaveEnemyPool(this.currentWave);
+    this.enemyPool = getWaveEnemyPool(this.currentWave, this.currentModifier);
     this.totalWeight = this.enemyPool.reduce((sum, e) => sum + e.weight, 0);
     return this.waveConfig;
   }
 
   private getEndlessWaveConfig(wave: number): WaveConfig {
     const scaleFactor = 1 + (wave - 1) * 0.15;
+    const modifier = getWaveModifier(((wave - 1) % 100) + 1);
     return {
       waveNumber: wave,
       enemyCount: 5 + Math.floor(wave * 2),
@@ -39,11 +42,15 @@ export class WaveManager {
       enemyHpMultiplier: scaleFactor * 1.5,
       enemySpeedMultiplier: 1 + (wave - 1) * 0.03,
       enemyRewardMultiplier: 1 + (wave - 1) * 0.15,
+      modifier,
     };
   }
 
   update(dt: number, enemyManager: EnemyManager): void {
     if (!this.waveActive || !this.waveConfig) return;
+
+    // Pass modifier to enemy manager for healing wave
+    enemyManager.waveModifier = this.currentModifier;
 
     this.spawnTimer -= dt * 1000;
 
@@ -72,6 +79,7 @@ export class WaveManager {
 
     if (this.spawned >= this.waveConfig.enemyCount && enemyManager.getAliveEnemies().length === 0) {
       this.waveActive = false;
+      this.currentModifier = null;
     }
   }
 

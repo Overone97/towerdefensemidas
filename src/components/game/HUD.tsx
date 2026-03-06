@@ -1,6 +1,7 @@
 import React from 'react';
-import { GameState } from '../../game/types';
+import { GameState, WaveModifier } from '../../game/types';
 import { soundManager } from '../../game/audio/SoundManager';
+import { WAVE_MODIFIER_INFO } from '../../game/data/waveData';
 
 export interface HUDProps {
   state: GameState;
@@ -121,6 +122,18 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
       {state.waveActive && (
         <div className="px-4 pb-1">
           <div className="flex items-center gap-2">
+            {state.waveModifier && WAVE_MODIFIER_INFO[state.waveModifier] && (
+              <span
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                style={{
+                  background: WAVE_MODIFIER_INFO[state.waveModifier].color + '33',
+                  color: WAVE_MODIFIER_INFO[state.waveModifier].color,
+                  border: `1px solid ${WAVE_MODIFIER_INFO[state.waveModifier].color}55`,
+                }}
+              >
+                {WAVE_MODIFIER_INFO[state.waveModifier].icon} {WAVE_MODIFIER_INFO[state.waveModifier].label}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground font-mono">
               ⚔️ {state.waveEnemiesKilledThisWave}/{state.waveEnemiesTotal}
             </span>
@@ -134,6 +147,11 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
               />
             </div>
           </div>
+          {state.waveModifier && WAVE_MODIFIER_INFO[state.waveModifier] && (
+            <p className="text-[9px] text-muted-foreground mt-0.5 ml-1">
+              {WAVE_MODIFIER_INFO[state.waveModifier].description}
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -42,6 +42,7 @@ export class TowerManager {
   synergyBonuses: Map<number, SynergyBonus> = new Map();
   talentBonus: TalentBonusData = { attackMult: 1, speedMult: 1, rangeMult: 1 };
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
+  iceDragonAuras: { x: number; y: number; radius: number }[] = [];
 
   placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems, stars: number = 1): PlacedUnit {
     const isRoamer = config.attackPattern === 'poison_trail' || config.attackPattern === 'mushroom';
@@ -466,7 +467,17 @@ export class TowerManager {
           break;
       }
 
-      unit.attackCooldown = 1 / stats.attackSpeed;
+      // Ice dragon aura: slow tower attack speed by 30%
+      let atkSpeedMod = 1;
+      for (const aura of this.iceDragonAuras) {
+        const dx = unit.x - aura.x;
+        const dy = unit.y - aura.y;
+        if (dx * dx + dy * dy <= aura.radius * aura.radius) {
+          atkSpeedMod = 0.7;
+          break;
+        }
+      }
+      unit.attackCooldown = 1 / (stats.attackSpeed * atkSpeedMod);
     }
 
     // Update projectiles

@@ -1,65 +1,61 @@
 
 
-## Plan : Système de vagues/boss plus varié
+# Suggestions d'ameliorations pour le Tower Defense
 
-### Problème actuel
-- Seulement 9 types d'ennemis, tous avec le même comportement (marcher sur le chemin)
-- Les boss n'ont aucune mécanique spéciale -- juste plus de HP/armor
-- Les vagues sont toutes identiques dans leur structure (spawn aléatoire pondéré)
-- Aucune variété de "thème" de vague
+Voici les axes d'amelioration les plus impactants pour le jeu, classes par priorite :
 
-### Ce que je propose d'ajouter
+---
 
-#### A. Nouveaux types d'ennemis (3 ajouts)
-- **Healer** (Soraka) : soigne les ennemis proches de 5% HP/s -- priorité de ciblage stratégique
-- **Stealth** (Evelynn) : invisible jusqu'à 50% HP, ne peut être ciblé qu'après révélation
-- **Splitter** (Voidling) : en mourant, se divise en 2 mini-ennemis plus rapides
+## 1. Systeme de fusion / evolution de champions (Merge)
+Fusionner 3 copies du meme champion pour creer une version etoilee (1★ → 2★ → 3★) avec des stats multipliees. C'est le systeme classique des auto-battlers (TFT, Auto Chess).
 
-#### B. Mécaniques de boss uniques
-Au lieu d'un simple ennemi avec gros HP, les boss auront des capacités actives :
-- **Baron** : invoque 3 sbires toutes les 5s pendant qu'il avance
-- **Dragon Infernal** : laisse une traînée de feu qui inflige des dégâts aux tours proches
-- **Dragon de Terre** : bouclier qui absorbe les 200 premiers dégâts, se régénère après 4s sans prendre de dégâts
-- **Dragon de Glace** : ralentit les tours dans un rayon autour de lui (réduit leur vitesse d'attaque de 30%)
-- **Dragon des Airs** : dash en avant de 3 waypoints quand il passe sous 50% HP
+- Ajouter un champ `stars` (1-3) a `OwnedCharacter`
+- Bouton "Merge" dans l'inventaire quand 3 copies existent
+- Stats x1.5 a 2★, x2.5 a 3★, sprite avec effet lumineux
 
-#### C. Vagues thématiques
-Certaines vagues auront un "modificateur" spécial affiché dans le HUD :
-- **Rush** (vagues 8, 22, 38...) : 2x plus d'ennemis mais 50% HP
-- **Tank Parade** (vagues 18, 42...) : uniquement des tanks/armored
-- **Speed Blitz** (vagues 12, 32...) : uniquement des fast avec +30% vitesse
-- **Healing Wave** (vagues 25, 55...) : tous les ennemis régénèrent 1% HP/s
-- **Dark Wave** (vagues 35, 65...) : ennemis stealth mélangés
+## 2. Equipements LoL iconiques (items composites)
+Permettre de combiner 2 equipements de base pour creer un item legendaire (comme dans TFT : BF Sword + Recurve Bow = Guinsoo).
 
-### Changements techniques
+- Ajouter une table de recettes dans `equipmentData.ts`
+- UI de craft dans `EquipmentPanel`
+- ~15 items composites avec effets speciaux (Infinity Edge: +crit, Warmog: regen HP base, etc.)
 
-**`src/game/types.ts`** :
-- Ajouter `'healer' | 'stealth' | 'splitter'` au type `EnemyType`
-- Ajouter champs optionnels sur `Enemy` : `stealthed`, `shieldHp`, `bossAbilityCooldown`
-- Ajouter `WaveModifier` type et champ `modifier` sur `WaveConfig`
+## 3. Mode multijoueur PvP asynchrone
+Les joueurs envoient des vagues personnalisees aux autres. Classement ELO.
 
-**`src/game/data/waveData.ts`** :
-- Ajouter les 3 nouveaux `ENEMY_CONFIGS`
-- Ajouter fonction `getWaveModifier(wave)` retournant le modificateur
-- Mettre à jour le pool pour inclure healer/stealth/splitter aux bonnes vagues
-- Modifier `getWaveConfig` pour appliquer les modificateurs (rush = 2x count, etc.)
+- Table backend `pvp_challenges` avec la composition d'equipe
+- Systeme de "fantome" : jouer contre la compo d'un autre joueur
+- Leaderboard ELO
 
-**`src/game/managers/EnemyManager.ts`** :
-- Logique stealth : ennemi non ciblable si `stealthed === true`
-- Logique splitter : quand un splitter meurt, spawn 2 mini-ennemis
-- Logique healer : soigne les ennemis dans un rayon de 60px
+## 4. Evenements saisonniers / boss raids
+Boss temporaires avec des recompenses exclusives (skins, equipements uniques).
 
-**`src/game/managers/WaveManager.ts`** :
-- Stocker le `modifier` actif, l'exposer pour le HUD
-- Boss abilities : timer dans `update()` pour les mécaniques actives (summon, dash, shield)
+- Systeme d'evenements avec dates dans la base de donnees
+- Boss raid avec barre de vie partagee entre tous les joueurs
+- Recompenses exclusives limitees dans le temps
 
-**`src/game/rendering/enemySprites.ts`** :
-- Mapper les nouveaux types vers les sprites existants (Soraka, Evelynn, etc.)
-- Effet visuel de stealth (opacité réduite)
+## 5. Amelioration visuelle - effets de particules et animations
+Ajouter des effets visuels pour les attaques, les critiques, les sorts, et les synergies actives.
 
-**`src/components/game/HUD.tsx`** :
-- Afficher le modificateur de vague actif avec icône et description
+- Particules de feu/glace/poison plus elaborees
+- Animation de critique (flash + nombre plus gros)
+- Aura visuelle pour les synergies actives sur les champions
 
-**`src/components/game/EnemyInfoPanel.tsx`** :
-- Afficher les capacités spéciales des boss et ennemis spéciaux
+## 6. Systeme de prestige / New Game+
+Apres avoir termine les 100 vagues, debloquer un mode "Prestige" qui reset la progression mais donne des bonus permanents multiplicatifs.
+
+- Compteur de prestiges dans SaveData
+- Bonus permanents (x1.1 ATK par prestige, etc.)
+- Nouveaux talents debloques au prestige
+
+## 7. Tutoriel interactif pour les nouveaux joueurs
+Guide pas-a-pas qui explique le summon, le placement, les vagues, les synergies.
+
+- Overlay transparent avec fleches pointant les elements
+- Progression en 5-6 etapes
+- Se declenche automatiquement au premier lancement
+
+---
+
+**Recommandation** : Les ameliorations 1 (Merge/Evolution) et 5 (Effets visuels) auraient le plus grand impact sur l'engagement joueur avec un effort raisonnable. Le systeme de fusion ajoute une couche strategique majeure, et les effets visuels rendent le jeu beaucoup plus satisfaisant.
 
