@@ -92,7 +92,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
       </div>
 
       {/* Special abilities */}
-      {(unit.config.dotDamage || unit.config.slowFactor || unit.config.aoeRadius || unit.config.chainCount || unit.config.burstCount) && (
+      {(unit.config.dotDamage || unit.config.slowFactor || unit.config.aoeRadius || unit.config.chainCount || unit.config.burstCount || unit.config.canRevealStealth) && (
         <div className="bg-muted/30 rounded px-2 py-1.5 mb-3 space-y-0.5">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Passives</span>
           {unit.config.dotDamage && (
