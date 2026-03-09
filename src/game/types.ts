@@ -63,6 +63,7 @@ export interface CharacterConfig {
   bodyColor: string;
   detailColor: string;
   weaponColor: string;
+  canRevealStealth?: boolean;
 }
 
 export interface WaveConfig {

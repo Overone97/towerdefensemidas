@@ -141,6 +141,21 @@ export class GameEngine {
     this.towerManager.talentBonus = talentBonus;
     this.towerManager.setWaypoints(this.getWaypoints());
 
+    // Stealth reveal: units with canRevealStealth reveal stealthed enemies in range
+    for (const unit of this.towerManager.units) {
+      if (!unit.config.canRevealStealth) continue;
+      const unitRange = getCharacterStats(unit.config, unit.level, unit.stars).range;
+      for (const enemy of this.enemyManager.enemies) {
+        if (!enemy.alive || !enemy.stealthed) continue;
+        const dx = enemy.x - unit.x;
+        const dy = enemy.y - unit.y;
+        if (dx * dx + dy * dy <= unitRange * unitRange) {
+          enemy.stealthed = false;
+          this.floatingTextManager.spawn(enemy.x, enemy.y - 10, '👁️ Revealed!', '#ff66ff', 11);
+        }
+      }
+    }
+
     // Use targetable enemies (excludes stealthed) for tower targeting
     const targetableEnemies = this.enemyManager.getTargetableEnemies();
     // Pass ice dragon auras for tower slow effect
