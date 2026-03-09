@@ -71,8 +71,8 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   // === BATCH 3: 50 NEW CHAMPIONS ===
   // COMMON (10)
   { id: 'sivir', name: 'Sivir', rarity: 'common', attack: 11, attackSpeed: 1.6, range: 130, attackPattern: 'single', bodyColor: '#8866aa', detailColor: '#664488', weaponColor: '#aaccee' },
-  { id: 'soraka', name: 'Soraka', rarity: 'common', atcanRevealStealth: true, tack: 6, attackSpeed: 1.3, range: 120, attackPattern: 'slow', slowFactorcanRevealStealth: true, : 0.7, slowDuration: 2, bodyColor: '#66bb88', detailColor: '#449966', wecanRevealStealth: true, aponColor: '#aaffcc' },
-  { id: 'warwick', name: 'Warwick', rarity: 'comcanRevealStealth: true, mon', attack: 13, attackSpeed: 1.4, range: 80, attackPattern: 'single', bodyColor: '#556644', detailColor: '#334422', weaponColor: '#88aa66' },
+  { id: 'soraka', name: 'Soraka', rarity: 'common', attack: 6, attackSpeed: 1.3, range: 120, attackPattern: 'slow', slowFactor: 0.7, slowDuration: 2, bodyColor: '#66bb88', detailColor: '#449966', weaponColor: '#aaffcc' },
+  { id: 'warwick', name: 'Warwick', rarity: 'common', attack: 13, attackSpeed: 1.4, range: 80, attackPattern: 'single', canRevealStealth: true, bodyColor: '#556644', detailColor: '#334422', weaponColor: '#88aa66' },
   { id: 'nasus', name: 'Nasus', rarity: 'common', attack: 14, attackSpeed: 0.7, range: 85, attackPattern: 'single', bodyColor: '#887744', detailColor: '#665522', weaponColor: '#bbaa66' },
   { id: 'xinzhao', name: 'Xin Zhao', rarity: 'common', attack: 12, attackSpeed: 1.1, range: 90, attackPattern: 'single', bodyColor: '#4466aa', detailColor: '#224488', weaponColor: '#6688cc' },
   { id: 'tristana', name: 'Tristana', rarity: 'common', attack: 9, attackSpeed: 2.0, range: 140, attackPattern: 'rapid', bodyColor: '#88aa44', detailColor: '#668822', weaponColor: '#bbcc66' },
