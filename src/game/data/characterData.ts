@@ -41,7 +41,7 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   // RARE (4)
   { id: 'yasuo', name: 'Yasuo', rarity: 'rare', attack: 20, attackSpeed: 1.0, range: 120, attackPattern: 'line', bodyColor: '#3a3a5a', detailColor: '#2a2a4a', weaponColor: '#7a5aaa' },
   { id: 'rumble', name: 'Rumble', rarity: 'rare', attack: 18, attackSpeed: 0.7, range: 130, attackPattern: 'aoe_circle', aoeRadius: 60, dotDamage: 8, dotDuration: 2, bodyColor: '#dd4400', detailColor: '#bb2200', weaponColor: '#ffaa00' },
-  { id: 'caitlyn', name: 'Caitlyn', rarity: 'rare', attack: 35, attackSpeed: 0.4, range: 220, attackPattern: 'single', bodyColor: '#556655', detailColor: '#334433', weaponColor: '#99aa88' },
+  { id: 'caitlyn', name: 'Caitlyn', rarity: 'rare', attack: 35, attackSpeed: 0.4, range: 220, attackPattern: 'single', canRevealStealth: true, bodyColor: '#556655', detailColor: '#334433', weaponColor: '#99aa88' },
   { id: 'thresh', name: 'Thresh', rarity: 'rare', attack: 12, attackSpeed: 1.0, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#5a3a5a', detailColor: '#3a1a3a', weaponColor: '#aa66aa' },
   // EPIC (6)
   { id: 'riven', name: 'Riven', rarity: 'epic', attack: 22, attackSpeed: 0.8, range: 110, attackPattern: 'burst', burstCount: 3, aoeRadius: 40, bodyColor: '#cc6633', detailColor: '#aa4411', weaponColor: '#ffcc44' },
