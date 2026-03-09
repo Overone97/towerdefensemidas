@@ -122,7 +122,7 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'shaco', name: 'Shaco', rarity: 'legendary', attack: 22, attackSpeed: 1.8, range: 100, attackPattern: 'poison', dotDamage: 12, dotDuration: 4, bodyColor: '#884488', detailColor: '#662266', weaponColor: '#cc88cc' },
   { id: 'tryndamere', name: 'Tryndamere', rarity: 'legendary', attack: 35, attackSpeed: 0.8, range: 90, attackPattern: 'burst', burstCount: 3, aoeRadius: 40, bodyColor: '#666688', detailColor: '#444466', weaponColor: '#aaccee' },
   { id: 'veigar', name: 'Veigar', rarity: 'legendary', attack: 28, attackSpeed: 0.7, range: 160, attackPattern: 'aoe_circle', aoeRadius: 65, bodyColor: '#443366', detailColor: '#221144', weaponColor: '#8866cc' },
-  { id: 'evcanRevealStealth: true, elynn', name: 'Evelynn', rarity: 'legendary', attack: 24, attackSpeed: 1.4, range: 100, attackPattern: 'poison', dotDamage: 14, dotDuration: 4, bodyColor: '#883388', detailColor: '#661166', weaponColor: '#cc66cc' },
+  { id: 'evelynn', name: 'Evelynn', rarity: 'legendary', attack: 24, attackSpeed: 1.4, range: 100, attackPattern: 'poison', dotDamage: 14, dotDuration: 4, canRevealStealth: true, bodyColor: '#883388', detailColor: '#661166', weaponColor: '#cc66cc' },
   { id: 'urgot', name: 'Urgot', rarity: 'legendary', attack: 20, attackSpeed: 1.0, range: 150, attackPattern: 'chain', chainCount: 5, dotDamage: 6, dotDuration: 2, bodyColor: '#558844', detailColor: '#336622', weaponColor: '#88cc66' },
 ];
 
