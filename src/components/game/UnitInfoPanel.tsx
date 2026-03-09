@@ -110,6 +110,9 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
           {unit.config.burstCount && (
             <div className="text-xs text-yellow-400">💣 Burst: {unit.config.burstCount} projectiles</div>
           )}
+          {unit.config.canRevealStealth && (
+            <div className="text-xs text-pink-400">👁️ True Sight: révèle les ennemis invisibles</div>
+          )}
         </div>
       )}
 
