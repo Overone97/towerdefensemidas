@@ -57,8 +57,8 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   // SECRET LEGENDARY
   { id: 'fizz', name: 'Fizz', rarity: 'legendary', attack: 28, attackSpeed: 1.0, range: 180, attackPattern: 'chain', chainCount: 6, slowFactor: 0.3, slowDuration: 3, bodyColor: '#1a6688', detailColor: '#0e4466', weaponColor: '#44ddff' },
   // BATCH 2 (10)
-  { id: 'ahri', name: 'Ahri', rarity: 'rare', attack: 16, attackSpeed: 1.1, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#bb88dd', detailColor: '#9966bb', weaponColor: canRevealStealth: true, '#44ccff' },
-  { id: 'lecanRevealStealth: true, esin', name: 'Lee Sin', canRevealStealth: true, rarity: 'rare', attack: canRevealStealth: true, 22, attackSpeed: 0.9, racanRevealStealth: true, nge: 80, attackPattern: canRevealStealth: true, 'burst', burstCount: 2, bodyColor: '#cc8844', detailColor: '#aa6622', weaponColor: '#ffcc66' },
+  { id: 'ahri', name: 'Ahri', rarity: 'rare', attack: 16, attackSpeed: 1.1, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#bb88dd', detailColor: '#9966bb', weaponColor: '#44ccff' },
+  { id: 'leesin', name: 'Lee Sin', rarity: 'rare', attack: 22, attackSpeed: 0.9, range: 80, attackPattern: 'burst', burstCount: 2, canRevealStealth: true, bodyColor: '#cc8844', detailColor: '#aa6622', weaponColor: '#ffcc66' },
   { id: 'vayne', name: 'Vayne', rarity: 'epic', attack: 18, attackSpeed: 2.4, range: 150, attackPattern: 'single', bodyColor: '#442266', detailColor: '#331155', weaponColor: '#aa66dd' },
   { id: 'morgana', name: 'Morgana', rarity: 'epic', attack: 14, attackSpeed: 0.8, range: 120, attackPattern: 'slow', slowFactor: 0.4, slowDuration: 3, aoeRadius: 45, dotDamage: 8, dotDuration: 3, bodyColor: '#552277', detailColor: '#331155', weaponColor: '#bb66ff' },
   { id: 'blitzcrank', name: 'Blitzcrank', rarity: 'uncommon', attack: 12, attackSpeed: 0.7, range: 100, attackPattern: 'chain', chainCount: 2, bodyColor: '#ccaa22', detailColor: '#aa8800', weaponColor: '#ffdd44' },
