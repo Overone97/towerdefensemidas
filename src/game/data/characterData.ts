@@ -41,7 +41,7 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   // RARE (4)
   { id: 'yasuo', name: 'Yasuo', rarity: 'rare', attack: 20, attackSpeed: 1.0, range: 120, attackPattern: 'line', bodyColor: '#3a3a5a', detailColor: '#2a2a4a', weaponColor: '#7a5aaa' },
   { id: 'rumble', name: 'Rumble', rarity: 'rare', attack: 18, attackSpeed: 0.7, range: 130, attackPattern: 'aoe_circle', aoeRadius: 60, dotDamage: 8, dotDuration: 2, bodyColor: '#dd4400', detailColor: '#bb2200', weaponColor: '#ffaa00' },
-  { id: 'caitlyn', name: 'Caitlyn', rarity: 'rare', attack: 35, attackSpeed: 0.4, range: 220, attackPattern: 'single', canRevealStealth: true, canRevealStealth: true, bodyColor: '#556655', detailColor: '#334433', weaponColor: '#99aa88' },
+  { id: 'caitlyn', name: 'Caitlyn', rarity: 'rare', attack: 35, attackSpeed: 0.4, range: 220, attackPattern: 'single', canRevealStealth: true, canRevealStealth: true, canRevealStealth: true, bodyColor: '#556655', detailColor: '#334433', weaponColor: '#99aa88' },
   { id: 'thresh', name: 'Thresh', rarity: 'rare', attack: 12, attackSpeed: 1.0, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#5a3a5a', detailColor: '#3a1a3a', weaponColor: '#aa66aa' },
   // EPIC (6)
   { id: 'riven', name: 'Riven', rarity: 'epic', attack: 22, attackSpeed: 0.8, range: 110, attackPattern: 'burst', burstCount: 3, aoeRadius: 40, bodyColor: '#cc6633', detailColor: '#aa4411', weaponColor: '#ffcc44' },
@@ -58,12 +58,12 @@ export const ALL_CHARACTERS: CharacterConfig[] = [
   { id: 'fizz', name: 'Fizz', rarity: 'legendary', attack: 28, attackSpeed: 1.0, range: 180, attackPattern: 'chain', chainCount: 6, slowFactor: 0.3, slowDuration: 3, bodyColor: '#1a6688', detailColor: '#0e4466', weaponColor: '#44ddff' },
   // BATCH 2 (10)
   { id: 'ahri', name: 'Ahri', rarity: 'rare', attack: 16, attackSpeed: 1.1, range: 130, attackPattern: 'chain', chainCount: 3, bodyColor: '#bb88dd', detailColor: '#9966bb', weaponColor: '#44ccff' },
-  { id: 'leesin', name: 'Lee Sin', rarity: 'rare', attack: 22, attackSpeed: 0.9, range: 80, attackPattern: canRevealStealth: true, 'burst', burstCount: 2, bodyColor: '#cc8844', detailColor: '#aa6622', weaponColor: '#ffcc66' },
+  { id: 'leesin', name: 'Lee Sin', rarity: 'rare', attack: 22, attackSpeed: 0.9, racanRevealStealth: true, nge: 80, attackPattern: canRevealStealth: true, 'burst', burstCount: 2, bodyColor: '#cc8844', detailColor: '#aa6622', weaponColor: '#ffcc66' },
   { id: 'vayne', name: 'Vayne', rarity: 'epic', attack: 18, attackSpeed: 2.4, range: 150, attackPattern: 'single', bodyColor: '#442266', detailColor: '#331155', weaponColor: '#aa66dd' },
   { id: 'morgana', name: 'Morgana', rarity: 'epic', attack: 14, attackSpeed: 0.8, range: 120, attackPattern: 'slow', slowFactor: 0.4, slowDuration: 3, aoeRadius: 45, dotDamage: 8, dotDuration: 3, bodyColor: '#552277', detailColor: '#331155', weaponColor: '#bb66ff' },
   { id: 'blitzcrank', name: 'Blitzcrank', rarity: 'uncommon', attack: 12, attackSpeed: 0.7, range: 100, attackPattern: 'chain', chainCount: 2, bodyColor: '#ccaa22', detailColor: '#aa8800', weaponColor: '#ffdd44' },
   { id: 'katarina', name: 'Katarina', rarity: 'legendary', attack: 26, attackSpeed: 1.1, range: 90, attackPattern: 'burst', burstCount: 4, aoeRadius: 45, bodyColor: '#cc2244', detailColor: '#aa1133', weaponColor: '#ff4466' },
-  { id: 'twistedfate', name: 'Twisted Fate', rarity: 'rare', attack: 15, attackSpeed: 1.0, range: 180, attackPattern: 'line', bodyColor: '#443366', detailColor: '#332255', weaponColor: '#8866cc' },
+  { id: 'twistedfate', name: 'Twisted Fate', rarity: 'rare', attack: 15, attaccanRevealStealth: true, kSpeed: 1.0, range: 180, attackPattern: 'line', bodyColor: '#443366', detailColor: '#332255', weaponColor: '#8866cc' },
   { id: 'malphite', name: 'Malphite', rarity: 'uncommon', attack: 10, attackSpeed: 0.6, range: 85, attackPattern: 'aoe_circle', aoeRadius: 50, slowFactor: 0.5, slowDuration: 2, bodyColor: '#556677', detailColor: '#334455', weaponColor: '#88aacc' },
   { id: 'ezreal', name: 'Ezreal', rarity: 'rare', attack: 17, attackSpeed: 1.3, range: 160, attackPattern: 'line', bodyColor: '#4488bb', detailColor: '#226699', weaponColor: '#66ccff' },
   { id: 'missfortune', name: 'Miss Fortune', rarity: 'epic', attack: 16, attackSpeed: 2.0, range: 150, attackPattern: 'rapid', bodyColor: '#cc3344', detailColor: '#aa1122', weaponColor: '#ff6677' },
