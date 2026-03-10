@@ -117,8 +117,39 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
               className="h-full bg-destructive transition-all"
               style={{ width: `${(state.baseHp / state.maxBaseHp) * 100}%` }}
             />
+        </div>
+      </div>
+
+      {/* Dungeon banner */}
+      {dungeonInfo && (
+        <div className="flex items-center justify-between px-4 py-1 bg-accent/30 border-t border-border/30">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{dungeonInfo.icon}</span>
+            <span className="text-xs font-bold" style={{ color: 'hsl(var(--primary))' }}>🏰 {dungeonInfo.name}</span>
+            {dungeonInfo.rules?.maxUnits && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Max {dungeonInfo.rules.maxUnits} units</span>
+            )}
+            {dungeonInfo.rules?.noEquipment && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">🚫 No equip</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {dungeonInfo.timeLimit && (
+              <span className={`text-xs font-mono font-bold ${
+                dungeonInfo.timer > dungeonInfo.timeLimit * 0.8 ? 'text-destructive animate-pulse' : 'text-muted-foreground'
+              }`}>
+                ⏱️ {Math.max(0, Math.ceil(dungeonInfo.timeLimit - dungeonInfo.timer))}s
+              </span>
+            )}
+            <button
+              onClick={onExitDungeon}
+              className="text-[10px] px-2 py-0.5 rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
+            >
+              Quitter
+            </button>
           </div>
         </div>
+      )}
       </div>
 
       {state.waveActive && (
