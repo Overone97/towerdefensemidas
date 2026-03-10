@@ -54,6 +54,7 @@ function defaultSave(): SaveData {
     gameSpeed: 1,
     prestige: 0,
     tutorialCompleted: false,
+    dungeonCompletions: {},
     stats: {
       totalKills: 0,
       totalGold: 0,
@@ -61,6 +62,7 @@ function defaultSave(): SaveData {
       perfectMaps: 0,
       maxWaveReached: 0,
       fishCaught: false,
+      dungeonsCompleted: 0,
     },
   };
 }
