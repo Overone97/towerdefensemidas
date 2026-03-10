@@ -8,6 +8,10 @@ export class WaveManager {
   totalWaves: number = TOTAL_WAVES;
   endlessMode: boolean = false;
   currentModifier: WaveModifier = null;
+  /** Dungeon overrides */
+  forcedModifier: WaveModifier = null;
+  dungeonHpMult: number = 1;
+  dungeonSpeedMult: number = 1;
   
   private waveConfig: WaveConfig | null = null;
   private spawnTimer: number = 0;
