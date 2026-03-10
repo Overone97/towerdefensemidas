@@ -232,8 +232,10 @@ const TowerDefenseGame: React.FC = () => {
         stars={state.stars}
         mapsCompleted={saveData.mapsCompleted}
         questsCompleted={saveData.questsCompleted || []}
+        dungeonCompletions={engine.getDungeonCompletions()}
         onSelectMap={handleSelectMap}
         onStartEndless={handleStartEndless}
+        onStartDungeon={handleStartDungeon}
         onBack={() => setScreen('game')}
       />
     );
