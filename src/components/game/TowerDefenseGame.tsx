@@ -134,6 +134,21 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleStartDungeon = useCallback((dungeonId: string) => {
+    if (engine.startDungeon(dungeonId)) {
+      setScreen('game');
+      setLastSummon(null);
+      onStateChange();
+    }
+  }, [engine, onStateChange]);
+
+  const handleExitDungeon = useCallback(() => {
+    engine.exitDungeon();
+    setScreen('maps');
+    setLastSummon(null);
+    onStateChange();
+  }, [engine, onStateChange]);
+
   const handleFishCaught = useCallback(() => {
     const fizz = state.inventory.find(c => c.config.id === 'fizz');
     if (fizz) {
