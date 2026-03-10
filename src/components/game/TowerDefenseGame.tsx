@@ -307,6 +307,17 @@ const TowerDefenseGame: React.FC = () => {
             prestigeLevel={engine.getPrestigeLevel()}
             canPrestige={engine.canPrestige()}
             onPrestige={handlePrestige}
+            dungeonInfo={engine.isDungeonMode() ? (() => {
+              const info = engine.getDungeonInfo();
+              return info ? {
+                name: info.dungeon.name,
+                icon: info.dungeon.icon,
+                timer: info.timer,
+                timeLimit: info.dungeon.rules.timeLimit,
+                rules: info.dungeon.rules,
+              } : null;
+            })() : null}
+            onExitDungeon={handleExitDungeon}
           />
         </div>
       </div>
