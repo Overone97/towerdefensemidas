@@ -25,6 +25,8 @@ export interface SaveData {
   gameSpeed: number;
   prestige: number;
   tutorialCompleted: boolean;
+  /** dungeon completions: dungeonId → ISO date string of last completion */
+  dungeonCompletions: Record<string, string>;
   stats: {
     totalKills: number;
     totalGold: number;
@@ -32,6 +34,7 @@ export interface SaveData {
     perfectMaps: number;
     maxWaveReached: number;
     fishCaught: boolean;
+    dungeonsCompleted: number;
   };
 }
 
