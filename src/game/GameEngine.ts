@@ -316,38 +316,42 @@ export class GameEngine {
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
       soundManager.playVictory();
-      // Award base stars on first completion
-      if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
-        this.saveData.stars += 3;
-        this.saveData.mapsCompleted.push(this.state.currentMapId);
-      }
-      // Check & award quest stars
-      const questCtx: QuestContext = {
-        victory: true,
-        baseHp: this.state.baseHp,
-        maxBaseHp: this.state.maxBaseHp,
-        enemiesKilled: this.state.enemiesKilled,
-        wavesCompleted: this.state.currentWave,
-        placedUnitsCount: this.towerManager.units.length,
-        goldEarned: this.state.gold,
-        totalWaves: this.state.totalWaves,
-        hpLost: this.state.maxBaseHp - this.state.baseHp,
-      };
-      const quests = getQuestsForMap(this.state.currentMapId);
-      for (const quest of quests) {
-        if (this.saveData.questsCompleted.includes(quest.id)) continue;
-        if (quest.condition(questCtx)) {
-          this.saveData.questsCompleted.push(quest.id);
-          this.saveData.stars += quest.starsReward;
+
+      if (this.activeDungeon) {
+        // Dungeon completion — rewards handled by completeDungeon()
+        this.completeDungeon();
+      } else {
+        // Normal map completion
+        if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
+          this.saveData.stars += 3;
+          this.saveData.mapsCompleted.push(this.state.currentMapId);
         }
+        const questCtx: QuestContext = {
+          victory: true,
+          baseHp: this.state.baseHp,
+          maxBaseHp: this.state.maxBaseHp,
+          enemiesKilled: this.state.enemiesKilled,
+          wavesCompleted: this.state.currentWave,
+          placedUnitsCount: this.towerManager.units.length,
+          goldEarned: this.state.gold,
+          totalWaves: this.state.totalWaves,
+          hpLost: this.state.maxBaseHp - this.state.baseHp,
+        };
+        const quests = getQuestsForMap(this.state.currentMapId);
+        for (const quest of quests) {
+          if (this.saveData.questsCompleted.includes(quest.id)) continue;
+          if (quest.condition(questCtx)) {
+            this.saveData.questsCompleted.push(quest.id);
+            this.saveData.stars += quest.starsReward;
+          }
+        }
+        this.state.stars = this.saveData.stars;
+        if (this.state.baseHp === this.state.maxBaseHp) {
+          this.saveData.stats.perfectMaps++;
+          this.trackDailyEvent({ type: 'perfect_wave', count: 1 });
+        }
+        this.trackDailyEvent({ type: 'win_map', count: 1 });
       }
-      this.state.stars = this.saveData.stars;
-      // Perfect map (no HP lost)
-      if (this.state.baseHp === this.state.maxBaseHp) {
-        this.saveData.stats.perfectMaps++;
-        this.trackDailyEvent({ type: 'perfect_wave', count: 1 });
-      }
-      this.trackDailyEvent({ type: 'win_map', count: 1 });
       this.persistSave();
     }
 
