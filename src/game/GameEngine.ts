@@ -457,10 +457,24 @@ export class GameEngine {
     const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
     if (!character) return false;
 
+    // Dungeon: max units constraint
+    if (this.activeDungeon?.rules.maxUnits) {
+      const currentPlaced = this.towerManager.units.length;
+      if (currentPlaced >= this.activeDungeon.rules.maxUnits) return false;
+    }
+
+    // Dungeon: rarity constraint
+    if (this.activeDungeon?.rules.allowedRarities) {
+      if (!this.activeDungeon.rules.allowedRarities.includes(character.config.rarity)) return false;
+    }
+
     const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
     if (alreadyPlaced) return false;
 
-    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment, character.stars);
+    // Dungeon: no equipment — strip equipment for placement
+    const equipmentToUse = this.activeDungeon?.rules.noEquipment ? {} : character.equipment;
+
+    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, equipmentToUse, character.stars);
     slot.unitId = unit.id;
     soundManager.playPlaceUnit();
     this.trackDailyEvent({ type: 'place_units', count: 1 });
