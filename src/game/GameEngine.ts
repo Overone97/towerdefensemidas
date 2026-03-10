@@ -979,6 +979,113 @@ export class GameEngine {
     return this.dailyQuests;
   }
 
+  // ─── Dungeon Mode ───
+
+  startDungeon(dungeonId: string): boolean {
+    const dungeon = ALL_DUNGEONS.find(d => d.id === dungeonId);
+    if (!dungeon) return false;
+    if (isDungeonCompletedToday(dungeonId, this.saveData.dungeonCompletions || {})) return false;
+
+    this.saveDeployments();
+    this.activeDungeon = dungeon;
+    this.dungeonTimer = 0;
+
+    const map = getDungeonMap(dungeon);
+    this.state.currentMapId = map.id;
+    this.enemyManager.setWaypoints(map.waypoints);
+    this.enemyManager.clear();
+    this.towerManager.clear();
+    this.particleManager.clear();
+    this.waveManager = new WaveManager();
+
+    // Override wave manager for dungeon
+    this.waveManager.totalWaves = dungeon.totalWaves;
+    if (dungeon.rules.forceModifier) {
+      this.waveManager.forcedModifier = dungeon.rules.forceModifier;
+    }
+    if (dungeon.rules.enemyHpMult) {
+      this.waveManager.dungeonHpMult = dungeon.rules.enemyHpMult;
+    }
+    if (dungeon.rules.enemySpeedMult) {
+      this.waveManager.dungeonSpeedMult = dungeon.rules.enemySpeedMult;
+    }
+
+    const talentBonus = getTalentBonus(this.saveData.talents);
+    const inventory = this.state.inventory;
+
+    this.state = {
+      ...this.createInitialState(),
+      inventory,
+      currentMapId: map.id,
+      gold: dungeon.rules.startGold || 200,
+      totalWaves: dungeon.totalWaves,
+    };
+    this.state.slots = map.slots.map(s => ({ ...s }));
+
+    return true;
+  }
+
+  isDungeonMode(): boolean {
+    return this.activeDungeon !== null;
+  }
+
+  getDungeonInfo(): { dungeon: DungeonDef; timer: number } | null {
+    if (!this.activeDungeon) return null;
+    return { dungeon: this.activeDungeon, timer: this.dungeonTimer };
+  }
+
+  /** Get allowed rarities in current dungeon (null = all allowed) */
+  getDungeonAllowedRarities(): Rarity[] | null {
+    return this.activeDungeon?.rules.allowedRarities || null;
+  }
+
+  getDungeonMaxUnits(): number | null {
+    return this.activeDungeon?.rules.maxUnits || null;
+  }
+
+  completeDungeon(): { stars: number; gold: number; equipment?: string } | null {
+    if (!this.activeDungeon) return null;
+    const dungeon = this.activeDungeon;
+
+    // Mark as completed today
+    if (!this.saveData.dungeonCompletions) this.saveData.dungeonCompletions = {};
+    this.saveData.dungeonCompletions[dungeon.id] = new Date().toISOString().slice(0, 10);
+    this.saveData.stats.dungeonsCompleted = (this.saveData.stats.dungeonsCompleted || 0) + 1;
+
+    // Award rewards
+    this.saveData.stars += dungeon.reward.stars;
+    this.state.stars = this.saveData.stars;
+    this.state.gold += dungeon.reward.gold;
+
+    let equipDrop: string | undefined;
+    if (dungeon.reward.guaranteedEquipRarity) {
+      const pool = ALL_EQUIPMENT.filter(e => e.rarity === dungeon.reward.guaranteedEquipRarity);
+      if (pool.length > 0) {
+        const item = pool[Math.floor(Math.random() * pool.length)];
+        this.state.equipmentInventory.push(item.id);
+        this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+        equipDrop = item.id;
+        this.state.lastDrop = item.id;
+      }
+    }
+
+    this.activeDungeon = null;
+    this.dungeonTimer = 0;
+    this.persistSave();
+
+    return { stars: dungeon.reward.stars, gold: dungeon.reward.gold, equipment: equipDrop };
+  }
+
+  exitDungeon(): void {
+    this.activeDungeon = null;
+    this.dungeonTimer = 0;
+    this.restart();
+  }
+
+  getDungeonCompletions(): Record<string, string> {
+    return this.saveData.dungeonCompletions || {};
+  }
+
   private persistSave(): void {
     this.saveData.inventory = inventoryToSaveData(this.state.inventory);
     this.saveData.equipmentInventory = [...this.state.equipmentInventory];
