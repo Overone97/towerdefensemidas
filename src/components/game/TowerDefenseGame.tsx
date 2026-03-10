@@ -110,7 +110,12 @@ const TowerDefenseGame: React.FC = () => {
     if (state.endlessMode && state.gameOver) {
       engine.submitEndlessScore();
     }
-    engine.restart();
+    if (engine.isDungeonMode()) {
+      engine.exitDungeon();
+      setScreen('maps');
+    } else {
+      engine.restart();
+    }
     setLastSummon(null);
     onStateChange();
   }, [engine, state, onStateChange]);
