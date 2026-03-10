@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
