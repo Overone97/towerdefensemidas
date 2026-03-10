@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
@@ -19,6 +19,7 @@ import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipme
 import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
 import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
+import { DungeonDef, getDungeonMap, isDungeonCompletedToday, ALL_DUNGEONS } from './data/dungeonData';
 
 let nextInstanceId = 1;
 
@@ -41,6 +42,8 @@ export class GameEngine {
   floatingTextManager = new FloatingTextManager();
   screenShake = new ScreenShake();
   dailyQuests: DailyQuestState;
+  activeDungeon: DungeonDef | null = null;
+  dungeonTimer = 0;
 
   private saveData: SaveData;
   state: GameState;
@@ -109,6 +112,16 @@ export class GameEngine {
 
   update(dt: number): void {
     if (this.state.gameOver || this.state.victory) return;
+
+    // Dungeon timer
+    if (this.activeDungeon?.rules.timeLimit) {
+      this.dungeonTimer += dt;
+      if (this.dungeonTimer >= this.activeDungeon.rules.timeLimit) {
+        this.state.gameOver = true;
+        soundManager.playGameOver();
+        return;
+      }
+    }
 
     this.waveManager.update(dt, this.enemyManager);
 
@@ -303,38 +316,42 @@ export class GameEngine {
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
       soundManager.playVictory();
-      // Award base stars on first completion
-      if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
-        this.saveData.stars += 3;
-        this.saveData.mapsCompleted.push(this.state.currentMapId);
-      }
-      // Check & award quest stars
-      const questCtx: QuestContext = {
-        victory: true,
-        baseHp: this.state.baseHp,
-        maxBaseHp: this.state.maxBaseHp,
-        enemiesKilled: this.state.enemiesKilled,
-        wavesCompleted: this.state.currentWave,
-        placedUnitsCount: this.towerManager.units.length,
-        goldEarned: this.state.gold,
-        totalWaves: this.state.totalWaves,
-        hpLost: this.state.maxBaseHp - this.state.baseHp,
-      };
-      const quests = getQuestsForMap(this.state.currentMapId);
-      for (const quest of quests) {
-        if (this.saveData.questsCompleted.includes(quest.id)) continue;
-        if (quest.condition(questCtx)) {
-          this.saveData.questsCompleted.push(quest.id);
-          this.saveData.stars += quest.starsReward;
+
+      if (this.activeDungeon) {
+        // Dungeon completion — rewards handled by completeDungeon()
+        this.completeDungeon();
+      } else {
+        // Normal map completion
+        if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
+          this.saveData.stars += 3;
+          this.saveData.mapsCompleted.push(this.state.currentMapId);
         }
+        const questCtx: QuestContext = {
+          victory: true,
+          baseHp: this.state.baseHp,
+          maxBaseHp: this.state.maxBaseHp,
+          enemiesKilled: this.state.enemiesKilled,
+          wavesCompleted: this.state.currentWave,
+          placedUnitsCount: this.towerManager.units.length,
+          goldEarned: this.state.gold,
+          totalWaves: this.state.totalWaves,
+          hpLost: this.state.maxBaseHp - this.state.baseHp,
+        };
+        const quests = getQuestsForMap(this.state.currentMapId);
+        for (const quest of quests) {
+          if (this.saveData.questsCompleted.includes(quest.id)) continue;
+          if (quest.condition(questCtx)) {
+            this.saveData.questsCompleted.push(quest.id);
+            this.saveData.stars += quest.starsReward;
+          }
+        }
+        this.state.stars = this.saveData.stars;
+        if (this.state.baseHp === this.state.maxBaseHp) {
+          this.saveData.stats.perfectMaps++;
+          this.trackDailyEvent({ type: 'perfect_wave', count: 1 });
+        }
+        this.trackDailyEvent({ type: 'win_map', count: 1 });
       }
-      this.state.stars = this.saveData.stars;
-      // Perfect map (no HP lost)
-      if (this.state.baseHp === this.state.maxBaseHp) {
-        this.saveData.stats.perfectMaps++;
-        this.trackDailyEvent({ type: 'perfect_wave', count: 1 });
-      }
-      this.trackDailyEvent({ type: 'win_map', count: 1 });
       this.persistSave();
     }
 
@@ -444,10 +461,24 @@ export class GameEngine {
     const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
     if (!character) return false;
 
+    // Dungeon: max units constraint
+    if (this.activeDungeon?.rules.maxUnits) {
+      const currentPlaced = this.towerManager.units.length;
+      if (currentPlaced >= this.activeDungeon.rules.maxUnits) return false;
+    }
+
+    // Dungeon: rarity constraint
+    if (this.activeDungeon?.rules.allowedRarities) {
+      if (!this.activeDungeon.rules.allowedRarities.includes(character.config.rarity)) return false;
+    }
+
     const alreadyPlaced = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
     if (alreadyPlaced) return false;
 
-    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, character.equipment, character.stars);
+    // Dungeon: no equipment — strip equipment for placement
+    const equipmentToUse = this.activeDungeon?.rules.noEquipment ? {} : character.equipment;
+
+    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, equipmentToUse, character.stars);
     slot.unitId = unit.id;
     soundManager.playPlaceUnit();
     this.trackDailyEvent({ type: 'place_units', count: 1 });
@@ -916,6 +947,7 @@ export class GameEngine {
     this.saveData.stats = {
       totalKills: 0, totalGold: 0, bossKills: 0,
       perfectMaps: 0, maxWaveReached: 0, fishCaught: this.saveData.stats.fishCaught,
+      dungeonsCompleted: 0,
     };
     this.persistSave();
     
@@ -949,6 +981,113 @@ export class GameEngine {
 
   getDailyQuests(): DailyQuestState {
     return this.dailyQuests;
+  }
+
+  // ─── Dungeon Mode ───
+
+  startDungeon(dungeonId: string): boolean {
+    const dungeon = ALL_DUNGEONS.find(d => d.id === dungeonId);
+    if (!dungeon) return false;
+    if (isDungeonCompletedToday(dungeonId, this.saveData.dungeonCompletions || {})) return false;
+
+    this.saveDeployments();
+    this.activeDungeon = dungeon;
+    this.dungeonTimer = 0;
+
+    const map = getDungeonMap(dungeon);
+    this.state.currentMapId = map.id;
+    this.enemyManager.setWaypoints(map.waypoints);
+    this.enemyManager.clear();
+    this.towerManager.clear();
+    this.particleManager.clear();
+    this.waveManager = new WaveManager();
+
+    // Override wave manager for dungeon
+    this.waveManager.totalWaves = dungeon.totalWaves;
+    if (dungeon.rules.forceModifier) {
+      this.waveManager.forcedModifier = dungeon.rules.forceModifier;
+    }
+    if (dungeon.rules.enemyHpMult) {
+      this.waveManager.dungeonHpMult = dungeon.rules.enemyHpMult;
+    }
+    if (dungeon.rules.enemySpeedMult) {
+      this.waveManager.dungeonSpeedMult = dungeon.rules.enemySpeedMult;
+    }
+
+    const talentBonus = getTalentBonus(this.saveData.talents);
+    const inventory = this.state.inventory;
+
+    this.state = {
+      ...this.createInitialState(),
+      inventory,
+      currentMapId: map.id,
+      gold: dungeon.rules.startGold || 200,
+      totalWaves: dungeon.totalWaves,
+    };
+    this.state.slots = map.slots.map(s => ({ ...s }));
+
+    return true;
+  }
+
+  isDungeonMode(): boolean {
+    return this.activeDungeon !== null;
+  }
+
+  getDungeonInfo(): { dungeon: DungeonDef; timer: number } | null {
+    if (!this.activeDungeon) return null;
+    return { dungeon: this.activeDungeon, timer: this.dungeonTimer };
+  }
+
+  /** Get allowed rarities in current dungeon (null = all allowed) */
+  getDungeonAllowedRarities(): Rarity[] | null {
+    return this.activeDungeon?.rules.allowedRarities || null;
+  }
+
+  getDungeonMaxUnits(): number | null {
+    return this.activeDungeon?.rules.maxUnits || null;
+  }
+
+  completeDungeon(): { stars: number; gold: number; equipment?: string } | null {
+    if (!this.activeDungeon) return null;
+    const dungeon = this.activeDungeon;
+
+    // Mark as completed today
+    if (!this.saveData.dungeonCompletions) this.saveData.dungeonCompletions = {};
+    this.saveData.dungeonCompletions[dungeon.id] = new Date().toISOString().slice(0, 10);
+    this.saveData.stats.dungeonsCompleted = (this.saveData.stats.dungeonsCompleted || 0) + 1;
+
+    // Award rewards
+    this.saveData.stars += dungeon.reward.stars;
+    this.state.stars = this.saveData.stars;
+    this.state.gold += dungeon.reward.gold;
+
+    let equipDrop: string | undefined;
+    if (dungeon.reward.guaranteedEquipRarity) {
+      const pool = ALL_EQUIPMENT.filter(e => e.rarity === dungeon.reward.guaranteedEquipRarity);
+      if (pool.length > 0) {
+        const item = pool[Math.floor(Math.random() * pool.length)];
+        this.state.equipmentInventory.push(item.id);
+        this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+        equipDrop = item.id;
+        this.state.lastDrop = item.id;
+      }
+    }
+
+    this.activeDungeon = null;
+    this.dungeonTimer = 0;
+    this.persistSave();
+
+    return { stars: dungeon.reward.stars, gold: dungeon.reward.gold, equipment: equipDrop };
+  }
+
+  exitDungeon(): void {
+    this.activeDungeon = null;
+    this.dungeonTimer = 0;
+    this.restart();
+  }
+
+  getDungeonCompletions(): Record<string, string> {
+    return this.saveData.dungeonCompletions || {};
   }
 
   private persistSave(): void {

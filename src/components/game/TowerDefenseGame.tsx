@@ -110,7 +110,12 @@ const TowerDefenseGame: React.FC = () => {
     if (state.endlessMode && state.gameOver) {
       engine.submitEndlessScore();
     }
-    engine.restart();
+    if (engine.isDungeonMode()) {
+      engine.exitDungeon();
+      setScreen('maps');
+    } else {
+      engine.restart();
+    }
     setLastSummon(null);
     onStateChange();
   }, [engine, state, onStateChange]);
@@ -130,6 +135,21 @@ const TowerDefenseGame: React.FC = () => {
   const handleStartEndless = useCallback((mapId: string) => {
     engine.startEndless(mapId);
     setScreen('game');
+    setLastSummon(null);
+    onStateChange();
+  }, [engine, onStateChange]);
+
+  const handleStartDungeon = useCallback((dungeonId: string) => {
+    if (engine.startDungeon(dungeonId)) {
+      setScreen('game');
+      setLastSummon(null);
+      onStateChange();
+    }
+  }, [engine, onStateChange]);
+
+  const handleExitDungeon = useCallback(() => {
+    engine.exitDungeon();
+    setScreen('maps');
     setLastSummon(null);
     onStateChange();
   }, [engine, onStateChange]);
@@ -217,8 +237,10 @@ const TowerDefenseGame: React.FC = () => {
         stars={state.stars}
         mapsCompleted={saveData.mapsCompleted}
         questsCompleted={saveData.questsCompleted || []}
+        dungeonCompletions={engine.getDungeonCompletions()}
         onSelectMap={handleSelectMap}
         onStartEndless={handleStartEndless}
+        onStartDungeon={handleStartDungeon}
         onBack={() => setScreen('game')}
       />
     );
@@ -290,6 +312,17 @@ const TowerDefenseGame: React.FC = () => {
             prestigeLevel={engine.getPrestigeLevel()}
             canPrestige={engine.canPrestige()}
             onPrestige={handlePrestige}
+            dungeonInfo={engine.isDungeonMode() ? (() => {
+              const info = engine.getDungeonInfo();
+              return info ? {
+                name: info.dungeon.name,
+                icon: info.dungeon.icon,
+                timer: info.timer,
+                timeLimit: info.dungeon.rules.timeLimit,
+                rules: info.dungeon.rules,
+              } : null;
+            })() : null}
+            onExitDungeon={handleExitDungeon}
           />
         </div>
       </div>

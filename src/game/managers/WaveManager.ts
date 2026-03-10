@@ -8,6 +8,10 @@ export class WaveManager {
   totalWaves: number = TOTAL_WAVES;
   endlessMode: boolean = false;
   currentModifier: WaveModifier = null;
+  /** Dungeon overrides */
+  forcedModifier: WaveModifier = null;
+  dungeonHpMult: number = 1;
+  dungeonSpeedMult: number = 1;
   
   private waveConfig: WaveConfig | null = null;
   private spawnTimer: number = 0;
@@ -21,6 +25,18 @@ export class WaveManager {
     if (!this.endlessMode && this.currentWave >= this.totalWaves) return null;
     this.currentWave++;
     this.waveConfig = this.endlessMode ? this.getEndlessWaveConfig(this.currentWave) : getWaveConfig(this.currentWave);
+    
+    // Apply dungeon overrides
+    if (this.forcedModifier) {
+      this.waveConfig.modifier = this.forcedModifier;
+    }
+    if (this.dungeonHpMult !== 1) {
+      this.waveConfig.enemyHpMultiplier *= this.dungeonHpMult;
+    }
+    if (this.dungeonSpeedMult !== 1) {
+      this.waveConfig.enemySpeedMultiplier *= this.dungeonSpeedMult;
+    }
+    
     this.currentModifier = this.waveConfig.modifier || null;
     this.waveActive = true;
     this.spawnTimer = 0;
