@@ -14,6 +14,8 @@ export interface HUDProps {
   prestigeLevel?: number;
   canPrestige?: boolean;
   onPrestige?: () => void;
+  dungeonInfo?: { name: string; icon: string; timer: number; timeLimit?: number; rules: any } | null;
+  onExitDungeon?: () => void;
 }
 
 const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, prestigeLevel = 0, canPrestige = false, onPrestige }) => {
