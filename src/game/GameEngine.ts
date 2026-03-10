@@ -916,6 +916,7 @@ export class GameEngine {
     this.saveData.stats = {
       totalKills: 0, totalGold: 0, bossKills: 0,
       perfectMaps: 0, maxWaveReached: 0, fishCaught: this.saveData.stats.fishCaught,
+      dungeonsCompleted: 0,
     };
     this.persistSave();
     
