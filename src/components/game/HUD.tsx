@@ -18,7 +18,7 @@ export interface HUDProps {
   onExitDungeon?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, prestigeLevel = 0, canPrestige = false, onPrestige }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, prestigeLevel = 0, canPrestige = false, onPrestige, dungeonInfo, onExitDungeon }) => {
   const waveProgress = state.waveActive && state.waveEnemiesTotal > 0
     ? (state.waveEnemiesKilledThisWave / state.waveEnemiesTotal) * 100
     : 0;
