@@ -113,6 +113,16 @@ export class GameEngine {
   update(dt: number): void {
     if (this.state.gameOver || this.state.victory) return;
 
+    // Dungeon timer
+    if (this.activeDungeon?.rules.timeLimit) {
+      this.dungeonTimer += dt;
+      if (this.dungeonTimer >= this.activeDungeon.rules.timeLimit) {
+        this.state.gameOver = true;
+        soundManager.playGameOver();
+        return;
+      }
+    }
+
     this.waveManager.update(dt, this.enemyManager);
 
     const talentBonus = getTalentBonus(this.saveData.talents);
