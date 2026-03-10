@@ -18,6 +18,7 @@ import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from 
 import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
+import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
 import { DungeonDef, getDungeonMap, isDungeonCompletedToday, ALL_DUNGEONS } from './data/dungeonData';
 
 let nextInstanceId = 1;
