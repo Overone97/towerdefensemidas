@@ -42,6 +42,8 @@ export class GameEngine {
   floatingTextManager = new FloatingTextManager();
   screenShake = new ScreenShake();
   dailyQuests: DailyQuestState;
+  activeDungeon: DungeonDef | null = null;
+  dungeonTimer = 0;
 
   private saveData: SaveData;
   state: GameState;
