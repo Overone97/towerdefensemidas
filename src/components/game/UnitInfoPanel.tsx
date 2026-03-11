@@ -12,6 +12,8 @@ interface UnitInfoPanelProps {
   onRemove: (unitId: number) => void;
   onSetPriority: (unitId: number, priority: TargetPriority) => void;
   onActivateAbility: (unitId: number) => void;
+  onOpenSkins?: (championId: string) => void;
+  hasAvailableSkins?: boolean;
 }
 
 const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
@@ -27,7 +29,7 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
   burst: { label: 'Burst', icon: '💣', desc: 'Fires multiple projectiles in a spread' },
 };
 
-const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority, onActivateAbility }) => {
+const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority, onActivateAbility, onOpenSkins, hasAvailableSkins }) => {
   const stats = getCharacterStats(unit.config, unit.level, unit.stars);
   const nextStats = getCharacterStats(unit.config, unit.level + 1, unit.stars);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
@@ -194,6 +196,18 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
           Remove
         </Button>
       </div>
+
+      {/* Skin button */}
+      {hasAvailableSkins && onOpenSkins && (
+        <Button
+          onClick={() => onOpenSkins(unit.config.id)}
+          size="sm"
+          variant="outline"
+          className="w-full mt-2 text-xs"
+        >
+          🎨 Skins
+        </Button>
+      )}
     </div>
   );
 };

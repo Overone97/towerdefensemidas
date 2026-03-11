@@ -19,6 +19,8 @@ import EquipmentDropToast from './EquipmentDropToast';
 import DailyQuestPanel from './DailyQuestPanel';
 import TeamSidebar from './TeamSidebar';
 import TutorialOverlay from './TutorialOverlay';
+import SkinSelector from './SkinSelector';
+import { getSkinsForChampion } from '../../game/data/skinData';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
@@ -29,6 +31,7 @@ const TowerDefenseGame: React.FC = () => {
   const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
   const [screen, setScreen] = useState<Screen>('game');
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
+  const [skinChampionId, setSkinChampionId] = useState<string | null>(null);
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -45,6 +48,8 @@ const TowerDefenseGame: React.FC = () => {
       if (newAch.length > 0) {
         setAchievementQueue(prev => [...prev, ...newAch]);
       }
+      // Auto-refresh unlocked skins
+      engine.refreshUnlockedSkins();
     }, 500);
     return () => clearInterval(interval);
   }, [engine]);
@@ -356,6 +361,27 @@ const TowerDefenseGame: React.FC = () => {
             onRemove={handleRemove}
             onSetPriority={handleSetPriority}
             onActivateAbility={handleActivateAbility}
+            onOpenSkins={(champId) => setSkinChampionId(champId)}
+            hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
+          />
+        </div>
+      )}
+
+      {/* Skin Selector Modal */}
+      {skinChampionId && (
+        <div className="absolute right-2 bottom-40 z-40 pointer-events-auto">
+          <SkinSelector
+            championId={skinChampionId}
+            championName={state.inventory.find(c => c.config.id === skinChampionId)?.config.name || skinChampionId}
+            unlockedSkins={engine.getUnlockedSkins()}
+            equippedSkins={engine.getEquippedSkins()}
+            prestigeLevel={engine.getPrestigeLevel()}
+            dungeonCompletions={engine.getDungeonCompletions()}
+            achievementsUnlocked={saveData.achievementsUnlocked || []}
+            maxWaveReached={saveData.stats?.maxWaveReached || 0}
+            onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
+            onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
+            onClose={() => setSkinChampionId(null)}
           />
         </div>
       )}

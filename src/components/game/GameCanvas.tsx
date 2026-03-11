@@ -202,7 +202,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       ctx.save();
       ctx.translate(shake.offsetX, shake.offsetY);
 
-      renderGame(ctx, engine.state, engine.getWaypoints(), timestamp);
+      renderGame(ctx, engine.state, engine.getWaypoints(), timestamp, engine.getEquippedSkins());
       engine.particleManager.render(ctx);
       engine.floatingTextManager.render(ctx);
 

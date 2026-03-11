@@ -27,6 +27,10 @@ export interface SaveData {
   tutorialCompleted: boolean;
   /** dungeon completions: dungeonId → ISO date string of last completion */
   dungeonCompletions: Record<string, string>;
+  /** Unlocked skin ids */
+  unlockedSkins: string[];
+  /** Champion id → equipped skin id */
+  equippedSkins: Record<string, string>;
   stats: {
     totalKills: number;
     totalGold: number;
@@ -55,6 +59,8 @@ function defaultSave(): SaveData {
     prestige: 0,
     tutorialCompleted: false,
     dungeonCompletions: {},
+    unlockedSkins: [],
+    equippedSkins: {},
     stats: {
       totalKills: 0,
       totalGold: 0,

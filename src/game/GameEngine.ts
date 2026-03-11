@@ -20,6 +20,7 @@ import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
 import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
 import { DungeonDef, getDungeonMap, isDungeonCompletedToday, ALL_DUNGEONS } from './data/dungeonData';
+import { ALL_SKINS, checkSkinUnlock, getSkinsForChampion, getSkinById } from './data/skinData';
 
 let nextInstanceId = 1;
 
@@ -1088,6 +1089,60 @@ export class GameEngine {
 
   getDungeonCompletions(): Record<string, string> {
     return this.saveData.dungeonCompletions || {};
+  }
+  // ─── Skins System ───
+
+  /** Refresh unlocked skins based on current progress */
+  refreshUnlockedSkins(): string[] {
+    const context = {
+      prestigeLevel: this.saveData.prestige || 0,
+      dungeonCompletions: this.saveData.dungeonCompletions || {},
+      achievementsUnlocked: this.saveData.achievementsUnlocked || [],
+      maxWaveReached: this.saveData.stats.maxWaveReached || 0,
+    };
+    const newlyUnlocked: string[] = [];
+    for (const skin of ALL_SKINS) {
+      if (this.saveData.unlockedSkins.includes(skin.id)) continue;
+      if (checkSkinUnlock(skin, context)) {
+        this.saveData.unlockedSkins.push(skin.id);
+        newlyUnlocked.push(skin.id);
+      }
+    }
+    if (newlyUnlocked.length > 0) this.persistSave();
+    return newlyUnlocked;
+  }
+
+  getUnlockedSkins(): string[] {
+    return this.saveData.unlockedSkins || [];
+  }
+
+  getEquippedSkins(): Record<string, string> {
+    return this.saveData.equippedSkins || {};
+  }
+
+  equipSkin(championId: string, skinId: string): boolean {
+    if (!this.saveData.unlockedSkins.includes(skinId)) return false;
+    const skin = getSkinById(skinId);
+    if (!skin || skin.championId !== championId) return false;
+    if (!this.saveData.equippedSkins) this.saveData.equippedSkins = {};
+    this.saveData.equippedSkins[championId] = skinId;
+    this.persistSave();
+    return true;
+  }
+
+  unequipSkin(championId: string): void {
+    if (!this.saveData.equippedSkins) return;
+    delete this.saveData.equippedSkins[championId];
+    this.persistSave();
+  }
+
+  /** Get the effective config colors for a champion (with skin applied) */
+  getSkinnedConfig(config: { id: string; bodyColor: string; detailColor: string; weaponColor: string }): { bodyColor: string; detailColor: string; weaponColor: string } {
+    const skinId = this.saveData.equippedSkins?.[config.id];
+    if (!skinId) return config;
+    const skin = getSkinById(skinId);
+    if (!skin) return config;
+    return { bodyColor: skin.bodyColor, detailColor: skin.detailColor, weaponColor: skin.weaponColor };
   }
 
   private persistSave(): void {

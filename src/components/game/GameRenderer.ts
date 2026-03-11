@@ -1,10 +1,11 @@
-import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState, GroundEffect } from '../../game/types';
+import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState, GroundEffect, CharacterConfig } from '../../game/types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
 import { ALL_MAPS } from '../../game/data/allMaps';
 import { fishState } from '../../game/GameEngine';
+import { getSkinById } from '../../game/data/skinData';
 import plainsBg from '../../assets/maps/plains-bg.jpg';
 import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
@@ -139,7 +140,7 @@ function getMapTheme(mapId: string) {
   }
 }
 
-export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[], time?: number): void {
+export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[], time?: number, equippedSkins?: Record<string, string>): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
   const mapId = state.currentMapId || 'plains';
@@ -179,7 +180,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   drawGroundEffects(ctx, state.groundEffects || [], t);
   drawEnemies(ctx, state.enemies);
   drawAoeWaves(ctx, state.aoeWaves || []);
-  drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
+  drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies, equippedSkins || {});
   drawProjectiles(ctx, state.projectiles);
   drawBase(ctx, waypoints);
 }
@@ -757,10 +758,19 @@ function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): voi
   }
 }
 
-function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[]): void {
+function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[], equippedSkins: Record<string, string>): void {
   const now = performance.now() / 1000;
 
   for (const unit of units) {
+    // Apply skin colors if equipped
+    let renderConfig = unit.config;
+    const skinId = equippedSkins[unit.config.id];
+    if (skinId) {
+      const skin = getSkinById(skinId);
+      if (skin) {
+        renderConfig = { ...unit.config, bodyColor: skin.bodyColor, detailColor: skin.detailColor, weaponColor: skin.weaponColor };
+      }
+    }
     const stats = getCharacterStats(unit.config, unit.level, unit.stars);
     const isSelected = selectedId === unit.id;
 
@@ -898,7 +908,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       }
     }
 
-    drawCharacterSprite(ctx, unit.config, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer, unit.stars);
+    drawCharacterSprite(ctx, renderConfig, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer, unit.stars);
 
     // Selection indicator (subtle glow instead of box)
     if (isSelected) {
