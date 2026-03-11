@@ -31,6 +31,7 @@ const TowerDefenseGame: React.FC = () => {
   const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
   const [screen, setScreen] = useState<Screen>('game');
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
+  const [skinChampionId, setSkinChampionId] = useState<string | null>(null);
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
