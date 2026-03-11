@@ -1,10 +1,11 @@
-import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState, GroundEffect } from '../../game/types';
+import { GameState, Enemy, PlacedUnit, Projectile, Slot, Point, AoeWaveState, GroundEffect, CharacterConfig } from '../../game/types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { getCharacterStats } from '../../game/data/characterData';
 import { drawCharacterSprite } from '../../game/rendering/characterSprites';
 import { drawEnemySprite } from '../../game/rendering/enemySprites';
 import { ALL_MAPS } from '../../game/data/allMaps';
 import { fishState } from '../../game/GameEngine';
+import { getSkinById } from '../../game/data/skinData';
 import plainsBg from '../../assets/maps/plains-bg.jpg';
 import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
