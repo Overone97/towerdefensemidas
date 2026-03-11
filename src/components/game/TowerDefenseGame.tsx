@@ -48,6 +48,8 @@ const TowerDefenseGame: React.FC = () => {
       if (newAch.length > 0) {
         setAchievementQueue(prev => [...prev, ...newAch]);
       }
+      // Auto-refresh unlocked skins
+      engine.refreshUnlockedSkins();
     }, 500);
     return () => clearInterval(interval);
   }, [engine]);
