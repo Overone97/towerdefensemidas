@@ -19,6 +19,8 @@ import EquipmentDropToast from './EquipmentDropToast';
 import DailyQuestPanel from './DailyQuestPanel';
 import TeamSidebar from './TeamSidebar';
 import TutorialOverlay from './TutorialOverlay';
+import SkinSelector from './SkinSelector';
+import { getSkinsForChampion } from '../../game/data/skinData';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
 
