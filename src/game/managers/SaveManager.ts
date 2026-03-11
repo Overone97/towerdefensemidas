@@ -59,6 +59,8 @@ function defaultSave(): SaveData {
     prestige: 0,
     tutorialCompleted: false,
     dungeonCompletions: {},
+    unlockedSkins: [],
+    equippedSkins: {},
     stats: {
       totalKills: 0,
       totalGold: 0,
