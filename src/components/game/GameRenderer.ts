@@ -180,7 +180,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   drawGroundEffects(ctx, state.groundEffects || [], t);
   drawEnemies(ctx, state.enemies);
   drawAoeWaves(ctx, state.aoeWaves || []);
-  drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies);
+  drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies, equippedSkins || {});
   drawProjectiles(ctx, state.projectiles);
   drawBase(ctx, waypoints);
 }
