@@ -758,10 +758,19 @@ function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): voi
   }
 }
 
-function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[]): void {
+function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedId: number | null, enemies: Enemy[], equippedSkins: Record<string, string>): void {
   const now = performance.now() / 1000;
 
   for (const unit of units) {
+    // Apply skin colors if equipped
+    let renderConfig = unit.config;
+    const skinId = equippedSkins[unit.config.id];
+    if (skinId) {
+      const skin = getSkinById(skinId);
+      if (skin) {
+        renderConfig = { ...unit.config, bodyColor: skin.bodyColor, detailColor: skin.detailColor, weaponColor: skin.weaponColor };
+      }
+    }
     const stats = getCharacterStats(unit.config, unit.level, unit.stars);
     const isSelected = selectedId === unit.id;
 
