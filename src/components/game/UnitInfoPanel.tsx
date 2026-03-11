@@ -196,6 +196,18 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, on
           Remove
         </Button>
       </div>
+
+      {/* Skin button */}
+      {hasAvailableSkins && onOpenSkins && (
+        <Button
+          onClick={() => onOpenSkins(unit.config.id)}
+          size="sm"
+          variant="outline"
+          className="w-full mt-2 text-xs"
+        >
+          🎨 Skins
+        </Button>
+      )}
     </div>
   );
 };
