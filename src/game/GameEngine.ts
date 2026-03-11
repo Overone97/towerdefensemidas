@@ -20,6 +20,7 @@ import { getQuestsForMap, QuestContext } from './data/questData';
 import { soundManager } from './audio/SoundManager';
 import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
 import { DungeonDef, getDungeonMap, isDungeonCompletedToday, ALL_DUNGEONS } from './data/dungeonData';
+import { ALL_SKINS, checkSkinUnlock, getSkinsForChampion, getSkinById } from './data/skinData';
 
 let nextInstanceId = 1;
 
