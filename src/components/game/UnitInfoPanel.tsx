@@ -12,6 +12,8 @@ interface UnitInfoPanelProps {
   onRemove: (unitId: number) => void;
   onSetPriority: (unitId: number, priority: TargetPriority) => void;
   onActivateAbility: (unitId: number) => void;
+  onOpenSkins?: (championId: string) => void;
+  hasAvailableSkins?: boolean;
 }
 
 const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
