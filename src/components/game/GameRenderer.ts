@@ -140,7 +140,7 @@ function getMapTheme(mapId: string) {
   }
 }
 
-export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[], time?: number): void {
+export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, waypoints: Point[], time?: number, equippedSkins?: Record<string, string>): void {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
   const mapId = state.currentMapId || 'plains';
