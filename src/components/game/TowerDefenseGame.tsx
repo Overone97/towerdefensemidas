@@ -361,6 +361,27 @@ const TowerDefenseGame: React.FC = () => {
             onRemove={handleRemove}
             onSetPriority={handleSetPriority}
             onActivateAbility={handleActivateAbility}
+            onOpenSkins={(champId) => setSkinChampionId(champId)}
+            hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
+          />
+        </div>
+      )}
+
+      {/* Skin Selector Modal */}
+      {skinChampionId && (
+        <div className="absolute right-2 bottom-40 z-40 pointer-events-auto">
+          <SkinSelector
+            championId={skinChampionId}
+            championName={state.inventory.find(c => c.config.id === skinChampionId)?.config.name || skinChampionId}
+            unlockedSkins={engine.getUnlockedSkins()}
+            equippedSkins={engine.getEquippedSkins()}
+            prestigeLevel={engine.getPrestigeLevel()}
+            dungeonCompletions={engine.getDungeonCompletions()}
+            achievementsUnlocked={saveData.achievementsUnlocked || []}
+            maxWaveReached={saveData.stats?.maxWaveReached || 0}
+            onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
+            onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
+            onClose={() => setSkinChampionId(null)}
           />
         </div>
       )}
