@@ -832,7 +832,12 @@ export class GameEngine {
 
   equipItem(characterInstanceId: number, equipmentId: string): boolean {
     const char = this.state.inventory.find(c => c.instanceId === characterInstanceId);
-    const item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+    let item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+    // Also check composite/crafted items
+    if (!item) {
+      const recipe = COMPOSITE_RECIPES.find(r => r.result.id === equipmentId);
+      if (recipe) item = recipe.result;
+    }
     if (!char || !item) return false;
 
     // Check if in equipment inventory

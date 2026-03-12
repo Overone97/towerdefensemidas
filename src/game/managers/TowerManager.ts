@@ -2,6 +2,7 @@ import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, Syn
 import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
 import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
+import { COMPOSITE_RECIPES } from '../data/compositeEquipmentData';
 
 let nextUnitId = 1;
 let nextProjectileId = 1;

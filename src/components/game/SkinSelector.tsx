@@ -1,17 +1,13 @@
 import React from 'react';
-import { CharacterConfig } from '../../game/types';
-import { getSkinsForChampion, SkinDef, getUnlockDescription, checkSkinUnlock } from '../../game/data/skinData';
-import { Button } from '../ui/button';
+import { getSkinsForChampion, SkinDef, getUnlockDescription } from '../../game/data/skinData';
 
 interface SkinSelectorProps {
   championId: string;
   championName: string;
   unlockedSkins: string[];
   equippedSkins: Record<string, string>;
-  prestigeLevel: number;
-  dungeonCompletions: Record<string, string>;
-  achievementsUnlocked: string[];
-  maxWaveReached: number;
+  stars: number;
+  onBuy: (skinId: string) => void;
   onEquip: (championId: string, skinId: string) => void;
   onUnequip: (championId: string) => void;
   onClose: () => void;
@@ -22,10 +18,8 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
   championName,
   unlockedSkins,
   equippedSkins,
-  prestigeLevel,
-  dungeonCompletions,
-  achievementsUnlocked,
-  maxWaveReached,
+  stars,
+  onBuy,
   onEquip,
   onUnequip,
   onClose,
@@ -45,14 +39,14 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
     );
   }
 
-  const context = { prestigeLevel, dungeonCompletions, achievementsUnlocked, maxWaveReached };
-
   return (
     <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-4 w-72 shadow-xl max-h-[50vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-foreground font-bold text-sm">🎨 Skins — {championName}</h3>
+        <h3 className="text-foreground font-bold text-sm">🎨 Boutique Skins — {championName}</h3>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
       </div>
+
+      <div className="text-xs text-muted-foreground mb-2 text-center">⭐ {stars} étoiles disponibles</div>
 
       {/* Default skin option */}
       <button
@@ -70,38 +64,25 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
 
       {/* Skin list */}
       {skins.map(skin => {
-        const isUnlocked = unlockedSkins.includes(skin.id) || checkSkinUnlock(skin, context);
+        const isUnlocked = unlockedSkins.includes(skin.id);
         const isEquipped = equippedSkinId === skin.id;
+        const canAfford = stars >= skin.unlockCondition.cost;
 
         return (
-          <button
+          <div
             key={skin.id}
-            onClick={() => {
-              if (!isUnlocked) return;
-              if (isEquipped) {
-                onUnequip(championId);
-              } else {
-                onEquip(championId, skin.id);
-              }
-            }}
-            disabled={!isUnlocked}
             className={`w-full flex items-center gap-3 p-2 rounded mb-1 transition-colors ${
               isEquipped
                 ? 'bg-primary/20 border border-primary'
                 : isUnlocked
                 ? 'bg-muted/30 hover:bg-muted/50 border border-transparent'
-                : 'bg-muted/10 border border-transparent opacity-50 cursor-not-allowed'
+                : 'bg-muted/10 border border-border/50'
             }`}
           >
             {/* Color preview */}
             <div className="w-8 h-8 rounded relative overflow-hidden" style={{ background: skin.bodyColor }}>
               <div className="absolute bottom-0 left-0 right-0 h-3" style={{ background: skin.detailColor }} />
               <div className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ background: skin.weaponColor }} />
-              {!isUnlocked && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-xs">🔒</span>
-                </div>
-              )}
             </div>
             <div className="flex-1 text-left">
               <div className="text-foreground text-xs font-semibold">{skin.name}</div>
@@ -109,8 +90,29 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
                 <div className="text-muted-foreground text-[10px]">{getUnlockDescription(skin)}</div>
               )}
             </div>
-            {isEquipped && <span className="text-primary text-xs font-bold">✓</span>}
-          </button>
+            {isUnlocked ? (
+              <button
+                onClick={() => isEquipped ? onUnequip(championId) : onEquip(championId, skin.id)}
+                className={`text-xs px-2 py-0.5 rounded font-bold ${
+                  isEquipped ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-accent'
+                }`}
+              >
+                {isEquipped ? '✓' : 'Équiper'}
+              </button>
+            ) : (
+              <button
+                onClick={() => canAfford && onBuy(skin.id)}
+                disabled={!canAfford}
+                className={`text-xs px-2 py-0.5 rounded font-bold ${
+                  canAfford
+                    ? 'bg-yellow-600 text-white hover:bg-yellow-500'
+                    : 'bg-muted/50 text-muted-foreground cursor-not-allowed'
+                }`}
+              >
+                {skin.unlockCondition.cost} ⭐
+              </button>
+            )}
+          </div>
         );
       })}
     </div>

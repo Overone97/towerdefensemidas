@@ -269,13 +269,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         <button
           onClick={toggleSpeed}
           className={`px-2.5 py-1 rounded font-mono text-xs font-bold transition-colors ${
-            engine.state.gameSpeed === 2
+            (engine.state.gameSpeed || 1) > 1
               ? 'bg-yellow-500 text-black'
               : 'bg-muted/80 text-muted-foreground hover:bg-accent'
           }`}
-          title={engine.state.gameSpeed === 1 ? 'Vitesse x2' : 'Vitesse x1'}
+          title={`Vitesse x${engine.state.gameSpeed || 1}`}
         >
-          {engine.state.gameSpeed === 1 ? '▶ x1' : '⏩ x2'}
+          {(engine.state.gameSpeed || 1) === 1 ? '▶ x1' : `⏩ x${engine.state.gameSpeed}`}
         </button>
       </div>
       <DamageStatsPanel engine={engine} />
