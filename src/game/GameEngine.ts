@@ -832,7 +832,12 @@ export class GameEngine {
 
   equipItem(characterInstanceId: number, equipmentId: string): boolean {
     const char = this.state.inventory.find(c => c.instanceId === characterInstanceId);
-    const item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+    let item = ALL_EQUIPMENT.find(e => e.id === equipmentId);
+    // Also check composite/crafted items
+    if (!item) {
+      const recipe = COMPOSITE_RECIPES.find(r => r.result.id === equipmentId);
+      if (recipe) item = recipe.result;
+    }
     if (!char || !item) return false;
 
     // Check if in equipment inventory
@@ -1092,24 +1097,24 @@ export class GameEngine {
   }
   // ─── Skins System ───
 
-  /** Refresh unlocked skins based on current progress */
+  /** Buy a skin with stars */
+  buySkin(skinId: string): boolean {
+    if (this.saveData.unlockedSkins.includes(skinId)) return false;
+    const skin = getSkinById(skinId);
+    if (!skin) return false;
+    const cost = skin.unlockCondition.cost;
+    if (this.saveData.stars < cost) return false;
+
+    this.saveData.stars -= cost;
+    this.state.stars = this.saveData.stars;
+    this.saveData.unlockedSkins.push(skinId);
+    this.persistSave();
+    return true;
+  }
+
+  /** Refresh unlocked skins — no-op now that skins are shop-based */
   refreshUnlockedSkins(): string[] {
-    const context = {
-      prestigeLevel: this.saveData.prestige || 0,
-      dungeonCompletions: this.saveData.dungeonCompletions || {},
-      achievementsUnlocked: this.saveData.achievementsUnlocked || [],
-      maxWaveReached: this.saveData.stats.maxWaveReached || 0,
-    };
-    const newlyUnlocked: string[] = [];
-    for (const skin of ALL_SKINS) {
-      if (this.saveData.unlockedSkins.includes(skin.id)) continue;
-      if (checkSkinUnlock(skin, context)) {
-        this.saveData.unlockedSkins.push(skin.id);
-        newlyUnlocked.push(skin.id);
-      }
-    }
-    if (newlyUnlocked.length > 0) this.persistSave();
-    return newlyUnlocked;
+    return [];
   }
 
   getUnlockedSkins(): string[] {

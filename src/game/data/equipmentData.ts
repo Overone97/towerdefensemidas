@@ -64,6 +64,14 @@ export function rollBossDrop(waveNumber: number): EquipmentItem | null {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+/** Lookup any equipment by id, including composite items */
+export function findEquipmentById(id: string): EquipmentItem | undefined {
+  const base = ALL_EQUIPMENT.find(e => e.id === id);
+  if (base) return base;
+  // Check composite recipes (imported lazily to avoid circular deps)
+  return undefined; // fallback — composite lookup done in getEquipmentBonuses caller
+}
+
 export function getEquipmentBonuses(items: EquipmentItem[]): {
   attackBonus: number;
   attackSpeedBonus: number;

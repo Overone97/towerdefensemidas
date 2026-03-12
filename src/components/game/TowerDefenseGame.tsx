@@ -375,10 +375,8 @@ const TowerDefenseGame: React.FC = () => {
             championName={state.inventory.find(c => c.config.id === skinChampionId)?.config.name || skinChampionId}
             unlockedSkins={engine.getUnlockedSkins()}
             equippedSkins={engine.getEquippedSkins()}
-            prestigeLevel={engine.getPrestigeLevel()}
-            dungeonCompletions={engine.getDungeonCompletions()}
-            achievementsUnlocked={saveData.achievementsUnlocked || []}
-            maxWaveReached={saveData.stats?.maxWaveReached || 0}
+            stars={state.stars}
+            onBuy={(skinId) => { engine.buySkin(skinId); onStateChange(); }}
             onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
             onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
             onClose={() => setSkinChampionId(null)}

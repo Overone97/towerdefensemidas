@@ -2,6 +2,7 @@ import { PlacedUnit, Projectile, Enemy, Slot, CharacterConfig, StatusEffect, Syn
 import { ABILITIES, AbilityEffect } from '../data/abilityData';
 import { getCharacterStats } from '../data/characterData';
 import { ALL_EQUIPMENT, getEquipmentBonuses } from '../data/equipmentData';
+import { COMPOSITE_RECIPES } from '../data/compositeEquipmentData';
 
 let nextUnitId = 1;
 let nextProjectileId = 1;
@@ -92,17 +93,27 @@ export class TowerManager {
     const eq = this.unitEquipment.get(unit.id) || {};
     const eqItems = [eq.weapon, eq.armor, eq.accessory]
       .filter(Boolean)
-      .map(id => ALL_EQUIPMENT.find(e => e.id === id))
+      .map(id => {
+        let item = ALL_EQUIPMENT.find(e => e.id === id);
+        if (!item) {
+          // Check composite recipes for crafted items
+          const recipe = COMPOSITE_RECIPES.find(r => r.result.id === id);
+          if (recipe) item = recipe.result;
+        }
+        return item;
+      })
       .filter(Boolean) as any[];
     const eqBonus = getEquipmentBonuses(eqItems);
     
     const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * eqBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
     const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * eqBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
-    const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
+    const isAoe = unit.config.attackPattern === 'aoe_circle';
+    const rMult = isAoe ? 1 : (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
+    const rBonus = isAoe ? 0 : eqBonus.rangeBonus;
     return {
       attack: Math.floor((base.attack + eqBonus.attackBonus) * aMult),
       attackSpeed: (base.attackSpeed + eqBonus.attackSpeedBonus) * sMult,
-      range: Math.floor((base.range + eqBonus.rangeBonus) * rMult),
+      range: Math.floor((base.range + rBonus) * rMult),
     };
   }
 
@@ -257,18 +268,32 @@ export class TowerManager {
           unit.roamTargetY = unit.homeY;
         }
       } else if (isTeemo) {
-        // Teemo: roam along waypoints (the enemy path), picking random waypoints to visit
+        // Teemo: walk along the enemy path back and forth sequentially
         const wp = this.waypoints;
         if (wp.length > 0) {
+          // Initialize waypoint index and direction if not set
+          if ((unit as any)._teemoWpIdx === undefined) {
+            (unit as any)._teemoWpIdx = 0;
+            (unit as any)._teemoDir = 1; // 1 = forward, -1 = backward
+            unit.x = wp[0].x;
+            unit.y = wp[0].y;
+            unit.roamTargetX = wp[0].x;
+            unit.roamTargetY = wp[0].y;
+          }
           const dx = (unit.roamTargetX || unit.x) - unit.x;
           const dy = (unit.roamTargetY || unit.y) - unit.y;
           const distToTarget = Math.sqrt(dx * dx + dy * dy);
-          if (distToTarget < 20 || unit.roamTargetX === undefined) {
-            // Pick a random point along a random segment of the path
-            const segIdx = Math.floor(Math.random() * (wp.length - 1));
-            const t = Math.random();
-            unit.roamTargetX = wp[segIdx].x + (wp[segIdx + 1].x - wp[segIdx].x) * t;
-            unit.roamTargetY = wp[segIdx].y + (wp[segIdx + 1].y - wp[segIdx].y) * t;
+          if (distToTarget < 20) {
+            // Move to next waypoint
+            let idx = (unit as any)._teemoWpIdx as number;
+            let dir = (unit as any)._teemoDir as number;
+            idx += dir;
+            if (idx >= wp.length) { idx = wp.length - 2; dir = -1; }
+            if (idx < 0) { idx = 1; dir = 1; }
+            (unit as any)._teemoWpIdx = idx;
+            (unit as any)._teemoDir = dir;
+            unit.roamTargetX = wp[idx].x;
+            unit.roamTargetY = wp[idx].y;
           }
         } else {
           unit.roamTargetX = unit.homeX;
