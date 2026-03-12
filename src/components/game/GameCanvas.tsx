@@ -242,7 +242,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
   }, [engine, onStateChange]);
 
   const toggleSpeed = useCallback(() => {
-    const next = engine.state.gameSpeed === 1 ? 2 : 1;
+    const speeds = [1, 2, 3, 4];
+    const currentIdx = speeds.indexOf(engine.state.gameSpeed || 1);
+    const next = speeds[(currentIdx + 1) % speeds.length];
     engine.setGameSpeed(next);
     onStateChange();
   }, [engine, onStateChange]);
