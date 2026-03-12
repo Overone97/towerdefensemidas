@@ -378,33 +378,6 @@ export class TowerManager {
             sourceUnitId: unit.id,
           });
         }
-      } else if (unit.config.attackPattern === 'mushroom') {
-        // Teemo: drop a mushroom trap every 1.5s
-        const dropInterval = Math.max(0.8, 1.5 - unit.level * 0.05);
-        if (unit.lastCloudTime >= dropInterval) {
-          unit.lastCloudTime = 0;
-          const shroomDps = (unit.config.dotDamage || 4) * (1 + (unit.level - 1) * 0.3);
-          const shroomDuration = 8 + unit.level;
-          const explRadius = (unit.config.aoeRadius || 35) + unit.level * 3;
-          this.groundEffects.push({
-            id: nextGroundEffectId++,
-            type: 'mushroom',
-            x: unit.x + (Math.random() - 0.5) * 30,
-            y: unit.y + (Math.random() - 0.5) * 30,
-            radius: 12,
-            duration: shroomDuration,
-            maxDuration: shroomDuration,
-            damagePerSecond: shroomDps,
-            slowFactor: unit.config.slowFactor || 0.6,
-            slowDuration: unit.config.slowDuration || 2,
-            aoeRadius: explRadius,
-            explosionDamage: stats.attack,
-            exploded: false,
-            alive: true,
-            color: '#88dd44',
-            sourceUnitId: unit.id,
-          });
-        }
       }
     }
 
