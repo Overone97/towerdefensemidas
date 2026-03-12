@@ -190,6 +190,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let frameCount = 0;
+
     const gameLoop = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
       const rawDt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05);
@@ -197,6 +199,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
       const dt = rawDt * (engine.state.gameSpeed || 1);
 
       engine.update(dt);
+
+      // Full canvas clear every 120 frames (~2s at 60fps) to prevent visual artifacts
+      frameCount++;
+      if (frameCount % 120 === 0) {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      }
 
       const shake = engine.screenShake;
       ctx.save();
