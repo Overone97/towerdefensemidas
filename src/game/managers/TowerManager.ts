@@ -268,13 +268,12 @@ export class TowerManager {
           unit.roamTargetY = unit.homeY;
         }
       } else if (isTeemo) {
-        // Teemo: walk along the enemy path back and forth sequentially
+        // Teemo: strictly follow the enemy path waypoints back and forth
         const wp = this.waypoints;
         if (wp.length > 0) {
-          // Initialize waypoint index and direction if not set
           if ((unit as any)._teemoWpIdx === undefined) {
             (unit as any)._teemoWpIdx = 0;
-            (unit as any)._teemoDir = 1; // 1 = forward, -1 = backward
+            (unit as any)._teemoDir = 1;
             unit.x = wp[0].x;
             unit.y = wp[0].y;
             unit.roamTargetX = wp[0].x;
@@ -283,8 +282,7 @@ export class TowerManager {
           const dx = (unit.roamTargetX || unit.x) - unit.x;
           const dy = (unit.roamTargetY || unit.y) - unit.y;
           const distToTarget = Math.sqrt(dx * dx + dy * dy);
-          if (distToTarget < 20) {
-            // Move to next waypoint
+          if (distToTarget < 5) {
             let idx = (unit as any)._teemoWpIdx as number;
             let dir = (unit as any)._teemoDir as number;
             idx += dir;
@@ -295,13 +293,58 @@ export class TowerManager {
             unit.roamTargetX = wp[idx].x;
             unit.roamTargetY = wp[idx].y;
           }
-        } else {
-          unit.roamTargetX = unit.homeX;
-          unit.roamTargetY = unit.homeY;
+
+          // Snap Teemo to path: move along the line segment toward roam target
+          const mx = (unit.roamTargetX || unit.x) - unit.x;
+          const my = (unit.roamTargetY || unit.y) - unit.y;
+          const md = Math.sqrt(mx * mx + my * my);
+          if (md > 2) {
+            unit.x += (mx / md) * speed * dt;
+            unit.y += (my / md) * speed * dt;
+            unit.isAttacking = true;
+            unit.attackAnimTimer = 0.1;
+          }
         }
+        // Skip generic movement below — Teemo uses path-locked movement above
+        unit.lastCloudTime = (unit.lastCloudTime || 0) + dt;
+        if (unit.config.attackPattern === 'mushroom') {
+          const dropInterval = Math.max(0.8, 1.5 - unit.level * 0.05);
+          if (unit.lastCloudTime >= dropInterval) {
+            // Cap at 50 active mushrooms
+            const activeShrooms = this.groundEffects.filter(g => g.type === 'mushroom' && g.alive && g.sourceUnitId === unit.id);
+            if (activeShrooms.length < 50) {
+              unit.lastCloudTime = 0;
+              const shroomDps = (unit.config.dotDamage || 4) * (1 + (unit.level - 1) * 0.3);
+              const shroomDuration = 8 + unit.level;
+              const explRadius = (unit.config.aoeRadius || 35) + unit.level * 3;
+              // Place mushroom exactly at Teemo's position (on the path)
+              this.groundEffects.push({
+                id: nextGroundEffectId++,
+                type: 'mushroom',
+                x: unit.x,
+                y: unit.y,
+                radius: 12,
+                duration: shroomDuration,
+                maxDuration: shroomDuration,
+                damagePerSecond: shroomDps,
+                slowFactor: unit.config.slowFactor || 0.6,
+                slowDuration: unit.config.slowDuration || 2,
+                aoeRadius: explRadius,
+                explosionDamage: stats.attack,
+                exploded: false,
+                alive: true,
+                color: '#88dd44',
+                sourceUnitId: unit.id,
+              });
+            } else {
+              unit.lastCloudTime = 0; // reset timer even if capped
+            }
+          }
+        }
+        continue; // Skip generic movement and mushroom code below
       }
 
-      // Move toward roam target
+      // Move toward roam target (Singed only now)
       const mx = (unit.roamTargetX || unit.x) - unit.x;
       const my = (unit.roamTargetY || unit.y) - unit.y;
       const md = Math.sqrt(mx * mx + my * my);
