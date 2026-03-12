@@ -257,18 +257,32 @@ export class TowerManager {
           unit.roamTargetY = unit.homeY;
         }
       } else if (isTeemo) {
-        // Teemo: roam along waypoints (the enemy path), picking random waypoints to visit
+        // Teemo: walk along the enemy path back and forth sequentially
         const wp = this.waypoints;
         if (wp.length > 0) {
+          // Initialize waypoint index and direction if not set
+          if ((unit as any)._teemoWpIdx === undefined) {
+            (unit as any)._teemoWpIdx = 0;
+            (unit as any)._teemoDir = 1; // 1 = forward, -1 = backward
+            unit.x = wp[0].x;
+            unit.y = wp[0].y;
+            unit.roamTargetX = wp[0].x;
+            unit.roamTargetY = wp[0].y;
+          }
           const dx = (unit.roamTargetX || unit.x) - unit.x;
           const dy = (unit.roamTargetY || unit.y) - unit.y;
           const distToTarget = Math.sqrt(dx * dx + dy * dy);
-          if (distToTarget < 20 || unit.roamTargetX === undefined) {
-            // Pick a random point along a random segment of the path
-            const segIdx = Math.floor(Math.random() * (wp.length - 1));
-            const t = Math.random();
-            unit.roamTargetX = wp[segIdx].x + (wp[segIdx + 1].x - wp[segIdx].x) * t;
-            unit.roamTargetY = wp[segIdx].y + (wp[segIdx + 1].y - wp[segIdx].y) * t;
+          if (distToTarget < 20) {
+            // Move to next waypoint
+            let idx = (unit as any)._teemoWpIdx as number;
+            let dir = (unit as any)._teemoDir as number;
+            idx += dir;
+            if (idx >= wp.length) { idx = wp.length - 2; dir = -1; }
+            if (idx < 0) { idx = 1; dir = 1; }
+            (unit as any)._teemoWpIdx = idx;
+            (unit as any)._teemoDir = dir;
+            unit.roamTargetX = wp[idx].x;
+            unit.roamTargetY = wp[idx].y;
           }
         } else {
           unit.roamTargetX = unit.homeX;
