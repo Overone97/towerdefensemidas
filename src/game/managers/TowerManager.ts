@@ -98,11 +98,13 @@ export class TowerManager {
     
     const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * eqBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
     const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * eqBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
-    const rMult = (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
+    const isAoe = unit.config.attackPattern === 'aoe_circle';
+    const rMult = isAoe ? 1 : (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
+    const rBonus = isAoe ? 0 : eqBonus.rangeBonus;
     return {
       attack: Math.floor((base.attack + eqBonus.attackBonus) * aMult),
       attackSpeed: (base.attackSpeed + eqBonus.attackSpeedBonus) * sMult,
-      range: Math.floor((base.range + eqBonus.rangeBonus) * rMult),
+      range: Math.floor((base.range + rBonus) * rMult),
     };
   }
 
