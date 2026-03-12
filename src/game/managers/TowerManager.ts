@@ -92,7 +92,15 @@ export class TowerManager {
     const eq = this.unitEquipment.get(unit.id) || {};
     const eqItems = [eq.weapon, eq.armor, eq.accessory]
       .filter(Boolean)
-      .map(id => ALL_EQUIPMENT.find(e => e.id === id))
+      .map(id => {
+        let item = ALL_EQUIPMENT.find(e => e.id === id);
+        if (!item) {
+          // Check composite recipes for crafted items
+          const recipe = COMPOSITE_RECIPES.find(r => r.result.id === id);
+          if (recipe) item = recipe.result;
+        }
+        return item;
+      })
       .filter(Boolean) as any[];
     const eqBonus = getEquipmentBonuses(eqItems);
     
