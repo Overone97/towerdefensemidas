@@ -12,6 +12,7 @@ interface MapSelectProps {
   onSelectMap: (mapId: string) => void;
   onStartEndless: (mapId: string) => void;
   onStartDungeon: (dungeonId: string) => void;
+  onStartAram?: (duo: boolean) => void;
   onBack: () => void;
 }
 
@@ -21,7 +22,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   Extreme: 'text-red-400',
 };
 
-const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompleted, dungeonCompletions, onSelectMap, onStartEndless, onStartDungeon, onBack }) => {
+const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompleted, dungeonCompletions, onSelectMap, onStartEndless, onStartDungeon, onStartAram, onBack }) => {
   const todaysDungeons = getTodaysDungeons();
 
   return (
@@ -168,6 +169,38 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
               </button>
             );
           })}
+        </div>
+
+        {/* ARAM Mode */}
+        <h3 className="text-sm font-bold text-muted-foreground mb-3 mt-8 uppercase tracking-wider">⚔️ Mode ARAM</h3>
+        <p className="text-xs text-muted-foreground mb-4 text-center">Champions aléatoires, augmentations roguelike, difficulté croissante — chaque partie est unique !</p>
+        <div className="flex flex-wrap justify-center gap-6 mb-8">
+          <button
+            onClick={() => onStartAram?.(false)}
+            className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 w-56 transition-all border-cyan-500/50 bg-cyan-500/5 hover:bg-cyan-500/10 cursor-pointer"
+          >
+            <div className="text-3xl">⚔️</div>
+            <span className="font-bold text-sm">ARAM Solo</span>
+            <span className="text-muted-foreground text-xs text-center leading-tight">1 champion aléatoire, augmentations toutes les 5 vagues, survie infinie</span>
+            <div className="flex flex-wrap gap-1 justify-center mt-1">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">🎲 Random</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">⚡ Augments</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">♾️ Endless</span>
+            </div>
+          </button>
+          <button
+            onClick={() => onStartAram?.(true)}
+            className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 w-56 transition-all border-orange-500/50 bg-orange-500/5 hover:bg-orange-500/10 cursor-pointer"
+          >
+            <div className="text-3xl">👥</div>
+            <span className="font-bold text-sm">ARAM Duo</span>
+            <span className="text-muted-foreground text-xs text-center leading-tight">2 joueurs, 2 champions, bonus de synergie duo, chaos multiplié</span>
+            <div className="flex flex-wrap gap-1 justify-center mt-1">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">👥 2 Players</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">💪 Synergy</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">♾️ Endless</span>
+            </div>
+          </button>
         </div>
       </div>
     </div>

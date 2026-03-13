@@ -20,9 +20,10 @@ import DailyQuestPanel from './DailyQuestPanel';
 import TeamSidebar from './TeamSidebar';
 import TutorialOverlay from './TutorialOverlay';
 import SkinSelector from './SkinSelector';
+import AramGame from './AramGame';
 import { getSkinsForChampion } from '../../game/data/skinData';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
@@ -246,6 +247,7 @@ const TowerDefenseGame: React.FC = () => {
         onSelectMap={handleSelectMap}
         onStartEndless={handleStartEndless}
         onStartDungeon={handleStartDungeon}
+        onStartAram={(duo) => setScreen(duo ? 'aram_duo' : 'aram_solo')}
         onBack={() => setScreen('game')}
       />
     );
@@ -285,6 +287,14 @@ const TowerDefenseGame: React.FC = () => {
         onBack={() => setScreen('game')}
       />
     );
+  }
+
+  if (screen === 'aram_solo') {
+    return <AramGame isDuo={false} onExit={() => setScreen('maps')} />;
+  }
+
+  if (screen === 'aram_duo') {
+    return <AramGame isDuo={true} onExit={() => setScreen('maps')} />;
   }
 
   const selectedUnit = state.selectedUnitId
