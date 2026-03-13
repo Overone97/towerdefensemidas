@@ -12,6 +12,7 @@ interface MapSelectProps {
   onSelectMap: (mapId: string) => void;
   onStartEndless: (mapId: string) => void;
   onStartDungeon: (dungeonId: string) => void;
+  onStartAram?: (duo: boolean) => void;
   onBack: () => void;
 }
 
