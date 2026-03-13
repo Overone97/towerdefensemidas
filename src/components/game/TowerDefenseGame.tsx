@@ -20,9 +20,10 @@ import DailyQuestPanel from './DailyQuestPanel';
 import TeamSidebar from './TeamSidebar';
 import TutorialOverlay from './TutorialOverlay';
 import SkinSelector from './SkinSelector';
+import AramGame from './AramGame';
 import { getSkinsForChampion } from '../../game/data/skinData';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
