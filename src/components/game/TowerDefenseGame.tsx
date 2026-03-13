@@ -247,6 +247,7 @@ const TowerDefenseGame: React.FC = () => {
         onSelectMap={handleSelectMap}
         onStartEndless={handleStartEndless}
         onStartDungeon={handleStartDungeon}
+        onStartAram={(duo) => setScreen(duo ? 'aram_duo' : 'aram_solo')}
         onBack={() => setScreen('game')}
       />
     );
