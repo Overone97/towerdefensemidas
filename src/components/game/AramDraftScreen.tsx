@@ -97,7 +97,7 @@ const AramDraftScreen: React.FC<Props> = ({
                     }}
                   >
                     <div className="w-16 h-16">
-                      <CharacterSprite characterId={c.id} size={64} />
+                      <CharacterSprite config={c} size={64} />
                     </div>
                     <span className="font-bold text-sm text-foreground">{c.name}</span>
                     <span className="text-xs px-2 py-0.5 rounded" style={{ color: RARITY_COLORS[c.rarity], border: `1px solid ${RARITY_COLORS[c.rarity]}44` }}>
