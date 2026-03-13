@@ -288,6 +288,14 @@ const TowerDefenseGame: React.FC = () => {
     );
   }
 
+  if (screen === 'aram_solo') {
+    return <AramGame isDuo={false} onExit={() => setScreen('maps')} />;
+  }
+
+  if (screen === 'aram_duo') {
+    return <AramGame isDuo={true} onExit={() => setScreen('maps')} />;
+  }
+
   const selectedUnit = state.selectedUnitId
     ? state.placedUnits.find(u => u.id === state.selectedUnitId) ?? null
     : null;
