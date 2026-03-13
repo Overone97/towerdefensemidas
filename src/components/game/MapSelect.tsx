@@ -22,7 +22,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   Extreme: 'text-red-400',
 };
 
-const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompleted, dungeonCompletions, onSelectMap, onStartEndless, onStartDungeon, onBack }) => {
+const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompleted, dungeonCompletions, onSelectMap, onStartEndless, onStartDungeon, onStartAram, onBack }) => {
   const todaysDungeons = getTodaysDungeons();
 
   return (
