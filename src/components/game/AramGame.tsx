@@ -10,7 +10,7 @@ import { renderGame } from './GameRenderer';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../../game/data/mapData';
 import { ARAM_MAP } from '../../game/data/aramData';
 import { CharacterConfig, GameState, OwnedCharacter } from '../../game/types';
-import { getCharacterStats } from '../../game/data/characterData';
+import { getCharacterStats, ALL_CHARACTERS } from '../../game/data/characterData';
 import { soundManager } from '../../game/audio/SoundManager';
 import AramDraftScreen from './AramDraftScreen';
 import AramAugmentPicker from './AramAugmentPicker';
@@ -39,6 +39,10 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
   const [scale, setScale] = useState(1);
   const [gameSpeed, setGameSpeed] = useState(1);
 
+  // Drag & drop state
+  const [dragUnitId, setDragUnitId] = useState<number | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+
   const aram = aramRef.current;
   const enemyManager = enemyManagerRef.current;
   const towerManager = towerManagerRef.current;
@@ -46,21 +50,16 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
   const floatingText = floatingRef.current;
   const screenShake = shakeRef.current;
 
-  // Damage tracker
   const damageTracker = useRef(new Map<number, { totalDamage: number; waveDamage: number }>());
-
-  // State for UI
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
 
-  // Initialize draft
   useEffect(() => {
     aram.startDraft(isDuo);
     enemyManager.setWaypoints(ARAM_MAP.waypoints);
     forceUpdate(n => n + 1);
   }, []);
 
-  // Viewport scaling
   useEffect(() => {
     const updateScale = () => {
       const s = Math.min(window.innerWidth / CANVAS_WIDTH, window.innerHeight / CANVAS_HEIGHT) * 0.88;
@@ -71,9 +70,20 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Build a GameState-like object for the renderer
+  // Apply level-up augment when augments change
+  useEffect(() => {
+    if (aram.combinedEffects.levelUpAll) {
+      for (const unit of towerManager.units) {
+        // Only level up to the augment level
+        const targetLevel = 1 + (aram.combinedEffects.levelUpAll || 0) + Math.floor(aram.currentWave / 3);
+        if (unit.level < targetLevel) unit.level = targetLevel;
+      }
+    }
+  }, [aram.ownedAugments.length]);
+
   const buildState = useCallback((): GameState => {
     const map = ARAM_MAP;
+    const slotCount = aram.availableSlotCount;
     return {
       gold: aram.gold,
       baseHp: aram.baseHp,
@@ -85,7 +95,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       projectiles: towerManager.projectiles,
       aoeWaves: towerManager.aoeWaves,
       groundEffects: towerManager.groundEffects,
-      slots: map.slots.map((s, i) => {
+      slots: map.slots.slice(0, slotCount).map((s, i) => {
         const unit = towerManager.units.find(u => u.slotIndex === i);
         return { ...s, unitId: unit?.id ?? null };
       }),
@@ -117,7 +127,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
   // Game loop
   useEffect(() => {
-    if (aram.phase === 'draft' || aram.phase === 'augment_pick') return;
+    if (aram.phase !== 'playing') return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -132,10 +142,8 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       lastTimeRef.current = timestamp;
       const dt = rawDt * gameSpeed;
 
-      // Update ARAM wave manager
       aram.update(dt, enemyManager);
 
-      // Enemy movement
       const { reachedEnd, dotKills, dotDamages } = enemyManager.update(dt);
       for (const enemy of reachedEnd) {
         const dead = aram.onBaseHit();
@@ -147,7 +155,6 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         }
       }
 
-      // Synergies
       const { activeSynergies, unitBonuses } = computeSynergies(towerManager.units);
       towerManager.synergyBonuses = unitBonuses;
       towerManager.setWaypoints(ARAM_MAP.waypoints);
@@ -166,26 +173,20 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         }
       }
 
-      // Tower combat
       const targetable = enemyManager.getTargetableEnemies();
       towerManager.iceDragonAuras = enemyManager.getIceDragonAuras();
 
-      // Apply augment bonuses to tower combat
       const augEffects = aram.combinedEffects;
-
       const { damages, statusEffects } = towerManager.update(dt, targetable);
 
       for (const { enemyId, effect } of statusEffects) {
         enemyManager.applyStatusEffect(enemyId, effect);
       }
 
-      // Apply slow on hit from augments
       if (augEffects.slowOnHit) {
         for (const { enemyId } of damages) {
           enemyManager.applyStatusEffect(enemyId, {
-            type: 'slow',
-            damagePerSecond: 0,
-            duration: 1.5,
+            type: 'slow', damagePerSecond: 0, duration: 1.5,
             slowFactor: 1 - augEffects.slowOnHit,
           });
         }
@@ -193,9 +194,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
       for (const { enemyId, damage: rawDmg, unitId } of damages as any[]) {
         let dmg = rawDmg;
-        // Augment: attack multiplier
         if (augEffects.attackMult) dmg *= augEffects.attackMult;
-        // Augment: crit
         if (augEffects.critChance && Math.random() < augEffects.critChance) {
           dmg *= augEffects.critDamage || 2;
           const enemy = enemyManager.enemies.find(e => e.id === enemyId);
@@ -205,7 +204,6 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         const enemy = enemyManager.enemies.find(e => e.id === enemyId);
         const result = enemyManager.damageEnemy(enemyId, dmg);
 
-        // Track damage
         if (unitId) {
           let entry = damageTracker.current.get(unitId);
           if (!entry) { entry = { totalDamage: 0, waveDamage: 0 }; damageTracker.current.set(unitId, entry); }
@@ -225,14 +223,12 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
             particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
           }
 
-          // Phantom soldiers augment
           if (aram.shouldSpawnAlly()) {
             floatingText.spawn(enemy.x, enemy.y - 20, '👻 Phantom!', '#aa66ff', 11);
           }
         }
       }
 
-      // DOT kills
       for (const enemy of dotKills) {
         const earned = aram.onEnemyKilled(enemy.reward);
         floatingText.spawn(enemy.x, enemy.y, `+${earned}💰`, '#44ff44', 9);
@@ -242,7 +238,6 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
       // Meteor impacts
       for (const meteor of aram.pendingMeteors) {
-        // Damage enemies in radius
         for (const enemy of enemyManager.enemies) {
           if (!enemy.alive) continue;
           const dx = enemy.x - meteor.x;
@@ -259,6 +254,26 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         floatingText.spawn(meteor.x, meteor.y, '☄️', '#ff6600', 14);
       }
       aram.pendingMeteors = [];
+
+      // Mini turrets: spawn auto-attacking units on path
+      if (aram.combinedEffects.miniTurrets && aram.miniTurretsSpawned < (aram.combinedEffects.miniTurrets || 0)) {
+        const turretConfig: any = {
+          id: '_turret', name: 'Mini Turret', rarity: 'common',
+          attack: 8 + aram.currentWave * 2, attackSpeed: 2.0, range: 120,
+          attackPattern: 'rapid', bodyColor: '#aaccff', detailColor: '#6688cc', weaponColor: '#ffffff',
+        };
+        // Place on waypoint midpoints
+        const wp = ARAM_MAP.waypoints;
+        for (let t = 0; t < (aram.combinedEffects.miniTurrets || 0) - aram.miniTurretsSpawned && t < wp.length - 1; t++) {
+          const idx = Math.floor((t + 1) * wp.length / ((aram.combinedEffects.miniTurrets || 2) + 1));
+          const midX = (wp[Math.min(idx, wp.length - 1)].x + wp[Math.min(idx + 1, wp.length - 1)].x) / 2;
+          const midY = (wp[Math.min(idx, wp.length - 1)].y + wp[Math.min(idx + 1, wp.length - 1)].y) / 2;
+          // Place as a non-slot unit
+          const fakeSlot = { x: midX, y: midY - 40, unitId: null };
+          towerManager.placeUnit(turretConfig, fakeSlot, 100 + aram.miniTurretsSpawned, 80000 + aram.miniTurretsSpawned, 1 + Math.floor(aram.currentWave / 5), {}, 1);
+          aram.miniTurretsSpawned++;
+        }
+      }
 
       // Auto abilities
       const alive = enemyManager.getTargetableEnemies();
@@ -283,7 +298,6 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         }
       }
 
-      // Unit aura particles
       for (const unit of towerManager.units) {
         if (unit.abilityActive && Math.random() < 0.2) {
           particleManager.spawnLegendaryAura(unit.x, unit.y, unit.config.weaponColor);
@@ -294,18 +308,15 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       floatingText.update(dt);
       screenShake.update(dt);
 
-      // Render
       frameCount++;
       if (frameCount % 120 === 0) ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.save();
       ctx.translate(screenShake.offsetX, screenShake.offsetY);
-
       const state = buildState();
       renderGame(ctx, state, ARAM_MAP.waypoints, timestamp, {});
       particleManager.render(ctx);
       floatingText.render(ctx);
-
       ctx.restore();
 
       forceUpdate(n => n + 1);
@@ -335,7 +346,6 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
   const handleStartWave = useCallback(() => {
     aram.startWave();
-    // Reset wave damage tracking
     for (const [, e] of damageTracker.current) e.waveDamage = 0;
     forceUpdate(n => n + 1);
   }, [aram]);
@@ -345,19 +355,25 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
     forceUpdate(n => n + 1);
   }, [aram]);
 
+  const handleChampionPick = useCallback((config: CharacterConfig) => {
+    aram.pickNewChampion(config);
+    forceUpdate(n => n + 1);
+  }, [aram]);
+
   const handlePlaceUnit = useCallback((instanceId: number) => {
     if (selectedSlotIndex === null) return;
     const char = aram.getAllCharacters().find(c => c.instanceId === instanceId);
     if (!char) return;
-    const map = ARAM_MAP;
-    const slot = map.slots[selectedSlotIndex];
+    const slotCount = aram.availableSlotCount;
+    if (selectedSlotIndex >= slotCount) return;
+    const slot = ARAM_MAP.slots[selectedSlotIndex];
     if (!slot) return;
-    // Check slot not occupied
     const occupied = towerManager.units.some(u => u.slotIndex === selectedSlotIndex);
     if (occupied) return;
     const alreadyPlaced = towerManager.units.some(u => u.characterInstanceId === instanceId);
     if (alreadyPlaced) return;
-    towerManager.placeUnit(char.config, { ...slot, unitId: null }, selectedSlotIndex, instanceId, char.level, char.equipment, char.stars);
+    const level = Math.max(1, char.level + (aram.combinedEffects.levelUpAll || 0));
+    towerManager.placeUnit(char.config, { ...slot, unitId: null }, selectedSlotIndex, instanceId, level, char.equipment, char.stars);
     soundManager.playPlaceUnit();
     setSelectedSlotIndex(null);
     forceUpdate(n => n + 1);
@@ -369,28 +385,29 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
     forceUpdate(n => n + 1);
   }, [towerManager]);
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Drag & drop: move unit between slots
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
     const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-    // Click on unit
+    // Check if clicking on a placed unit
     for (const unit of towerManager.units) {
       const dx = x - unit.x;
       const dy = y - unit.y;
       if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
-        setSelectedUnitId(selectedUnitId === unit.id ? null : unit.id);
-        setSelectedSlotIndex(null);
+        setDragUnitId(unit.id);
+        setDragPos({ x, y });
         return;
       }
     }
 
     // Click on slot
-    const map = ARAM_MAP;
-    for (let i = 0; i < map.slots.length; i++) {
-      const slot = map.slots[i];
+    const slotCount = aram.availableSlotCount;
+    for (let i = 0; i < Math.min(ARAM_MAP.slots.length, slotCount); i++) {
+      const slot = ARAM_MAP.slots[i];
       const occupied = towerManager.units.some(u => u.slotIndex === i);
       if (occupied) continue;
       const dx = x - slot.x;
@@ -404,7 +421,84 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
     setSelectedSlotIndex(null);
     setSelectedUnitId(null);
-  }, [towerManager, selectedUnitId, selectedSlotIndex]);
+  }, [towerManager, selectedSlotIndex, aram]);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragUnitId === null) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+    const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+    setDragPos({ x, y });
+  }, [dragUnitId]);
+
+  const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragUnitId === null) return;
+    const canvas = canvasRef.current;
+    if (!canvas) { setDragUnitId(null); setDragPos(null); return; }
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+    const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+
+    const unit = towerManager.units.find(u => u.id === dragUnitId);
+    if (unit) {
+      // Find closest empty slot
+      const slotCount = aram.availableSlotCount;
+      let bestSlot = -1;
+      let bestDist = 50; // max snap distance
+      for (let i = 0; i < Math.min(ARAM_MAP.slots.length, slotCount); i++) {
+        const occupied = towerManager.units.some(u => u.id !== dragUnitId && u.slotIndex === i);
+        if (occupied) continue;
+        const slot = ARAM_MAP.slots[i];
+        const dx = x - slot.x;
+        const dy = y - slot.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < bestDist) { bestDist = d; bestSlot = i; }
+      }
+
+      if (bestSlot >= 0) {
+        // Move unit to new slot
+        const slot = ARAM_MAP.slots[bestSlot];
+        unit.slotIndex = bestSlot;
+        unit.x = slot.x;
+        unit.y = slot.y;
+        unit.homeX = slot.x;
+        unit.homeY = slot.y;
+      }
+      // If dropped outside slots, remove unit back to inventory
+      else {
+        towerManager.removeUnit(dragUnitId);
+      }
+    }
+
+    setDragUnitId(null);
+    setDragPos(null);
+    setSelectedUnitId(null);
+    forceUpdate(n => n + 1);
+  }, [dragUnitId, towerManager, aram]);
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragUnitId !== null) return; // handled by mouseUp
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+    const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+
+    for (const unit of towerManager.units) {
+      const dx = x - unit.x;
+      const dy = y - unit.y;
+      if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+        setSelectedUnitId(selectedUnitId === unit.id ? null : unit.id);
+        setSelectedSlotIndex(null);
+        return;
+      }
+    }
+
+    setSelectedSlotIndex(null);
+    setSelectedUnitId(null);
+  }, [towerManager, selectedUnitId, dragUnitId]);
 
   const toggleSpeed = useCallback(() => {
     const speeds = [1, 2, 3, 4];
@@ -420,7 +514,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       <AramDraftScreen
         choices={aram.draftChoices}
         player2Choices={aram.player2Choices}
-        rerollUsed={aram.rerollUsed}
+        rerollsLeft={aram.rerollsLeft}
         isDuo={isDuo}
         onPick={handleDraftPick}
         onReroll={handleReroll}
@@ -445,6 +539,24 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
     );
   }
 
+  // Champion pick phase (after augment)
+  if (aram.phase === 'champion_pick') {
+    return (
+      <AramDraftScreen
+        choices={aram.championChoices}
+        rerollsLeft={0}
+        isDuo={false}
+        onPick={(config) => handleChampionPick(config)}
+        onReroll={() => {}}
+        onStart={() => {}}
+        pickedCount={0}
+        player2PickedCount={0}
+        isPostWavePick
+        wave={aram.currentWave}
+      />
+    );
+  }
+
   const state = buildState();
   const selectedUnit = selectedUnitId ? towerManager.units.find(u => u.id === selectedUnitId) ?? null : null;
   const placedIds = new Set(towerManager.units.map(u => u.characterInstanceId));
@@ -459,6 +571,9 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
             ref={canvasRef}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
             onClick={handleCanvasClick}
             className="cursor-pointer"
             style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
@@ -518,12 +633,13 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
             onStartWave={handleStartWave}
             onToggleAutoWave={() => {}}
             onAutoDeploy={() => {
-              // Auto place all unplaced chars
+              const slotCount = aram.availableSlotCount;
               for (const char of unplacedChars) {
-                const slotIdx = ARAM_MAP.slots.findIndex((_, i) => !towerManager.units.some(u => u.slotIndex === i));
+                const slotIdx = ARAM_MAP.slots.slice(0, slotCount).findIndex((_, i) => !towerManager.units.some(u => u.slotIndex === i));
                 if (slotIdx >= 0) {
                   const slot = ARAM_MAP.slots[slotIdx];
-                  towerManager.placeUnit(char.config, { ...slot, unitId: null }, slotIdx, char.instanceId, char.level, char.equipment, char.stars);
+                  const level = Math.max(1, char.level + (aram.combinedEffects.levelUpAll || 0));
+                  towerManager.placeUnit(char.config, { ...slot, unitId: null }, slotIdx, char.instanceId, level, char.equipment, char.stars);
                 }
               }
               forceUpdate(n => n + 1);

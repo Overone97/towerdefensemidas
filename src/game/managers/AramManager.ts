@@ -10,7 +10,7 @@ import { ALL_CHARACTERS } from '../data/characterData';
 
 let nextAramInstanceId = 90000;
 
-export type AramPhase = 'draft' | 'playing' | 'augment_pick' | 'game_over';
+export type AramPhase = 'draft' | 'playing' | 'augment_pick' | 'champion_pick' | 'game_over';
 
 export class AramManager {
   phase: AramPhase = 'draft';
@@ -19,8 +19,11 @@ export class AramManager {
 
   // Draft
   draftChoices: CharacterConfig[] = [];
-  rerollUsed = false;
+  rerollsLeft = 1;
   pickedCharacters: OwnedCharacter[] = [];
+
+  // Champion pick (every 5 waves)
+  championChoices: CharacterConfig[] = [];
 
   // Augments
   ownedAugments: string[] = [];
@@ -62,16 +65,21 @@ export class AramManager {
   baseHp = 20;
   maxBaseHp = 20;
 
+  // Mini turrets spawned flag
+  miniTurretsSpawned = 0;
+
+  // Available slots count (base 6, can grow with augments)
+  get availableSlotCount(): number {
+    return Math.min(ARAM_MAP.slots.length, 6 + (this.combinedEffects.extraSlots || 0));
+  }
+
   startDraft(duo: boolean): void {
     this.isDuo = duo;
     this.phase = 'draft';
-    this.rerollUsed = false;
+    this.rerollsLeft = 1;
     this.draftChoices = this.rollDraftChoices();
     if (duo) {
       this.player2Choices = this.rollDraftChoices();
-    }
-    // Duo bonus
-    if (duo) {
       this.baseHp += 5;
       this.maxBaseHp += 5;
     }
@@ -89,13 +97,12 @@ export class AramManager {
   }
 
   rerollDraft(player: 1 | 2 = 1): CharacterConfig[] {
-    if (this.rerollUsed) return player === 1 ? this.draftChoices : this.player2Choices;
+    if (this.rerollsLeft <= 0) return player === 1 ? this.draftChoices : this.player2Choices;
+    this.rerollsLeft--;
     if (player === 1) {
-      this.rerollUsed = true; // only 1 reroll total
       this.draftChoices = this.rollDraftChoices();
       return this.draftChoices;
     } else {
-      this.rerollUsed = true;
       this.player2Choices = this.rollDraftChoices();
       return this.player2Choices;
     }
@@ -115,6 +122,20 @@ export class AramManager {
       this.player2Picked.push(char);
     }
     return char;
+  }
+
+  // Pick a new champion (offered every 5 waves)
+  pickNewChampion(config: CharacterConfig): void {
+    const char: OwnedCharacter = {
+      instanceId: nextAramInstanceId++,
+      config,
+      level: Math.max(1, Math.floor(this.currentWave / 3)),
+      equipment: {},
+      stars: 1,
+    };
+    this.pickedCharacters.push(char);
+    this.championChoices = [];
+    this.phase = 'playing';
   }
 
   finishDraft(): void {
@@ -140,12 +161,10 @@ export class AramManager {
     this.totalWeight = this.enemyPool.reduce((s, e) => s + e.weight, 0);
     this.waveActive = true;
 
-    // Bonus gold per wave from augments
     if (this.combinedEffects.bonusGoldPerWave && this.currentWave % 3 === 0) {
       this.gold += this.combinedEffects.bonusGoldPerWave;
     }
 
-    // Trigger random event
     if (this.currentWave >= this.nextEventWave) {
       this.triggerRandomEvent();
       this.nextEventWave = this.currentWave + 10 + Math.floor(Math.random() * 8);
@@ -161,7 +180,6 @@ export class AramManager {
     if (this.activeEvent) {
       this.eventTimer -= dt;
       if (this.eventTimer <= 0) {
-        // Remove event effects
         if (this.activeEvent.effect.enemyStealth) {
           for (const e of enemyManager.enemies) {
             if (e.alive) e.stealthed = false;
@@ -176,7 +194,6 @@ export class AramManager {
       this.meteorTimer -= dt;
       if (this.meteorTimer <= 0) {
         this.meteorTimer = this.combinedEffects.meteorInterval;
-        // Strike random alive enemies
         const alive = enemyManager.getAliveEnemies();
         if (alive.length > 0) {
           const target = alive[Math.floor(Math.random() * alive.length)];
@@ -206,7 +223,6 @@ export class AramManager {
       const speedEventMult = this.activeEvent?.effect.enemySpeedMult || 1;
       enemyManager.spawnEnemy(config, this.hpMult, this.speedMult * speedEventMult, this.rewardMult);
 
-      // Apply stealth event
       if (this.activeEvent?.effect.enemyStealth) {
         const last = enemyManager.enemies[enemyManager.enemies.length - 1];
         if (last) last.stealthed = true;
@@ -220,7 +236,7 @@ export class AramManager {
     if (this.spawned >= this.enemyCount && enemyManager.getAliveEnemies().length === 0) {
       this.waveActive = false;
 
-      // Augment pick every 5 waves
+      // Every 5 waves: augment pick THEN champion pick
       if (this.currentWave % 5 === 0) {
         this.augmentChoices = rollAugments(this.ownedAugments);
         this.phase = 'augment_pick';
@@ -242,7 +258,9 @@ export class AramManager {
       else this.baseHp = Math.min(this.baseHp, this.maxBaseHp);
     }
 
-    this.phase = 'playing';
+    // After augment pick, offer a new champion
+    this.championChoices = this.rollDraftChoices();
+    this.phase = 'champion_pick';
   }
 
   onEnemyKilled(reward: number): number {

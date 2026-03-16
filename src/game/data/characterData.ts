@@ -128,6 +128,11 @@ const BASE_CHARACTERS: CharacterConfig[] = [
   { id: 'urgot', name: 'Urgot', rarity: 'legendary', attack: 20, attackSpeed: 1.0, range: 150, attackPattern: 'chain', chainCount: 5, dotDamage: 6, dotDuration: 2, bodyColor: '#558844', detailColor: '#336622', weaponColor: '#88cc66' },
 ];
 
+// Add all remaining LoL champions with generic stats
+const existingIds = new Set(BASE_CHARACTERS.map(c => c.id));
+const extraChamps = generateRemainingChampions(existingIds);
+export const ALL_CHARACTERS: CharacterConfig[] = [...BASE_CHARACTERS, ...extraChamps];
+
 export function getStarMultiplier(stars: number): number {
   if (stars === 3) return 2.5;
   if (stars === 2) return 1.5;

@@ -132,6 +132,13 @@ function getMapTheme(mapId: string) {
         treeLeaf: '#4a2a1a', treeTrunk: '#3a1a0a', treeShadow: '#2a0a0a',
         waterColor: '#ff4400',
       };
+    case 'aram':
+      return {
+        grassLight: '#0a1628', grassDark: '#060e1a', grassAccent: '#0d1e3a',
+        pathMain: '#2a4a6a', pathBorder: '#1a3a5a', pathDetail: '#3a6a8a',
+        treeLeaf: '#1a3a5a', treeTrunk: '#0a1e2e', treeShadow: '#061428',
+        waterColor: '#00aaff',
+      };
     default: // plains
       return {
         grassLight: '#3a8a2a', grassDark: '#2a6a1a', grassAccent: '#4a9a3a',

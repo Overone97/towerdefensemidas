@@ -6,21 +6,66 @@ import CharacterSprite from './CharacterSprite';
 interface Props {
   choices: CharacterConfig[];
   player2Choices?: CharacterConfig[];
-  rerollUsed: boolean;
+  rerollsLeft: number;
   isDuo: boolean;
   onPick: (config: CharacterConfig, player: 1 | 2) => void;
   onReroll: (player: 1 | 2) => void;
   onStart: () => void;
   pickedCount: number;
   player2PickedCount: number;
+  isPostWavePick?: boolean;
+  wave?: number;
 }
 
 const AramDraftScreen: React.FC<Props> = ({
-  choices, player2Choices, rerollUsed, isDuo, onPick, onReroll, onStart, pickedCount, player2PickedCount,
+  choices, player2Choices, rerollsLeft, isDuo, onPick, onReroll, onStart, pickedCount, player2PickedCount,
+  isPostWavePick, wave,
 }) => {
   const p1Done = pickedCount >= 1;
   const p2Done = !isDuo || player2PickedCount >= 1;
   const allDone = p1Done && p2Done;
+
+  // Post-wave champion pick: pick one and go back
+  if (isPostWavePick) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #0a0e1a 0%, #000 100%)' }}>
+        <div className="flex flex-col items-center gap-6 max-w-4xl w-full px-4">
+          <div className="text-center">
+            <h1 className="text-3xl font-black tracking-wider" style={{ color: '#00ccff', textShadow: '0 0 30px #00ccff55' }}>
+              🎁 NOUVEAU CHAMPION !
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm">Vague {wave} terminée — choisis un champion à ajouter à ton équipe</p>
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            {choices.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => onPick(c, 1)}
+                className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-105"
+                style={{
+                  borderColor: RARITY_COLORS[c.rarity],
+                  background: `linear-gradient(180deg, ${RARITY_COLORS[c.rarity]}15 0%, #0a0e1a 100%)`,
+                }}
+              >
+                <div className="w-16 h-16">
+                  <CharacterSprite config={c} size={64} />
+                </div>
+                <span className="font-bold text-sm text-foreground">{c.name}</span>
+                <span className="text-xs px-2 py-0.5 rounded" style={{ color: RARITY_COLORS[c.rarity], border: `1px solid ${RARITY_COLORS[c.rarity]}44` }}>
+                  {c.rarity}
+                </span>
+                <div className="text-[10px] text-muted-foreground space-y-0.5">
+                  <div>ATK: {c.attack} | SPD: {c.attackSpeed}</div>
+                  <div>RNG: {c.range} | {c.attackPattern}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #0a0e1a 0%, #000 100%)' }}>
@@ -67,14 +112,14 @@ const AramDraftScreen: React.FC<Props> = ({
           ) : (
             <div className="text-center text-green-400 font-bold">✅ Champion choisi !</div>
           )}
-          {!p1Done && !rerollUsed && (
+          {!p1Done && rerollsLeft > 0 && (
             <div className="text-center mt-3">
               <button
                 onClick={() => onReroll(1)}
                 className="px-4 py-1.5 rounded-lg text-sm font-bold transition-colors"
                 style={{ background: '#ffaa0033', color: '#ffaa00', border: '1px solid #ffaa0055' }}
               >
-                🔄 Reroll (1 seul)
+                🔄 Reroll ({rerollsLeft} restant{rerollsLeft > 1 ? 's' : ''})
               </button>
             </div>
           )}
