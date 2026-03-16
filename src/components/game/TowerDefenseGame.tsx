@@ -289,6 +289,44 @@ const TowerDefenseGame: React.FC = () => {
     );
   }
 
+  if (screen === 'skin_shop') {
+    return (
+      <div className="flex flex-col h-screen bg-background text-foreground">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <button onClick={() => setScreen('game')} className="px-3 py-1 rounded text-sm bg-muted text-muted-foreground hover:bg-accent">← Retour</button>
+          <h2 className="font-bold font-mono">🎨 Boutique de Skins</h2>
+          <div className="text-yellow-400 font-mono font-bold">⭐ {state.stars}</div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+            {state.inventory.map(char => {
+              const skins = getSkinsForChampion(char.config.id);
+              if (skins.length === 0) return null;
+              return (
+                <div key={char.instanceId} className="p-3 rounded-xl border border-border bg-card/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-bold text-sm text-foreground">{char.config.name}</span>
+                  </div>
+                  <SkinSelector
+                    championId={char.config.id}
+                    championName={char.config.name}
+                    unlockedSkins={engine.getUnlockedSkins()}
+                    equippedSkins={engine.getEquippedSkins()}
+                    stars={state.stars}
+                    onBuy={(skinId) => { engine.buySkin(skinId); onStateChange(); }}
+                    onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
+                    onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
+                    onClose={() => {}}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === 'aram_solo') {
     return <AramGame isDuo={false} onExit={() => setScreen('maps')} />;
   }
