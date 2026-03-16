@@ -9,11 +9,13 @@ import { getSkinById } from '../../game/data/skinData';
 import plainsBg from '../../assets/maps/plains-bg.jpg';
 import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
+import aramBg from '../../assets/maps/aram-bg.jpg';
 
 const MAP_BG_IMAGES: Record<string, string> = {
   plains: plainsBg,
   forest: forestBg,
   volcano: volcanoBg,
+  aram: aramBg,
 };
 
 // Preload background images
