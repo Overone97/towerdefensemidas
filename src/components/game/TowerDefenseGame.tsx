@@ -361,6 +361,7 @@ const TowerDefenseGame: React.FC = () => {
             onOpenMaps={() => setScreen('maps')}
             onOpenWiki={() => setScreen('wiki')}
             onOpenAchievements={() => setScreen('achievements')}
+            onOpenEquipment={() => setScreen('equipment')}
             onOpenSkins={() => setScreen('skin_shop')}
             prestigeLevel={engine.getPrestigeLevel()}
             canPrestige={engine.canPrestige()}
