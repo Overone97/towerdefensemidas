@@ -23,7 +23,7 @@ import SkinSelector from './SkinSelector';
 import AramGame from './AramGame';
 import { getSkinsForChampion } from '../../game/data/skinData';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo';
+type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo' | 'skin_shop';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
