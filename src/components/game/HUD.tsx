@@ -72,6 +72,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
             { label: '📖', onClick: onOpenWiki },
             { label: '🏆', onClick: onOpenAchievements },
             { label: '🎒', onClick: onOpenEquipment },
+            { label: '🎨 Skins', onClick: onOpenSkins },
           ].map(btn => (
             <button
               key={btn.label}
