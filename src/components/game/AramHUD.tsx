@@ -13,6 +13,7 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
 
   const isBossWave = (aram.currentWave + 1) % 10 === 0;
   const isAugWave = (aram.currentWave + 1) % 5 === 0;
+  const hpPercent = aram.maxBaseHp > 0 ? (aram.baseHp / aram.maxBaseHp) * 100 : 0;
 
   return (
     <>
@@ -29,11 +30,24 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
             </span>
           </div>
 
-          {/* Center: Resources */}
+          {/* Center: Resources + HP BAR */}
           <div className="flex items-center gap-4">
             <span className="font-mono text-sm">💰 {aram.gold}</span>
-            <span className="font-mono text-sm">❤️ {aram.baseHp}/{aram.maxBaseHp}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-red-400 font-bold text-sm">❤️</span>
+              <span className="font-mono text-sm font-bold text-foreground">{aram.baseHp}/{aram.maxBaseHp}</span>
+              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${hpPercent}%`,
+                    background: hpPercent > 50 ? '#22c55e' : hpPercent > 25 ? '#f59e0b' : '#ef4444',
+                  }}
+                />
+              </div>
+            </div>
             <span className="font-mono text-sm">🏆 {aram.score}</span>
+            <span className="font-mono text-sm text-cyan-400">👥 {aram.getAllCharacters().length} champs</span>
           </div>
 
           {/* Right: Buttons */}
@@ -79,7 +93,7 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
         <div className="absolute bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
           <div className="flex flex-col items-center gap-2">
             {isAugWave && (
-              <span className="text-xs font-bold" style={{ color: '#ffcc00' }}>⚡ Augmentation à la fin de cette vague</span>
+              <span className="text-xs font-bold" style={{ color: '#ffcc00' }}>⚡ Augmentation + Champion à la fin de cette vague</span>
             )}
             <button
               onClick={onStartWave}

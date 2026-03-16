@@ -11,6 +11,7 @@ export interface HUDProps {
   onOpenWiki: () => void;
   onOpenAchievements: () => void;
   onOpenEquipment: () => void;
+  onOpenSkins?: () => void;
   prestigeLevel?: number;
   canPrestige?: boolean;
   onPrestige?: () => void;
@@ -18,7 +19,7 @@ export interface HUDProps {
   onExitDungeon?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, prestigeLevel = 0, canPrestige = false, onPrestige, dungeonInfo, onExitDungeon }) => {
+const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, onOpenWiki, onOpenAchievements, onOpenEquipment, onOpenSkins, prestigeLevel = 0, canPrestige = false, onPrestige, dungeonInfo, onExitDungeon }) => {
   const waveProgress = state.waveActive && state.waveEnemiesTotal > 0
     ? (state.waveEnemiesKilledThisWave / state.waveEnemiesTotal) * 100
     : 0;
@@ -72,6 +73,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
             { label: '📖', onClick: onOpenWiki },
             { label: '🏆', onClick: onOpenAchievements },
             { label: '🎒', onClick: onOpenEquipment },
+            { label: '🎨 Skins', onClick: onOpenSkins },
           ].map(btn => (
             <button
               key={btn.label}

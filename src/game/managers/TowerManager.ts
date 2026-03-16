@@ -282,7 +282,14 @@ export class TowerManager {
           const dx = (unit.roamTargetX || unit.x) - unit.x;
           const dy = (unit.roamTargetY || unit.y) - unit.y;
           const distToTarget = Math.sqrt(dx * dx + dy * dy);
-          if (distToTarget < 5) {
+          
+          // Use a larger snap radius for fast Teemos to prevent overshooting
+          const snapRadius = Math.max(5, speed * dt * 1.5);
+          if (distToTarget < snapRadius) {
+            // Snap to waypoint to prevent corner sticking
+            unit.x = unit.roamTargetX || unit.x;
+            unit.y = unit.roamTargetY || unit.y;
+            
             let idx = (unit as any)._teemoWpIdx as number;
             let dir = (unit as any)._teemoDir as number;
             idx += dir;
@@ -294,13 +301,14 @@ export class TowerManager {
             unit.roamTargetY = wp[idx].y;
           }
 
-          // Snap Teemo to path: move along the line segment toward roam target
+          // Move toward target waypoint
           const mx = (unit.roamTargetX || unit.x) - unit.x;
           const my = (unit.roamTargetY || unit.y) - unit.y;
           const md = Math.sqrt(mx * mx + my * my);
-          if (md > 2) {
-            unit.x += (mx / md) * speed * dt;
-            unit.y += (my / md) * speed * dt;
+          if (md > 1) {
+            const moveStep = Math.min(speed * dt, md); // never overshoot
+            unit.x += (mx / md) * moveStep;
+            unit.y += (my / md) * moveStep;
             unit.isAttacking = true;
             unit.attackAnimTimer = 0.1;
           }
