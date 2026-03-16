@@ -24,7 +24,9 @@ const RARITY_UPGRADE_BASE: Record<Rarity, number> = {
   legendary: 200,
 };
 
-export const ALL_CHARACTERS: CharacterConfig[] = [
+import { generateRemainingChampions } from './allChampions';
+
+const BASE_CHARACTERS: CharacterConfig[] = [
   // === ORIGINAL ROSTER ===
   // COMMON (5)
   { id: 'garen', name: 'Garen', rarity: 'common', attack: 12, attackSpeed: 1.2, range: 100, attackPattern: 'single', bodyColor: '#7a8b9a', detailColor: '#5a6b7a', weaponColor: '#c0c8d0' },
