@@ -361,19 +361,30 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
   }, [aram]);
 
   const handlePlaceUnit = useCallback((instanceId: number) => {
-    if (selectedSlotIndex === null) return;
     const char = aram.getAllCharacters().find(c => c.instanceId === instanceId);
     if (!char) return;
-    const slotCount = aram.availableSlotCount;
-    if (selectedSlotIndex >= slotCount) return;
-    const slot = ARAM_MAP.slots[selectedSlotIndex];
-    if (!slot) return;
-    const occupied = towerManager.units.some(u => u.slotIndex === selectedSlotIndex);
-    if (occupied) return;
     const alreadyPlaced = towerManager.units.some(u => u.characterInstanceId === instanceId);
     if (alreadyPlaced) return;
+    const slotCount = aram.availableSlotCount;
+
+    // If a slot is selected, use it; otherwise auto-find first empty slot
+    let targetSlot = selectedSlotIndex;
+    if (targetSlot === null || targetSlot >= slotCount || towerManager.units.some(u => u.slotIndex === targetSlot)) {
+      // Auto-find first empty slot
+      targetSlot = -1;
+      for (let i = 0; i < Math.min(ARAM_MAP.slots.length, slotCount); i++) {
+        if (!towerManager.units.some(u => u.slotIndex === i)) {
+          targetSlot = i;
+          break;
+        }
+      }
+      if (targetSlot < 0) return; // No slots available
+    }
+
+    const slot = ARAM_MAP.slots[targetSlot];
+    if (!slot) return;
     const level = Math.max(1, char.level + (aram.combinedEffects.levelUpAll || 0));
-    towerManager.placeUnit(char.config, { ...slot, unitId: null }, selectedSlotIndex, instanceId, level, char.equipment, char.stars);
+    towerManager.placeUnit(char.config, { ...slot, unitId: null }, targetSlot, instanceId, level, char.equipment, char.stars);
     soundManager.playPlaceUnit();
     setSelectedSlotIndex(null);
     forceUpdate(n => n + 1);

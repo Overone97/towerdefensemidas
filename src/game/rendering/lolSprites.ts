@@ -35,7 +35,7 @@ import twistedfateImg from '@/assets/sprites/twistedfate.png';
 import malphiteImg from '@/assets/sprites/malphite.png';
 import ezrealImg from '@/assets/sprites/ezreal.png';
 import missfortuneImg from '@/assets/sprites/missfortune.png';
-// New 50 champions
+// Batch 2: 50 champions
 import dravenImg from '@/assets/sprites/draven.png';
 import fioraImg from '@/assets/sprites/fiora.png';
 import gravesImg from '@/assets/sprites/graves.png';
@@ -86,9 +86,88 @@ import eliseImg from '@/assets/sprites/elise.png';
 import evelynnImg from '@/assets/sprites/evelynn.png';
 import gangplankImg from '@/assets/sprites/gangplank.png';
 import hecarimImg from '@/assets/sprites/hecarim.png';
+// Batch 3: 70 new champions from allChampions.ts
+import aatroxImg from '@/assets/sprites/aatrox.png';
+import akaliImg from '@/assets/sprites/akali.png';
+import akshanImg from '@/assets/sprites/akshan.png';
+import ambessaImg from '@/assets/sprites/ambessa.png';
+import amumuImg from '@/assets/sprites/amumu.png';
+import apheliosImg from '@/assets/sprites/aphelios.png';
+import auroraImg from '@/assets/sprites/aurora.png';
+import aurelionsolImg from '@/assets/sprites/aurelionsol.png';
+import azirImg from '@/assets/sprites/azir.png';
+import bardImg from '@/assets/sprites/bard.png';
+import belvethImg from '@/assets/sprites/belveth.png';
+import braumImg from '@/assets/sprites/braum.png';
+import briarImg from '@/assets/sprites/briar.png';
+import camilleImg from '@/assets/sprites/camille.png';
+import cassiopeiaImg from '@/assets/sprites/cassiopeia.png';
+import chogathImg from '@/assets/sprites/chogath.png';
+import corkiImg from '@/assets/sprites/corki.png';
+import drmundoImg from '@/assets/sprites/drmundo.png';
+import fiddlesticksImg from '@/assets/sprites/fiddlesticks.png';
+import galioImg from '@/assets/sprites/galio.png';
+import gnarImg from '@/assets/sprites/gnar.png';
+import gragasImg from '@/assets/sprites/gragas.png';
+import gwenImg from '@/assets/sprites/gwen.png';
+import hweiImg from '@/assets/sprites/hwei.png';
+import illaoiImg from '@/assets/sprites/illaoi.png';
+import ivernImg from '@/assets/sprites/ivern.png';
+import jannaImg from '@/assets/sprites/janna.png';
+import jhinImg from '@/assets/sprites/jhin.png';
+import kaisaImg from '@/assets/sprites/kaisa.png';
+import kalistaImg from '@/assets/sprites/kalista.png';
+import karmaImg from '@/assets/sprites/karma.png';
+import karthusImg from '@/assets/sprites/karthus.png';
+import kaynImg from '@/assets/sprites/kayn.png';
+import kennenImg from '@/assets/sprites/kennen.png';
+import kindredImg from '@/assets/sprites/kindred.png';
+import kledImg from '@/assets/sprites/kled.png';
+import kogmawImg from '@/assets/sprites/kogmaw.png';
+import ksanteImg from '@/assets/sprites/ksante.png';
+import lilliaImg from '@/assets/sprites/lillia.png';
+import maokaiImg from '@/assets/sprites/maokai.png';
+import mordekaiserImg from '@/assets/sprites/mordekaiser.png';
+import naafiriImg from '@/assets/sprites/naafiri.png';
+import neekoImg from '@/assets/sprites/neeko.png';
+import nilahImg from '@/assets/sprites/nilah.png';
+import nocturneImg from '@/assets/sprites/nocturne.png';
+import nunuImg from '@/assets/sprites/nunu.png';
+import olafImg from '@/assets/sprites/olaf.png';
+import poppyImg from '@/assets/sprites/poppy.png';
+import pykeImg from '@/assets/sprites/pyke.png';
+import qiyanaImg from '@/assets/sprites/qiyana.png';
+import quinnImg from '@/assets/sprites/quinn.png';
+import rakanImg from '@/assets/sprites/rakan.png';
+import rammusImg from '@/assets/sprites/rammus.png';
+import reksaiImg from '@/assets/sprites/reksai.png';
+import rellImg from '@/assets/sprites/rell.png';
+import renataImg from '@/assets/sprites/renata.png';
+import samiraImg from '@/assets/sprites/samira.png';
+import sennaImg from '@/assets/sprites/senna.png';
+import seraphineImg from '@/assets/sprites/seraphine.png';
+import settImg from '@/assets/sprites/sett.png';
+import shyvanaImg from '@/assets/sprites/shyvana.png';
+import sionImg from '@/assets/sprites/sion.png';
+import skarnerImg from '@/assets/sprites/skarner.png';
+import smolderImg from '@/assets/sprites/smolder.png';
+import sylasImg from '@/assets/sprites/sylas.png';
+import tahmkenchImg from '@/assets/sprites/tahmkench.png';
+import taliyahImg from '@/assets/sprites/taliyah.png';
+import taricImg from '@/assets/sprites/taric.png';
+import twitchImg from '@/assets/sprites/twitch.png';
+import vexImg from '@/assets/sprites/vex.png';
+import viegoImg from '@/assets/sprites/viego.png';
+import xayahImg from '@/assets/sprites/xayah.png';
+import yoneImg from '@/assets/sprites/yone.png';
+import yuumiImg from '@/assets/sprites/yuumi.png';
+import zacImg from '@/assets/sprites/zac.png';
+import zeriImg from '@/assets/sprites/zeri.png';
+import zoeImg from '@/assets/sprites/zoe.png';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
+  // Original roster
   garen: garenImg, ashe: asheImg, leona: leonaImg, teemo: teemoImg, lux: luxImg,
   annie: annieImg, jarvan: jarvanImg, singed: singedImg, darius: dariusImg, lissandra: lissandraImg,
   yasuo: yasuoImg, rumble: rumbleImg, caitlyn: caitlynImg, thresh: threshImg,
@@ -97,7 +176,7 @@ const SPRITE_MAP: Record<string, string> = {
   brand: brandImg, jinx: jinxImg, ahri: ahriImg, leesin: leesinImg,
   vayne: vayneImg, morgana: morganaImg, blitzcrank: blitzcrankImg, katarina: katarinaImg,
   twistedfate: twistedfateImg, malphite: malphiteImg, ezreal: ezrealImg, missfortune: missfortuneImg,
-  // New 50
+  // Batch 2
   draven: dravenImg, fiora: fioraImg, graves: gravesImg, irelia: ireliaImg,
   jax: jaxImg, jayce: jayceImg, khazix: khazixImg, leblanc: leblancImg,
   lucian: lucianImg, lulu: luluImg, masteryi: masteryiImg, nami: namiImg,
@@ -111,6 +190,27 @@ const SPRITE_MAP: Record<string, string> = {
   yorick: yorickImg, ziggs: ziggsImg, zilean: zileanImg, zyra: zyraImg,
   diana: dianaImg, ekko: ekkoImg, elise: eliseImg, evelynn: evelynnImg,
   gangplank: gangplankImg, hecarim: hecarimImg,
+  // Batch 3: allChampions.ts champions
+  aatrox: aatroxImg, akali: akaliImg, akshan: akshanImg, ambessa: ambessaImg,
+  amumu: amumuImg, aphelios: apheliosImg, aurora: auroraImg, aurelionsol: aurelionsolImg,
+  azir: azirImg, bard: bardImg, belveth: belvethImg, braum: braumImg,
+  briar: briarImg, camille: camilleImg, cassiopeia: cassiopeiaImg, chogath: chogathImg,
+  corki: corkiImg, drmundo: drmundoImg, fiddlesticks: fiddlesticksImg,
+  galio: galioImg, gnar: gnarImg, gragas: gragasImg, gwen: gwenImg,
+  hwei: hweiImg, illaoi: illaoiImg, ivern: ivernImg, janna: jannaImg,
+  jhin: jhinImg, kaisa: kaisaImg, kalista: kalistaImg, karma: karmaImg,
+  karthus: karthusImg, kayn: kaynImg, kennen: kennenImg, kindred: kindredImg,
+  kled: kledImg, kogmaw: kogmawImg, ksante: ksanteImg, lillia: lilliaImg,
+  maokai: maokaiImg, mordekaiser: mordekaiserImg, naafiri: naafiriImg,
+  neeko: neekoImg, nilah: nilahImg, nocturne: nocturneImg, nunu: nunuImg,
+  olaf: olafImg, poppy: poppyImg, pyke: pykeImg, qiyana: qiyanaImg,
+  quinn: quinnImg, rakan: rakanImg, rammus: rammusImg, reksai: reksaiImg,
+  rell: rellImg, renata: renataImg, samira: samiraImg, senna: sennaImg,
+  seraphine: seraphineImg, sett: settImg, shyvana: shyvanaImg, sion: sionImg,
+  skarner: skarnerImg, smolder: smolderImg, sylas: sylasImg, tahmkench: tahmkenchImg,
+  taliyah: taliyahImg, taric: taricImg, twitch: twitchImg, vex: vexImg,
+  viego: viegoImg, xayah: xayahImg, yone: yoneImg, yuumi: yuumiImg,
+  zac: zacImg, zeri: zeriImg, zoe: zoeImg,
 };
 
 // Image cache (cleaned versions without background)
