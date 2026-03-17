@@ -26,11 +26,11 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, s
   const [loadingLb, setLoadingLb] = useState(true);
 
   useEffect(() => {
-    fetchLeaderboard(undefined, 10).then(data => {
+    fetchLeaderboard(mapId, 10).then(data => {
       setCloudLeaderboard(data);
       setLoadingLb(false);
     });
-  }, [submitted]);
+  }, [submitted, mapId]);
 
   const handleSubmit = async () => {
     if (!playerName.trim()) return;
