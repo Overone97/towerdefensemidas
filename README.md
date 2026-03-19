@@ -87,6 +87,11 @@ dist/
 - Les logs structurés `[obs]` sont émis au boot et sur erreurs globales (`window_error`, `unhandled_rejection`).
 - Runbook incident: `docs/incident-runbook.md`.
 
+## Runbooks release
+- Checklist release v1: `docs/release-v1-checklist.md`
+- Notes de version v1: `docs/release-notes-v1.md`
+- Plan de rollback: `docs/rollback-plan.md`
+
 ## Déploiement
 Déploiement pensé pour **Cloudflare Pages** :
 - Build command : `npm run build`
