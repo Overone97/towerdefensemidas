@@ -2,6 +2,7 @@ import React from 'react';
 import { GameState, WaveModifier } from '../../game/types';
 import { soundManager } from '../../game/audio/SoundManager';
 import { WAVE_MODIFIER_INFO } from '../../game/data/waveData';
+import AuthButton from './AuthButton';
 
 export interface HUDProps {
   state: GameState;
