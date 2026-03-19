@@ -84,10 +84,11 @@ dist/
 ```
 
 ## Déploiement
-Déploiement pensé pour une cible type **Cloudflare Pages** :
-- build command : `npm run build`
-- output directory : `dist`
-- prévoir un **fallback SPA** côté hébergement pour les routes frontend
+Déploiement pensé pour **Cloudflare Pages** :
+- Build command : `npm run build`
+- Si interface classique : Output directory `dist`
+- Si interface imposant Wrangler : `npx wrangler pages deploy dist`
+- Fallback SPA : `public/_redirects` est fourni (`/* /index.html 200`)
 
 ## Idées d'amélioration pour la suite
 - ajouter des **captures d'écran / GIF** dans le README
@@ -102,6 +103,3 @@ Si tu veux proposer une amélioration :
 3. fais ton changement
 4. ouvre une PR
 
----
-
-Si tu veux, je peux aussi te proposer ensuite une **version README plus "vitrine"**, avec badges, captures, et une section “roadmap”.
