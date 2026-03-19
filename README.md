@@ -83,6 +83,10 @@ Le build sort dans :
 dist/
 ```
 
+## Observabilité minimale
+- Les logs structurés `[obs]` sont émis au boot et sur erreurs globales (`window_error`, `unhandled_rejection`).
+- Runbook incident: `docs/incident-runbook.md`.
+
 ## Déploiement
 Déploiement pensé pour **Cloudflare Pages** :
 - Build command : `npm run build`
