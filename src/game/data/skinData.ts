@@ -61,7 +61,7 @@ export function getSkinById(skinId: string): SkinDef | undefined {
   return ALL_SKINS.find(s => s.id === skinId);
 }
 
-export function checkSkinUnlock(skin: SkinDef, _context: any): boolean {
+export function checkSkinUnlock(skin: SkinDef, _context: unknown): boolean {
   // Shop skins are never auto-unlocked — must be purchased
   return false;
 }

@@ -1,6 +1,8 @@
 // Procedural sound effects using Web Audio API
 // All sounds are synthesized — no external files needed
 
+type AudioContextCtor = typeof AudioContext;
+
 class SoundManager {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -19,7 +21,9 @@ class SoundManager {
   private ensureContext() {
     if (!this.ctx) {
       try {
-        this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const AudioContextClass = window.AudioContext ?? (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
+        if (!AudioContextClass) return null;
+        this.ctx = new AudioContextClass();
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = this._volume;
         this.masterGain.connect(this.ctx.destination);
@@ -300,7 +304,7 @@ class SoundManager {
 
   stopMusic() {
     this.musicPlaying = false;
-    this.musicOscillators.forEach(o => { try { o.stop(); } catch {} });
+    this.musicOscillators.forEach(o => { try { o.stop(); } catch { /* oscillator may already be stopped */ } });
     this.musicOscillators = [];
   }
 

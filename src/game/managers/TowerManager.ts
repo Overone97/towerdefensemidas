@@ -35,6 +35,22 @@ interface TalentBonusData {
   rangeMult: number;
 }
 
+interface RageAbilityEffect extends AbilityEffect {
+  type: 'rage';
+  attackMult?: number;
+  speedMult?: number;
+}
+
+interface BuffSpeedAbilityEffect extends AbilityEffect {
+  type: 'buff_speed';
+  mult?: number;
+}
+
+type TeemoWaypointUnit = PlacedUnit & {
+  _teemoWpIdx?: number;
+  _teemoDir?: number;
+};
+
 export class TowerManager {
   units: PlacedUnit[] = [];
   projectiles: Projectile[] = [];
@@ -102,11 +118,14 @@ export class TowerManager {
         }
         return item;
       })
-      .filter(Boolean) as any[];
+      .filter((item): item is EquipmentItem => Boolean(item));
     const eqBonus = getEquipmentBonuses(eqItems);
     
-    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * eqBonus.attackMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).attackMult : 1);
-    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * eqBonus.speedMult * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'rage' ? (this.getAbilityEffect(unit) as any).speedMult : 1) * (unit.abilityActive && this.getAbilityEffect(unit)?.type === 'buff_speed' ? (this.getAbilityEffect(unit) as any).mult : 1);
+    const abilityEffect = unit.abilityActive ? this.getAbilityEffect(unit) : undefined;
+    const rageEffect = abilityEffect?.type === 'rage' ? abilityEffect as RageAbilityEffect : undefined;
+    const buffSpeedEffect = abilityEffect?.type === 'buff_speed' ? abilityEffect as BuffSpeedAbilityEffect : undefined;
+    const aMult = (syn?.attackMult || 1) * this.talentBonus.attackMult * eqBonus.attackMult * (rageEffect?.attackMult ?? 1);
+    const sMult = (syn?.speedMult || 1) * this.talentBonus.speedMult * eqBonus.speedMult * (rageEffect?.speedMult ?? 1) * (buffSpeedEffect?.mult ?? 1);
     const isAoe = unit.config.attackPattern === 'aoe_circle';
     const rMult = isAoe ? 1 : (syn?.rangeMult || 1) * this.talentBonus.rangeMult * eqBonus.rangeMult;
     const rBonus = isAoe ? 0 : eqBonus.rangeBonus;
@@ -268,12 +287,13 @@ export class TowerManager {
           unit.roamTargetY = unit.homeY;
         }
       } else if (isTeemo) {
+        const teemoUnit = unit as TeemoWaypointUnit;
         // Teemo: strictly follow the enemy path waypoints back and forth
         const wp = this.waypoints;
         if (wp.length > 0) {
-          if ((unit as any)._teemoWpIdx === undefined) {
-            (unit as any)._teemoWpIdx = 0;
-            (unit as any)._teemoDir = 1;
+          if (teemoUnit._teemoWpIdx === undefined) {
+            teemoUnit._teemoWpIdx = 0;
+            teemoUnit._teemoDir = 1;
             unit.x = wp[0].x;
             unit.y = wp[0].y;
             unit.roamTargetX = wp[0].x;
@@ -290,13 +310,13 @@ export class TowerManager {
             unit.x = unit.roamTargetX || unit.x;
             unit.y = unit.roamTargetY || unit.y;
             
-            let idx = (unit as any)._teemoWpIdx as number;
-            let dir = (unit as any)._teemoDir as number;
+            let idx = teemoUnit._teemoWpIdx ?? 0;
+            let dir = teemoUnit._teemoDir ?? 1;
             idx += dir;
             if (idx >= wp.length) { idx = wp.length - 2; dir = -1; }
             if (idx < 0) { idx = 1; dir = 1; }
-            (unit as any)._teemoWpIdx = idx;
-            (unit as any)._teemoDir = dir;
+            teemoUnit._teemoWpIdx = idx;
+            teemoUnit._teemoDir = dir;
             unit.roamTargetX = wp[idx].x;
             unit.roamTargetY = wp[idx].y;
           }

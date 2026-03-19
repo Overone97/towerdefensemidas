@@ -1,3 +1,5 @@
+type AudioContextCtor = typeof AudioContext;
+
 const RARITY_FREQS = [220, 330, 440, 550, 700]; // common → legendary
 
 export function playGachaSounds(targetRarityIndex: number): {
@@ -6,7 +8,9 @@ export function playGachaSounds(targetRarityIndex: number): {
 } {
   let ctx: AudioContext;
   try {
-    ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass = window.AudioContext ?? (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
+    if (!AudioContextClass) throw new Error('Web Audio API unavailable');
+    ctx = new AudioContextClass();
   } catch {
     return { cleanup: () => {}, playRevealBurst: () => {} };
   }
@@ -31,7 +35,7 @@ export function playGachaSounds(targetRarityIndex: number): {
   }
 
   return {
-    cleanup: () => { try { ctx.close(); } catch {} },
+    cleanup: () => { try { ctx.close(); } catch { /* audio context may already be closed */ } },
     playRevealBurst: () => {
       const baseFreq = 300 + targetRarityIndex * 120;
       [1, 1.5, 2, 3].forEach((mult, i) => {

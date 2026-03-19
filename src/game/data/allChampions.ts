@@ -2,7 +2,7 @@
  * ALL remaining League of Legends champions with generic stats based on role.
  * These are added to the main roster via characterData.ts
  */
-import { CharacterConfig } from '../types';
+import { CharacterConfig, type AttackPattern, type Rarity } from '../types';
 
 // Role templates for generic stat generation
 type Role = 'tank' | 'fighter' | 'assassin' | 'mage' | 'marksman' | 'support';
@@ -35,7 +35,7 @@ function hashColor(name: string, offset: number = 0): string {
 function hslToHex(hsl: string): string {
   const m = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (!m) return '#555555';
-  let h = parseInt(m[1]) / 360, s = parseInt(m[2]) / 100, l = parseInt(m[3]) / 100;
+  const h = parseInt(m[1]) / 360, s = parseInt(m[2]) / 100, l = parseInt(m[3]) / 100;
   const hue2rgb = (p: number, q: number, t: number) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q-p)*6*t; if (t < 1/2) return q; if (t < 2/3) return p + (q-p)*(2/3-t)*6; return p; };
   let r, g, b;
   if (s === 0) { r = g = b = l; } else { const q = l < 0.5 ? l*(1+s) : l+s-l*s; const p = 2*l-q; r = hue2rgb(p, q, h+1/3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h-1/3); }
@@ -164,11 +164,11 @@ export function generateRemainingChampions(existingIds: Set<string>): CharacterC
     const config: CharacterConfig = {
       id,
       name: champ.name,
-      rarity: (champ.extra?.rarity || template.rarity) as any,
+      rarity: (champ.extra?.rarity || template.rarity) as Rarity,
       attack: champ.extra?.attack ?? template.attack,
       attackSpeed: champ.extra?.attackSpeed ?? template.attackSpeed,
       range: champ.extra?.range ?? template.range,
-      attackPattern: (champ.extra?.attackPattern || template.attackPattern) as any,
+      attackPattern: (champ.extra?.attackPattern || template.attackPattern) as AttackPattern,
       bodyColor,
       detailColor,
       weaponColor,

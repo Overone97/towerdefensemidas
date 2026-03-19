@@ -192,7 +192,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
         }
       }
 
-      for (const { enemyId, damage: rawDmg, unitId } of damages as any[]) {
+      for (const { enemyId, damage: rawDmg, unitId } of damages as Array<{ enemyId: number; damage: number; unitId: number }>) {
         let dmg = rawDmg;
         if (augEffects.attackMult) dmg *= augEffects.attackMult;
         if (augEffects.critChance && Math.random() < augEffects.critChance) {
@@ -257,7 +257,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
       // Mini turrets: spawn auto-attacking units on path
       if (aram.combinedEffects.miniTurrets && aram.miniTurretsSpawned < (aram.combinedEffects.miniTurrets || 0)) {
-        const turretConfig: any = {
+        const turretConfig: CharacterConfig = {
           id: '_turret', name: 'Mini Turret', rarity: 'common',
           attack: 8 + aram.currentWave * 2, attackSpeed: 2.0, range: 120,
           attackPattern: 'rapid', bodyColor: '#aaccff', detailColor: '#6688cc', weaponColor: '#ffffff',

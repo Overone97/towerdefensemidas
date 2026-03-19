@@ -73,7 +73,7 @@ export function loadDailyQuests(): DailyQuestState {
       const state: DailyQuestState = JSON.parse(raw);
       if (state.date === today) return state;
     }
-  } catch {}
+  } catch { /* localStorage unavailable */ }
   // Generate new quests for today
   const state: DailyQuestState = { date: today, quests: generateDailyQuests(today) };
   saveDailyQuests(state);
@@ -83,7 +83,7 @@ export function loadDailyQuests(): DailyQuestState {
 export function saveDailyQuests(state: DailyQuestState): void {
   try {
     localStorage.setItem(DAILY_QUEST_KEY, JSON.stringify(state));
-  } catch {}
+  } catch { /* localStorage unavailable */ }
 }
 
 export type DailyQuestEvent =
