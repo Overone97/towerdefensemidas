@@ -49,7 +49,7 @@ function isNearPath(px: number, py: number, waypoints: Point[], dist: number): b
     const dx = bx - ax, dy = by - ay;
     const len2 = dx*dx + dy*dy;
     if (len2 === 0) continue;
-    let t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / len2));
+    const t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / len2));
     const cx = ax + t*dx, cy = ay + t*dy;
     const d2 = (px-cx)*(px-cx) + (py-cy)*(py-cy);
     if (d2 < dist*dist) return true;
@@ -67,7 +67,7 @@ function isNearSlot(px: number, py: number, slots: Slot[], dist: number): boolea
 function getDecorations(mapId: string, waypoints: Point[], slots: Slot[]) {
   if (mapDecorationsCache[mapId]) return mapDecorationsCache[mapId];
   
-  const rand = seededRandom(mapId.charCodeAt(0) * 1000 + mapId.charCodeAt(1||0) * 100);
+  const rand = seededRandom(mapId.charCodeAt(0) * 1000 + (mapId.charCodeAt(1) || 0) * 100);
   const trees: {x:number,y:number,type:number,size:number}[] = [];
   const flowers: {x:number,y:number,color:string}[] = [];
   const rocks: {x:number,y:number,size:number}[] = [];

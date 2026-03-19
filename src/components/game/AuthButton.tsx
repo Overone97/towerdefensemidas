@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 const AuthButton: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

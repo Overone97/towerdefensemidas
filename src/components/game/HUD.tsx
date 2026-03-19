@@ -16,7 +16,7 @@ export interface HUDProps {
   prestigeLevel?: number;
   canPrestige?: boolean;
   onPrestige?: () => void;
-  dungeonInfo?: { name: string; icon: string; timer: number; timeLimit?: number; rules: any } | null;
+  dungeonInfo?: { name: string; icon: string; timer: number; timeLimit?: number; rules: DungeonRule[] } | null;
   onExitDungeon?: () => void;
 }
 

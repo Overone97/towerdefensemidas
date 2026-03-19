@@ -69,7 +69,7 @@ export class GameEngine {
       nextInstanceId = Math.max(...inventory.map(c => c.instanceId)) + 1;
     }
     const talentBonus = getTalentBonus(this.saveData.talents);
-    const map = ALL_MAPS.find(m => m.id === (this.saveData as any).currentMapId) || ALL_MAPS[0];
+    const map = ALL_MAPS.find(m => m.id === this.saveData.currentMapId) || ALL_MAPS[0];
 
     this.enemyManager.setWaypoints(map.waypoints);
 
@@ -180,7 +180,7 @@ export class GameEngine {
       this.enemyManager.applyStatusEffect(enemyId, effect);
     }
 
-    for (const { enemyId, damage, unitId } of damages as any[]) {
+    for (const { enemyId, damage, unitId } of damages as Array<{ enemyId: number; damage: number; unitId: number }>) {
       // Find enemy before damaging to get position for particles
       const enemy = this.enemyManager.enemies.find(e => e.id === enemyId);
       const result = this.enemyManager.damageEnemy(enemyId, damage);
@@ -525,7 +525,7 @@ export class GameEngine {
 
   getDamageStats() {
     const elapsed = this.waveStartTime > 0 ? (performance.now() - this.waveStartTime) / 1000 : 1;
-    const stats: { unitId: number; instanceId: number; config: any; totalDamage: number; waveDamage: number; dps: number }[] = [];
+    const stats: { unitId: number; instanceId: number; config: CharacterConfig; totalDamage: number; waveDamage: number; dps: number }[] = [];
     for (const unit of this.towerManager.units) {
       // Ensure every placed unit has a tracker entry
       if (!this.damageTracker.has(unit.id)) {
@@ -655,7 +655,7 @@ export class GameEngine {
     // Save current deployments
     this.saveDeployments();
     this.state.currentMapId = mapId;
-    (this.saveData as any).currentMapId = mapId;
+    this.saveData.currentMapId = mapId;
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
     this.restart();
@@ -666,7 +666,7 @@ export class GameEngine {
   startEndless(mapId: string): void {
     this.saveDeployments();
     this.state.currentMapId = mapId;
-    (this.saveData as any).currentMapId = mapId;
+    this.saveData.currentMapId = mapId;
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
     this.restart();
@@ -741,7 +741,7 @@ export class GameEngine {
   }
 
   restart(): void {
-    const currentMapId = this.state.currentMapId || (this.saveData as any).currentMapId || 'plains';
+    const currentMapId = this.state.currentMapId || this.saveData.currentMapId || 'plains';
     this.enemyManager.clear();
     this.towerManager.clear();
     this.particleManager.clear();
