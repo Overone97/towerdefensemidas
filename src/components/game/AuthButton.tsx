@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
 
 const AuthButton: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -19,8 +18,11 @@ const AuthButton: React.FC = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
       });
       if (error) console.error('Login error:', error);
     } catch (e) {

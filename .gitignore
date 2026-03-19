@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Environnement / secrets
+.env
+.env.*
+!.env.example
+
+# Tooling non retenu
+bun.lock
+bun.lockb
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
