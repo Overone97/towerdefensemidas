@@ -215,6 +215,7 @@ const SPRITE_MAP: Record<string, string> = {
 
 // Image cache (cleaned versions without background)
 const imageCache: Map<string, HTMLCanvasElement> = new Map();
+const skinCache: Map<string, HTMLCanvasElement> = new Map();
 const loadingImages: Set<string> = new Set();
 
 function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
@@ -239,6 +240,34 @@ function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
   return c;
 }
 
+/** Apply a color tint to a sprite canvas for skin support */
+function applyColorTint(source: HTMLCanvasElement, tintColor: string): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = source.width;
+  c.height = source.height;
+  const ctx = c.getContext('2d')!;
+  // Draw original
+  ctx.drawImage(source, 0, 0);
+  // Apply tint using multiply composite
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = tintColor;
+  ctx.fillRect(0, 0, c.width, c.height);
+  // Restore alpha from original
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(source, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  // Add a slight brightness boost
+  ctx.globalAlpha = 0.15;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = tintColor;
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(source, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  return c;
+}
+
 function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
   const cached = imageCache.get(key);
   if (cached) return cached;
@@ -260,6 +289,19 @@ function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
   return null;
 }
 
+function getSkinSprite(charId: string, skinColor: string): HTMLCanvasElement | null {
+  const cacheKey = `${charId}_skin_${skinColor}`;
+  const cached = skinCache.get(cacheKey);
+  if (cached) return cached;
+
+  const baseSprite = imageCache.get(charId);
+  if (!baseSprite) return null;
+
+  const tinted = applyColorTint(baseSprite, skinColor);
+  skinCache.set(cacheKey, tinted);
+  return tinted;
+}
+
 export function preloadLolSprites() {
   for (const [key, src] of Object.entries(SPRITE_MAP)) {
     getOrLoadImage(src, key);
@@ -276,14 +318,24 @@ export function drawLolSprite(
   size: number,
   animFrame: number,
   isAttacking: boolean,
-  attackAnimTimer: number
+  attackAnimTimer: number,
+  skinColor?: string
 ) {
   const src = SPRITE_MAP[charId];
   if (!src) return false;
 
-  const img = getOrLoadImage(src, charId);
-  const drawSize = size * 2.2;
+  getOrLoadImage(src, charId);
 
+  // Use skin-tinted version if skinColor is provided
+  let img: HTMLCanvasElement | null = null;
+  if (skinColor) {
+    img = getSkinSprite(charId, skinColor);
+  }
+  if (!img) {
+    img = imageCache.get(charId) || null;
+  }
+
+  const drawSize = size * 2.2;
   const bob = Math.sin(animFrame * 0.08) * 1.5;
 
   let swing = 0;
