@@ -11,7 +11,8 @@ export function drawCharacterSprite(
   animFrame: number,
   isAttacking: boolean,
   attackAnimTimer: number,
-  stars: number = 1
+  stars: number = 1,
+  originalConfig?: CharacterConfig // original config to detect skin changes
 ): void {
   ctx.save();
   const bob = Math.sin(animFrame * 0.08) * 1.5;
@@ -30,7 +31,6 @@ export function drawCharacterSprite(
     ctx.shadowColor = glowColor;
     ctx.shadowBlur = glowSize * pulse;
     
-    // Draw glow circle underneath
     ctx.globalAlpha = 0.15 + Math.sin(animFrame * 0.04) * 0.05;
     ctx.fillStyle = glowColor;
     ctx.beginPath();
@@ -39,9 +39,16 @@ export function drawCharacterSprite(
     ctx.globalAlpha = 1;
   }
 
-  // All characters use LoL sprite renderer
+  // Determine if skin colors differ from original (skin is equipped)
+  const hasSkin = originalConfig && (
+    config.bodyColor !== originalConfig.bodyColor ||
+    config.detailColor !== originalConfig.detailColor ||
+    config.weaponColor !== originalConfig.weaponColor
+  );
+  const skinColor = hasSkin ? config.bodyColor : undefined;
+
   if (hasLolSprite(config.id)) {
-    drawLolSprite(ctx, config.id, x, cy, size, animFrame, isAttacking, attackAnimTimer);
+    drawLolSprite(ctx, config.id, x, cy, size, animFrame, isAttacking, attackAnimTimer, skinColor);
 
     // Attack flash
     if (isAttacking && attackAnimTimer > 0) {
@@ -56,7 +63,7 @@ export function drawCharacterSprite(
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
 
-    // Draw star indicators above the unit
+    // Draw star indicators
     if (stars >= 2) {
       const starY = cy - size - 6;
       ctx.font = `${stars === 3 ? 9 : 8}px sans-serif`;
