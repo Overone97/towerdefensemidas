@@ -95,6 +95,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         </div>
 
         <div className="flex items-center gap-1.5">
+          <AuthButton />
           <button
             onClick={() => { soundManager.toggleMute(); }}
             className="px-1.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
