@@ -6,10 +6,12 @@ interface Props {
   aram: AramManager;
   onStartWave: () => void;
   onExit: () => void;
+  onBuyShopItem: (itemId: string) => void;
 }
 
-const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
+const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit, onBuyShopItem }) => {
   const [showHistory, setShowHistory] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   const isBossWave = (aram.currentWave + 1) % 10 === 0;
   const isAugWave = (aram.currentWave + 1) % 5 === 0;
@@ -36,6 +38,7 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
             <div className="flex items-center gap-1.5">
               <span className="text-red-400 font-bold text-sm">❤️</span>
               <span className="font-mono text-sm font-bold text-foreground">{aram.baseHp}/{aram.maxBaseHp}</span>
+              {aram.baseShield > 0 && <span className="font-mono text-xs text-cyan-300">🛡️ {aram.baseShield}</span>}
               <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
@@ -52,6 +55,13 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
 
           {/* Right: Buttons */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowShop(!showShop)}
+              className="px-2 py-1 rounded text-xs font-bold transition-colors"
+              style={{ background: '#22c55e22', color: '#22c55e', border: '1px solid #22c55e44' }}
+            >
+              🛒 Boutique ARAM
+            </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="px-2 py-1 rounded text-xs font-bold transition-colors"
@@ -106,6 +116,50 @@ const AramHUD: React.FC<Props> = ({ aram, onStartWave, onExit }) => {
             >
               ▶ VAGUE {aram.currentWave + 1}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ARAM shop */}
+      {showShop && (
+        <div
+          className="absolute top-14 left-4 z-40 pointer-events-auto rounded-xl p-3 max-h-96 overflow-y-auto w-80"
+          style={{ background: 'rgba(10,14,26,0.96)', border: '1px solid #22c55e44' }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-bold text-green-400">🛒 Boutique du Pont</h3>
+            <span className="text-xs text-yellow-300 font-mono">💰 {aram.gold}</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">Bonus actifs seulement en ARAM. Économie basée sur tes kills et vagues.</p>
+
+          <div className="space-y-2">
+            {aram.getShopItems().map((item) => {
+              const stacks = aram.getShopStack(item.id);
+              const canBuy = aram.canBuyShopItem(item.id);
+              return (
+                <div key={item.id} className="rounded-lg p-2 border border-white/10 bg-black/20">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-foreground">{item.icon} {item.name}</div>
+                      <div className="text-[10px] text-muted-foreground">{item.description}</div>
+                      <div className="text-[10px] text-cyan-300">Stacks: {stacks}/{item.maxStacks}</div>
+                    </div>
+                    <button
+                      disabled={!canBuy}
+                      onClick={() => onBuyShopItem(item.id)}
+                      className="px-2 py-1 rounded text-[10px] font-bold disabled:opacity-40"
+                      style={{ background: canBuy ? '#22c55e33' : '#66666633', color: canBuy ? '#86efac' : '#999', border: '1px solid #22c55e44' }}
+                    >
+                      Acheter ({item.cost})
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 text-[10px] text-muted-foreground">
+            Bonus actifs: ATK x{aram.shopBonuses.attackMult.toFixed(2)} • SPD x{aram.shopBonuses.speedMult.toFixed(2)} • RNG x{aram.shopBonuses.rangeMult.toFixed(2)} • +{aram.shopBonuses.bonusGoldPerKill}/kill • 🛡️ {aram.shopBonuses.baseShieldPerWave}/vague
           </div>
         </div>
       )}

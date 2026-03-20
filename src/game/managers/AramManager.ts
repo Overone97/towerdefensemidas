@@ -12,6 +12,24 @@ let nextAramInstanceId = 90000;
 
 export type AramPhase = 'draft' | 'playing' | 'augment_pick' | 'champion_pick' | 'game_over';
 
+export interface AramShopItem {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  cost: number;
+  maxStacks: number;
+}
+
+const ARAM_SHOP_ITEMS: AramShopItem[] = [
+  { id: 'forge_blade', name: 'Lame de forge', icon: '🗡️', description: '+10% ATK (stack max 5)', cost: 90, maxStacks: 5 },
+  { id: 'swift_gloves', name: 'Gants véloces', icon: '🧤', description: '+8% Vitesse d’attaque (stack max 5)', cost: 85, maxStacks: 5 },
+  { id: 'scout_lens', name: 'Lentille éclaireuse', icon: '🔭', description: '+10% portée (stack max 3)', cost: 110, maxStacks: 3 },
+  { id: 'bounty_charm', name: 'Charme du butin', icon: '🪙', description: '+1 or par kill (stack max 10)', cost: 70, maxStacks: 10 },
+  { id: 'fortify_core', name: 'Noyau fortifié', icon: '🛡️', description: '+1 bouclier base par vague (stack max 5)', cost: 120, maxStacks: 5 },
+  { id: 'medkit', name: 'Medkit Nexus', icon: '💊', description: 'Rend 3 PV base instantanément', cost: 100, maxStacks: 999 },
+];
+
 export class AramManager {
   phase: AramPhase = 'draft';
   currentWave = 0;
@@ -67,6 +85,17 @@ export class AramManager {
 
   // Mini turrets spawned flag
   miniTurretsSpawned = 0;
+
+  // Shop bonuses (ARAM-only economy)
+  shopStacks: Record<string, number> = {};
+  shopBonuses = {
+    attackMult: 1,
+    speedMult: 1,
+    rangeMult: 1,
+    bonusGoldPerKill: 0,
+    baseShieldPerWave: 0,
+  };
+  baseShield = 0;
 
   // Available slots count (base 6, can grow with augments)
   get availableSlotCount(): number {
@@ -141,6 +170,9 @@ export class AramManager {
   finishDraft(): void {
     this.phase = 'playing';
     this.gold = this.isDuo ? 250 : 150;
+    this.shopStacks = {};
+    this.shopBonuses = { attackMult: 1, speedMult: 1, rangeMult: 1, bonusGoldPerKill: 0, baseShieldPerWave: 0 };
+    this.baseShield = 0;
   }
 
   // ─── Wave System ───
@@ -160,6 +192,7 @@ export class AramManager {
     this.enemyPool = getAramEnemyPool(this.currentWave);
     this.totalWeight = this.enemyPool.reduce((s, e) => s + e.weight, 0);
     this.waveActive = true;
+    this.baseShield = this.shopBonuses.baseShieldPerWave;
 
     if (this.combinedEffects.bonusGoldPerWave && this.currentWave % 3 === 0) {
       this.gold += this.combinedEffects.bonusGoldPerWave;
@@ -265,7 +298,7 @@ export class AramManager {
 
   onEnemyKilled(reward: number): number {
     const goldMult = (this.combinedEffects.goldMult || 1) * (this.activeEvent?.effect.goldMult || 1);
-    const earned = Math.floor(reward * goldMult);
+    const earned = Math.floor(reward * goldMult) + this.shopBonuses.bonusGoldPerKill;
     this.gold += earned;
     this.score += reward;
     this.killsSinceLastAlly++;
@@ -282,6 +315,10 @@ export class AramManager {
   }
 
   onBaseHit(): boolean {
+    if (this.baseShield > 0) {
+      this.baseShield--;
+      return false;
+    }
     this.baseHp--;
     return this.baseHp <= 0;
   }
@@ -307,6 +344,57 @@ export class AramManager {
 
   getMap() {
     return ARAM_MAP;
+  }
+
+  getShopItems(): AramShopItem[] {
+    return ARAM_SHOP_ITEMS;
+  }
+
+  getShopStack(itemId: string): number {
+    return this.shopStacks[itemId] || 0;
+  }
+
+  canBuyShopItem(itemId: string): boolean {
+    const item = ARAM_SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return false;
+    const stacks = this.getShopStack(itemId);
+    return this.gold >= item.cost && stacks < item.maxStacks;
+  }
+
+  buyShopItem(itemId: string): boolean {
+    const item = ARAM_SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return false;
+    const stacks = this.getShopStack(itemId);
+    if (this.gold < item.cost || stacks >= item.maxStacks) return false;
+
+    this.gold -= item.cost;
+    this.shopStacks[itemId] = stacks + 1;
+
+    switch (itemId) {
+      case 'forge_blade':
+        this.shopBonuses.attackMult = Math.min(2.2, this.shopBonuses.attackMult + 0.10);
+        break;
+      case 'swift_gloves':
+        this.shopBonuses.speedMult = Math.min(2.0, this.shopBonuses.speedMult + 0.08);
+        break;
+      case 'scout_lens':
+        this.shopBonuses.rangeMult = Math.min(1.5, this.shopBonuses.rangeMult + 0.10);
+        break;
+      case 'bounty_charm':
+        this.shopBonuses.bonusGoldPerKill += 1;
+        break;
+      case 'fortify_core':
+        this.shopBonuses.baseShieldPerWave += 1;
+        this.baseShield += 1;
+        break;
+      case 'medkit':
+        this.baseHp = Math.min(this.maxBaseHp, this.baseHp + 3);
+        break;
+      default:
+        break;
+    }
+
+    return true;
   }
 
   getAllCharacters(): OwnedCharacter[] {
