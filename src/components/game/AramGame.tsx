@@ -157,6 +157,11 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
       const { activeSynergies, unitBonuses } = computeSynergies(towerManager.units);
       towerManager.synergyBonuses = unitBonuses;
+      towerManager.talentBonus = {
+        attackMult: aram.shopBonuses.attackMult,
+        speedMult: aram.shopBonuses.speedMult,
+        rangeMult: aram.shopBonuses.rangeMult,
+      };
       towerManager.setWaypoints(ARAM_MAP.waypoints);
 
       // Stealth reveal
@@ -352,6 +357,11 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
 
   const handleAugmentPick = useCallback((augId: string) => {
     aram.pickAugment(augId);
+    forceUpdate(n => n + 1);
+  }, [aram]);
+
+  const handleBuyShopItem = useCallback((itemId: string) => {
+    aram.buyShopItem(itemId);
     forceUpdate(n => n + 1);
   }, [aram]);
 
@@ -602,7 +612,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       </div>
 
       {/* ARAM HUD */}
-      <AramHUD aram={aram} onStartWave={handleStartWave} onExit={onExit} />
+      <AramHUD aram={aram} onStartWave={handleStartWave} onExit={onExit} onBuyShopItem={handleBuyShopItem} />
 
       {/* Team sidebar */}
       {towerManager.units.length > 0 && (
