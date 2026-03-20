@@ -655,7 +655,16 @@ export class GameEngine {
 
   setAdminByEmail(email?: string | null): void {
     const normalized = (email || '').trim().toLowerCase();
-    const isAdmin = normalized === 'overone97@gmail.com';
+    const normalizeGmail = (value: string) => {
+      const parts = value.split('@');
+      if (parts.length !== 2) return value;
+      const [localRaw, domain] = parts;
+      if (domain !== 'gmail.com') return value;
+      const local = localRaw.split('+')[0].replace(/\./g, '');
+      return `${local}@gmail.com`;
+    };
+
+    const isAdmin = normalizeGmail(normalized) === 'overone97@gmail.com';
     this.adminMode = isAdmin;
     if (isAdmin) {
       this.grantAdminCollection();
