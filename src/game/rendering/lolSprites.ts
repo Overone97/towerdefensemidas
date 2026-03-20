@@ -232,9 +232,8 @@ function removeBackground(img: HTMLImageElement, aggressive = false): HTMLCanvas
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const d = data.data;
 
-  // Average the 4 corners for a more stable background key color
-  const p = (x: number, y: number) => (y * c.width + x) * 4;
-  const corners = [p(0, 0), p(c.width - 1, 0), p(0, c.height - 1), p(c.width - 1, c.height - 1)];
+  const pixelIndex = (x: number, y: number) => (y * c.width + x) * 4;
+  const corners = [pixelIndex(0, 0), pixelIndex(c.width - 1, 0), pixelIndex(0, c.height - 1), pixelIndex(c.width - 1, c.height - 1)];
   let bgR = 0, bgG = 0, bgB = 0;
   for (const idx of corners) {
     bgR += d[idx];
@@ -245,26 +244,65 @@ function removeBackground(img: HTMLImageElement, aggressive = false): HTMLCanvas
   bgG /= corners.length;
   bgB /= corners.length;
 
-  const threshold = aggressive ? 92 : 40;
+  // For custom skin assets: flood-fill from borders only.
+  // This removes the background without eating character colors.
+  if (aggressive) {
+    const w = c.width;
+    const h = c.height;
+    const visited = new Uint8Array(w * h);
+    const queue: number[] = [];
+    const threshold = 84;
 
+    const colorDist = (i: number) => {
+      const dr = d[i] - bgR;
+      const dg = d[i + 1] - bgG;
+      const db = d[i + 2] - bgB;
+      return Math.abs(dr) + Math.abs(dg) + Math.abs(db);
+    };
+
+    const push = (x: number, y: number) => {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx1 = y * w + x;
+      if (visited[idx1]) return;
+      visited[idx1] = 1;
+      queue.push(idx1);
+    };
+
+    for (let x = 0; x < w; x++) {
+      push(x, 0);
+      push(x, h - 1);
+    }
+    for (let y = 0; y < h; y++) {
+      push(0, y);
+      push(w - 1, y);
+    }
+
+    while (queue.length) {
+      const idx1 = queue.pop()!;
+      const x = idx1 % w;
+      const y = Math.floor(idx1 / w);
+      const i = idx1 * 4;
+      if (colorDist(i) > threshold) continue;
+
+      d[i + 3] = 0;
+
+      push(x + 1, y);
+      push(x - 1, y);
+      push(x, y + 1);
+      push(x, y - 1);
+    }
+
+    ctx.putImageData(data, 0, 0);
+    return c;
+  }
+
+  const threshold = 40;
   for (let i = 0; i < d.length; i += 4) {
     const dr = Math.abs(d[i] - bgR);
     const dg = Math.abs(d[i + 1] - bgG);
     const db = Math.abs(d[i + 2] - bgB);
     const dist = dr + dg + db;
-
-    // Basic keying on dominant background color
-    if (dist < threshold * 2.2) {
-      d[i + 3] = 0;
-      continue;
-    }
-
-    // Extra cleanup for mauve/purple halo on custom skin JPGs
-    if (aggressive) {
-      const r = d[i], g = d[i + 1], b = d[i + 2];
-      const purpleLike = b > 85 && r > 75 && g < 105 && (b - g) > 20 && (r - g) > 10;
-      if (purpleLike) d[i + 3] = Math.min(d[i + 3], 20);
-    }
+    if (dist < threshold * 2.2) d[i + 3] = 0;
   }
 
   ctx.putImageData(data, 0, 0);
