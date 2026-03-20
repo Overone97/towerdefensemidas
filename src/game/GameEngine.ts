@@ -37,6 +37,7 @@ export const fishState = {
 
 export class GameEngine {
   enemyManager = new EnemyManager();
+  private adminMode = false;
   towerManager = new TowerManager();
   waveManager = new WaveManager();
   particleManager = new ParticleManager();
@@ -112,6 +113,7 @@ export class GameEngine {
   }
 
   update(dt: number): void {
+    this.applyAdminCheats();
     if (this.state.gameOver || this.state.victory) return;
 
     // Dungeon timer
@@ -649,6 +651,40 @@ export class GameEngine {
 
   getSaveData(): SaveData {
     return this.saveData;
+  }
+
+  setAdminByEmail(email?: string | null): void {
+    const normalized = (email || '').trim().toLowerCase();
+    const isAdmin = normalized === 'overone97@gmail.com';
+    this.adminMode = isAdmin;
+    if (isAdmin) {
+      this.grantAdminCollection();
+      this.applyAdminCheats();
+      this.persistSave();
+    }
+  }
+
+  private grantAdminCollection(): void {
+    const owned = new Set(this.state.inventory.map(c => c.config.id));
+    for (const config of ALL_CHARACTERS) {
+      if (config.id === 'fizz') continue; // garde le secret easter egg
+      if (owned.has(config.id)) continue;
+      this.state.inventory.push({
+        instanceId: nextInstanceId++,
+        config,
+        level: 1,
+        equipment: {},
+        stars: 1,
+      });
+      owned.add(config.id);
+    }
+  }
+
+  private applyAdminCheats(): void {
+    if (!this.adminMode) return;
+    if (this.state.gold < 999999999) this.state.gold = 999999999;
+    if (this.saveData.stars < 999999) this.saveData.stars = 999999;
+    this.state.stars = this.saveData.stars;
   }
 
   setMap(mapId: string): void {
