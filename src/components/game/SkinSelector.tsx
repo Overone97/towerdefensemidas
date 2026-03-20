@@ -47,7 +47,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
   }
 
   return (
-    <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-4 w-[560px] shadow-xl max-h-[70vh] overflow-y-auto">
+    <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-3 w-[min(92vw,760px)] shadow-xl max-h-[78vh] overflow-y-auto overflow-x-hidden">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-foreground font-bold text-sm">🛍️ Boutique Skins — {championName}</h3>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
@@ -56,7 +56,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
       <div className="text-xs text-muted-foreground mb-3">⭐ {stars} étoiles disponibles</div>
 
       {/* Hero preview panel */}
-      <div className="mb-4 rounded-xl border border-border/70 bg-black/25 p-3 flex items-center gap-4">
+      <div className="mb-3 rounded-xl border border-border/70 bg-black/25 p-3 flex flex-col sm:flex-row items-center gap-3 sticky top-0 z-10 backdrop-blur-sm">
         <div className="w-[132px] h-[132px] rounded-lg border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent flex items-center justify-center">
           <SkinPreviewCanvas championId={championId} tintColor={focusedSkin?.bodyColor} size={86} canvasSize={120} className="w-[120px] h-[120px]" />
         </div>
@@ -75,7 +75,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {/* Default card */}
         <button
           onClick={() => { setFocusedSkinId(null); onUnequip(championId); }}

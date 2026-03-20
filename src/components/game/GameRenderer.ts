@@ -918,7 +918,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       }
     }
 
-    drawCharacterSprite(ctx, renderConfig, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer, unit.stars, unit.config);
+    drawCharacterSprite(ctx, renderConfig, unit.x, unit.y, 18, unit.animFrame, unit.isAttacking, unit.attackAnimTimer, unit.stars, unit.config, skinId);
 
     // Selection indicator (subtle glow instead of box)
     if (isSelected) {
