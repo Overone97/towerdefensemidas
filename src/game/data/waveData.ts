@@ -123,6 +123,24 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     bodyColor: '#8822CC', strokeColor: '#BB55FF',
     label: 'BARON',
   },
+  void_empress: {
+    type: 'void_empress', hp: 900, speed: 30, reward: 180, size: 20,
+    armor: 8, slowResist: 0.7,
+    bodyColor: '#8a4dff', strokeColor: '#c59bff',
+    label: 'Bel\'Veth',
+  },
+  ice_witch: {
+    type: 'ice_witch', hp: 820, speed: 28, reward: 175, size: 20,
+    armor: 7, slowResist: 0.85,
+    bodyColor: '#6cb3ff', strokeColor: '#c8ecff',
+    label: 'Lissandra',
+  },
+  noxian_grand_general: {
+    type: 'noxian_grand_general', hp: 1100, speed: 24, reward: 220, size: 22,
+    armor: 10, slowResist: 0.8,
+    bodyColor: '#b33a3a', strokeColor: '#ff9c9c',
+    label: 'Swain',
+  },
 };
 
 export interface WaveEnemyPool {
@@ -181,7 +199,17 @@ export function isBossWave(waveNumber: number): boolean {
   return waveNumber % 5 === 0;
 }
 
-export function getBossTypeForWave(waveNumber: number): EnemyType {
+export function getBossTypeForWave(waveNumber: number, mapId?: string): EnemyType {
+  if (mapId === 'void_rift') {
+    return waveNumber % 10 === 0 ? 'void_empress' : 'dragon_earth';
+  }
+  if (mapId === 'freljord_storm') {
+    return waveNumber % 10 === 0 ? 'ice_witch' : 'dragon_ice';
+  }
+  if (mapId === 'noxus_siege') {
+    return waveNumber % 10 === 0 ? 'noxian_grand_general' : 'boss';
+  }
+
   switch (waveNumber) {
     case 5: return 'tank';
     case 10: return 'dragon_fire';

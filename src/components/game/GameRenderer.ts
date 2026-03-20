@@ -556,7 +556,8 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.restore();
     }
 
-    if (enemy.type === 'boss') {
+    const isMajorBoss = enemy.type === 'boss' || enemy.type === 'void_empress' || enemy.type === 'ice_witch' || enemy.type === 'noxian_grand_general';
+    if (isMajorBoss) {
       ctx.fillStyle = '#ff88ff';
       ctx.font = 'bold 7px monospace';
       ctx.textAlign = 'center';
@@ -577,15 +578,15 @@ function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
       ctx.fillText('👁️', enemy.x, enemy.y - enemy.size - 10);
     }
 
-    if (enemy.armor > 0 && enemy.type !== 'boss') {
+    if (enemy.armor > 0 && !isMajorBoss) {
       ctx.fillStyle = '#cccc88';
       ctx.font = 'bold 7px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('🛡', enemy.x + enemy.size + 2, enemy.y - enemy.size + 4);
     }
 
-    const barW = enemy.type === 'boss' ? 36 : 24;
-    const barH = enemy.type === 'boss' ? 5 : 4;
+    const barW = isMajorBoss ? 40 : 24;
+    const barH = isMajorBoss ? 6 : 4;
     const barX = enemy.x - barW / 2;
     const barY = enemy.y - enemy.size - 8;
     const hpRatio = enemy.hp / enemy.maxHp;

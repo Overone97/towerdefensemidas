@@ -62,6 +62,15 @@ export class EnemyManager {
     if (config.type === 'dragon_fire') {
       enemy.bossAbilityCooldown = 1;
     }
+    if (config.type === 'void_empress') {
+      enemy.bossAbilityCooldown = 3.5;
+    }
+    if (config.type === 'ice_witch') {
+      enemy.bossAbilityCooldown = 4.2;
+    }
+    if (config.type === 'noxian_grand_general') {
+      enemy.bossAbilityCooldown = 3.8;
+    }
     if (config.type === 'dragon_air') {
       enemy.hasDashed = false;
     }
@@ -151,6 +160,69 @@ export class EnemyManager {
             };
             this.enemies.push(minion);
           }
+        }
+      }
+
+      // Bel'Veth: void brood swarm + temporary shell at low hp
+      if (enemy.type === 'void_empress' && enemy.bossAbilityCooldown !== undefined) {
+        enemy.bossAbilityCooldown -= dt;
+        if (enemy.hp / enemy.maxHp <= 0.35 && !enemy.shieldMaxHp) {
+          enemy.shieldMaxHp = enemy.maxHp * 0.22;
+          enemy.shieldHp = enemy.shieldMaxHp;
+        }
+        if (enemy.bossAbilityCooldown <= 0) {
+          enemy.bossAbilityCooldown = 3.5;
+          for (let i = 0; i < 2; i++) {
+            const cfg = ENEMY_CONFIGS.fast;
+            this.enemies.push({
+              id: nextEnemyId++, type: 'fast',
+              x: enemy.x + (Math.random() - 0.5) * 18, y: enemy.y + (Math.random() - 0.5) * 18,
+              hp: Math.floor(cfg.hp * 3.2), maxHp: Math.floor(cfg.hp * 3.2),
+              speed: cfg.speed * 1.5, baseSpeed: cfg.speed * 1.5,
+              reward: Math.floor(cfg.reward * 1.2), size: 7,
+              armor: 0, poisonResist: false, slowResist: 0.5,
+              bodyColor: '#9a63ff', strokeColor: '#d5b6ff',
+              waypointIndex: enemy.waypointIndex, progress: enemy.progress,
+              alive: true, statusEffects: [], animFrame: Math.random() * 100,
+            });
+          }
+        }
+      }
+
+      // Lissandra: icy slow aura pulses
+      if (enemy.type === 'ice_witch' && enemy.bossAbilityCooldown !== undefined) {
+        enemy.bossAbilityCooldown -= dt;
+        if (enemy.bossAbilityCooldown <= 0) {
+          enemy.bossAbilityCooldown = 4.2;
+          for (const target of this.enemies) {
+            if (!target.alive || target.id === enemy.id) continue;
+            const dx = target.x - enemy.x;
+            const dy = target.y - enemy.y;
+            if (dx * dx + dy * dy <= 110 * 110) {
+              target.statusEffects.push({ type: 'slow', damagePerSecond: 0, duration: 2.2, slowFactor: 0.65 });
+            }
+          }
+        }
+      }
+
+      // Swain: drains nearby units by healing himself periodically
+      if (enemy.type === 'noxian_grand_general' && enemy.bossAbilityCooldown !== undefined) {
+        enemy.bossAbilityCooldown -= dt;
+        if (enemy.bossAbilityCooldown <= 0) {
+          enemy.bossAbilityCooldown = 3.8;
+          let drained = 0;
+          for (const target of this.enemies) {
+            if (!target.alive || target.id === enemy.id) continue;
+            const dx = target.x - enemy.x;
+            const dy = target.y - enemy.y;
+            if (dx * dx + dy * dy <= 130 * 130) {
+              const amount = Math.min(18, target.hp);
+              target.hp -= amount;
+              drained += amount;
+              if (target.hp <= 0) target.alive = false;
+            }
+          }
+          enemy.hp = Math.min(enemy.maxHp, enemy.hp + drained * 0.45);
         }
       }
 
