@@ -223,7 +223,7 @@ const imageCache: Map<string, HTMLCanvasElement> = new Map();
 const skinCache: Map<string, HTMLCanvasElement> = new Map();
 const loadingImages: Set<string> = new Set();
 
-function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
+function removeBackground(img: HTMLImageElement, aggressive = false): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
@@ -231,16 +231,42 @@ function removeBackground(img: HTMLImageElement): HTMLCanvasElement {
   ctx.drawImage(img, 0, 0);
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const d = data.data;
-  const bgR = d[0], bgG = d[1], bgB = d[2];
-  const threshold = 40;
+
+  // Average the 4 corners for a more stable background key color
+  const p = (x: number, y: number) => (y * c.width + x) * 4;
+  const corners = [p(0, 0), p(c.width - 1, 0), p(0, c.height - 1), p(c.width - 1, c.height - 1)];
+  let bgR = 0, bgG = 0, bgB = 0;
+  for (const idx of corners) {
+    bgR += d[idx];
+    bgG += d[idx + 1];
+    bgB += d[idx + 2];
+  }
+  bgR /= corners.length;
+  bgG /= corners.length;
+  bgB /= corners.length;
+
+  const threshold = aggressive ? 92 : 40;
+
   for (let i = 0; i < d.length; i += 4) {
     const dr = Math.abs(d[i] - bgR);
     const dg = Math.abs(d[i + 1] - bgG);
     const db = Math.abs(d[i + 2] - bgB);
-    if (dr < threshold && dg < threshold && db < threshold) {
+    const dist = dr + dg + db;
+
+    // Basic keying on dominant background color
+    if (dist < threshold * 2.2) {
       d[i + 3] = 0;
+      continue;
+    }
+
+    // Extra cleanup for mauve/purple halo on custom skin JPGs
+    if (aggressive) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const purpleLike = b > 85 && r > 75 && g < 105 && (b - g) > 20 && (r - g) > 10;
+      if (purpleLike) d[i + 3] = Math.min(d[i + 3], 20);
     }
   }
+
   ctx.putImageData(data, 0, 0);
   return c;
 }
@@ -291,7 +317,7 @@ function getOrLoadImage(src: string, key: string): HTMLCanvasElement | null {
     const img = new Image();
     img.src = src;
     img.onload = () => {
-      const cleaned = removeBackground(img);
+      const cleaned = removeBackground(img, key.startsWith('skin:'));
       imageCache.set(key, cleaned);
       loadingImages.delete(key);
     };
