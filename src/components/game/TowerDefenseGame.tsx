@@ -22,6 +22,7 @@ import TutorialOverlay from './TutorialOverlay';
 import SkinSelector from './SkinSelector';
 import AramGame from './AramGame';
 import { getSkinsForChampion } from '../../game/data/skinData';
+import { supabase } from '@/integrations/supabase/client';
 
 type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo' | 'skin_shop';
 
@@ -54,6 +55,24 @@ const TowerDefenseGame: React.FC = () => {
     }, 500);
     return () => clearInterval(interval);
   }, [engine]);
+
+  // Admin mode bootstrap (account-bound)
+  useEffect(() => {
+    const applySession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      engine.setAdminByEmail(session?.user?.email);
+      onStateChange();
+    };
+
+    applySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      engine.setAdminByEmail(session?.user?.email);
+      onStateChange();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [engine, onStateChange]);
 
   const handlePlaceUnit = useCallback((instanceId: number) => {
     if (state.selectedSlotIndex === null) return;
