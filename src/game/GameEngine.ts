@@ -742,7 +742,7 @@ export class GameEngine {
 
   restart(): void {
     const currentMapId = this.state.currentMapId || this.saveData.currentMapId || 'plains';
-    const preservedGold = this.state.gold;
+    const preservedGold = Math.max(this.state.gold, this.saveData.gold ?? 0);
     this.enemyManager.clear();
     this.towerManager.clear();
     this.particleManager.clear();
