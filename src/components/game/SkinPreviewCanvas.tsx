@@ -4,12 +4,13 @@ import { drawLolSprite, hasLolSprite } from '../../game/rendering/lolSprites';
 interface Props {
   championId: string;
   tintColor?: string;
+  skinId?: string;
   size?: number;
   canvasSize?: number;
   className?: string;
 }
 
-const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84, canvasSize = 120, className }) => {
+const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, skinId, size = 84, canvasSize = 120, className }) => {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84, 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (hasLolSprite(championId)) {
-      drawLolSprite(ctx, championId, canvas.width / 2, canvas.height / 2 + 1, size, 20, false, 0, tintColor);
+      drawLolSprite(ctx, championId, canvas.width / 2, canvas.height / 2 + 1, size, 20, false, 0, tintColor, skinId);
       return;
     }
 
@@ -30,7 +31,7 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84, 
     ctx.beginPath();
     ctx.arc(canvas.width / 2, canvas.height / 2, size * 0.22, 0, Math.PI * 2);
     ctx.fill();
-  }, [championId, tintColor, size]);
+  }, [championId, tintColor, skinId, size]);
 
   return <canvas ref={ref} width={canvasSize} height={canvasSize} className={className || ''} />;
 };

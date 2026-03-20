@@ -22,6 +22,7 @@ export const ALL_SKINS: SkinDef[] = [
   // ── Jinx ──
   { id: 'jinx_neon', championId: 'jinx', name: 'Jinx Cow-Girl', bodyColor: '#ff9f43', detailColor: '#8e5a2a', weaponColor: '#ffd166', unlockCondition: { type: 'shop', cost: 20 } },
   { id: 'jinx_dark', championId: 'jinx', name: 'Jinx Déesse des Enfers', bodyColor: '#ff2d55', detailColor: '#7a1028', weaponColor: '#ff9aa2', unlockCondition: { type: 'shop', cost: 40 } },
+  { id: 'jinx_mushroom', championId: 'jinx', name: 'Jinx Mushroom', bodyColor: '#7bed9f', detailColor: '#2ed573', weaponColor: '#fffa65', unlockCondition: { type: 'shop', cost: 55 } },
 
   // ── Yasuo ──
   { id: 'yasuo_storm', championId: 'yasuo', name: 'Yasuo Tempête', bodyColor: '#1e3a5f', detailColor: '#0f2b46', weaponColor: '#63b3ed', unlockCondition: { type: 'shop', cost: 30 } },

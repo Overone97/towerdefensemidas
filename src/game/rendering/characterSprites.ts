@@ -97,7 +97,7 @@ export function drawCharacterSprite(
   const skinColor = hasSkin ? config.bodyColor : undefined;
 
   if (hasLolSprite(config.id)) {
-    drawLolSprite(ctx, config.id, x, cy, size, animFrame, isAttacking, attackAnimTimer, skinColor);
+    drawLolSprite(ctx, config.id, x, cy, size, animFrame, isAttacking, attackAnimTimer, skinColor, skinId);
     drawSkinOverlay(ctx, skinId, x, cy, size);
 
     if (isAttacking && attackAnimTimer > 0) {
