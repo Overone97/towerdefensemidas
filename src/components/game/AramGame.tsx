@@ -164,7 +164,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       };
       towerManager.setWaypoints(ARAM_MAP.waypoints);
 
-      // Stealth reveal
+      // Stealth reveal (units + pink wards)
       for (const unit of towerManager.units) {
         if (!unit.config.canRevealStealth) continue;
         const stats = getCharacterStats(unit.config, unit.level, unit.stars);
@@ -174,6 +174,17 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
           const dy = enemy.y - unit.y;
           if (dx * dx + dy * dy <= stats.range * stats.range) {
             enemy.stealthed = false;
+          }
+        }
+      }
+      for (const ward of aram.pinkWards) {
+        for (const enemy of enemyManager.enemies) {
+          if (!enemy.alive || !enemy.stealthed) continue;
+          const dx = enemy.x - ward.x;
+          const dy = enemy.y - ward.y;
+          if (dx * dx + dy * dy <= ward.radius * ward.radius) {
+            enemy.stealthed = false;
+            floatingText.spawn(enemy.x, enemy.y - 10, '🩷 Révélé', '#ff66cc', 10);
           }
         }
       }
@@ -320,6 +331,31 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       ctx.translate(screenShake.offsetX, screenShake.offsetY);
       const state = buildState();
       renderGame(ctx, state, ARAM_MAP.waypoints, timestamp, {});
+
+      for (const ward of aram.pinkWards) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 80, 180, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(ward.x, ward.y, ward.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 120, 210, 0.22)';
+        ctx.beginPath();
+        ctx.arc(ward.x, ward.y, ward.radius * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ff66cc';
+        ctx.beginPath();
+        ctx.arc(ward.x, ward.y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd6f2';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('PW', ward.x, ward.y - 12);
+        ctx.restore();
+      }
+
       particleManager.render(ctx);
       floatingText.render(ctx);
       ctx.restore();
