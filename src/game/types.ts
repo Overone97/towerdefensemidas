@@ -180,6 +180,12 @@ export interface Projectile {
   aoeRadius?: number;
   appliesPoison?: { damage: number; duration: number };
   appliesSlow?: { factor: number; duration: number };
+  projectileType?: 'default' | 'sivir_boomerang';
+  bouncesRemaining?: number;
+  bounceRange?: number;
+  hitEnemyIds?: number[];
+  rotation?: number;
+  sourceUnitId?: number;
 }
 
 export interface Slot {
