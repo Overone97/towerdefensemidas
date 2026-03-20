@@ -5,9 +5,11 @@ interface Props {
   championId: string;
   tintColor?: string;
   size?: number;
+  canvasSize?: number;
+  className?: string;
 }
 
-const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84 }) => {
+const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84, canvasSize = 120, className }) => {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84 }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (hasLolSprite(championId)) {
-      drawLolSprite(ctx, championId, canvas.width / 2, canvas.height / 2 + 2, size, 20, false, 0, tintColor);
+      drawLolSprite(ctx, championId, canvas.width / 2, canvas.height / 2 + 1, size, 20, false, 0, tintColor);
       return;
     }
 
@@ -30,7 +32,7 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, size = 84 }
     ctx.fill();
   }, [championId, tintColor, size]);
 
-  return <canvas ref={ref} width={120} height={120} className="w-[120px] h-[120px]" />;
+  return <canvas ref={ref} width={canvasSize} height={canvasSize} className={className || ''} />;
 };
 
 export default SkinPreviewCanvas;
