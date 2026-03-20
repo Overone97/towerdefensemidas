@@ -38,6 +38,8 @@ export const fishState = {
 export class GameEngine {
   enemyManager = new EnemyManager();
   private adminMode = false;
+  private adminByEmail = false;
+  private adminBySecret = false;
   towerManager = new TowerManager();
   waveManager = new WaveManager();
   particleManager = new ParticleManager();
@@ -664,9 +666,18 @@ export class GameEngine {
       return `${local}@gmail.com`;
     };
 
-    const isAdmin = normalizeGmail(normalized) === 'overone97@gmail.com';
-    this.adminMode = isAdmin;
-    if (isAdmin) {
+    this.adminByEmail = normalizeGmail(normalized) === 'overone97@gmail.com';
+    this.refreshAdminMode();
+  }
+
+  setAdminSecretEnabled(enabled: boolean): void {
+    this.adminBySecret = enabled;
+    this.refreshAdminMode();
+  }
+
+  private refreshAdminMode(): void {
+    this.adminMode = this.adminByEmail || this.adminBySecret;
+    if (this.adminMode) {
       this.grantAdminCollection();
       this.applyAdminCheats();
       this.persistSave();
