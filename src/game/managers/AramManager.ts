@@ -22,12 +22,13 @@ export interface AramShopItem {
 }
 
 const ARAM_SHOP_ITEMS: AramShopItem[] = [
-  { id: 'forge_blade', name: 'Lame de forge', icon: '🗡️', description: '+10% ATK (stack max 5)', cost: 90, maxStacks: 5 },
-  { id: 'swift_gloves', name: 'Gants véloces', icon: '🧤', description: '+8% Vitesse d’attaque (stack max 5)', cost: 85, maxStacks: 5 },
-  { id: 'scout_lens', name: 'Lentille éclaireuse', icon: '🔭', description: '+10% portée (stack max 3)', cost: 110, maxStacks: 3 },
-  { id: 'bounty_charm', name: 'Charme du butin', icon: '🪙', description: '+1 or par kill (stack max 10)', cost: 70, maxStacks: 10 },
-  { id: 'fortify_core', name: 'Noyau fortifié', icon: '🛡️', description: '+1 bouclier base par vague (stack max 5)', cost: 120, maxStacks: 5 },
-  { id: 'medkit', name: 'Medkit Nexus', icon: '💊', description: 'Rend 3 PV base instantanément', cost: 100, maxStacks: 999 },
+  { id: 'forge_blade', name: 'Lame de forge', icon: '🗡️', description: '+10% ATK (stack max 5)', cost: 220, maxStacks: 5 },
+  { id: 'swift_gloves', name: 'Gants véloces', icon: '🧤', description: '+8% Vitesse d’attaque (stack max 5)', cost: 210, maxStacks: 5 },
+  { id: 'scout_lens', name: 'Lentille éclaireuse', icon: '🔭', description: '+10% portée (stack max 3)', cost: 260, maxStacks: 3 },
+  { id: 'bounty_charm', name: 'Charme du butin', icon: '🪙', description: '+1 or par kill (stack max 10)', cost: 180, maxStacks: 10 },
+  { id: 'fortify_core', name: 'Noyau fortifié', icon: '🛡️', description: '+1 bouclier base par vague (stack max 5)', cost: 280, maxStacks: 5 },
+  { id: 'pink_ward', name: 'Pink Ward', icon: '🩷', description: 'Révèle les mobs invisibles proches', cost: 240, maxStacks: 3 },
+  { id: 'medkit', name: 'Medkit Nexus', icon: '💊', description: 'Rend 3 PV base instantanément', cost: 200, maxStacks: 999 },
 ];
 
 export class AramManager {
@@ -96,6 +97,7 @@ export class AramManager {
     baseShieldPerWave: 0,
   };
   baseShield = 0;
+  pinkWards: { x: number; y: number; radius: number }[] = [];
 
   // Available slots count (base 6, can grow with augments)
   get availableSlotCount(): number {
@@ -173,6 +175,7 @@ export class AramManager {
     this.shopStacks = {};
     this.shopBonuses = { attackMult: 1, speedMult: 1, rangeMult: 1, bonusGoldPerKill: 0, baseShieldPerWave: 0 };
     this.baseShield = 0;
+    this.pinkWards = [];
   }
 
   // ─── Wave System ───
@@ -387,6 +390,18 @@ export class AramManager {
         this.shopBonuses.baseShieldPerWave += 1;
         this.baseShield += 1;
         break;
+      case 'pink_ward': {
+        const wp = ARAM_MAP.waypoints;
+        const wardSpots = [
+          { x: wp[Math.floor(wp.length * 0.3)].x, y: wp[Math.floor(wp.length * 0.3)].y },
+          { x: wp[Math.floor(wp.length * 0.5)].x, y: wp[Math.floor(wp.length * 0.5)].y },
+          { x: wp[Math.floor(wp.length * 0.72)].x, y: wp[Math.floor(wp.length * 0.72)].y },
+        ];
+        const slot = Math.min(this.getShopStack('pink_ward') - 1, wardSpots.length - 1);
+        const spot = wardSpots[Math.max(0, slot)];
+        this.pinkWards.push({ x: spot.x, y: spot.y, radius: 110 });
+        break;
+      }
       case 'medkit':
         this.baseHp = Math.min(this.maxBaseHp, this.baseHp + 3);
         break;
