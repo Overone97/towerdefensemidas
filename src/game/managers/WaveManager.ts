@@ -4,6 +4,7 @@ import { EnemyManager } from './EnemyManager';
 
 export class WaveManager {
   currentWave: number = 0;
+  mapId: string = 'plains';
   waveActive: boolean = false;
   totalWaves: number = TOTAL_WAVES;
   endlessMode: boolean = false;
@@ -25,6 +26,15 @@ export class WaveManager {
     if (!this.endlessMode && this.currentWave >= this.totalWaves) return null;
     this.currentWave++;
     this.waveConfig = this.endlessMode ? this.getEndlessWaveConfig(this.currentWave) : getWaveConfig(this.currentWave);
+
+    const isExtremeMap = ['void_rift', 'freljord_storm', 'noxus_siege'].includes(this.mapId);
+    if (isExtremeMap && this.waveConfig) {
+      this.waveConfig.enemyHpMultiplier *= 2.4;
+      this.waveConfig.enemySpeedMultiplier *= 1.22;
+      this.waveConfig.enemyRewardMultiplier *= 1.7;
+      this.waveConfig.enemyCount = Math.floor(this.waveConfig.enemyCount * 1.35);
+      this.waveConfig.spawnInterval = Math.max(120, Math.floor(this.waveConfig.spawnInterval * 0.85));
+    }
     
     // Apply dungeon overrides
     if (this.forcedModifier) {
@@ -76,7 +86,7 @@ export class WaveManager {
       
       let enemyType: EnemyType;
       if (isBoss) {
-        enemyType = getBossTypeForWave(this.currentWave);
+        enemyType = getBossTypeForWave(this.currentWave, this.mapId);
         this.bossSpawned = true;
       } else {
         enemyType = this.rollEnemyType();

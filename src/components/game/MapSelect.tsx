@@ -37,7 +37,8 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
         <h3 className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wider">📍 Campaign</h3>
         <div className="flex flex-wrap justify-center gap-6 mb-8">
           {ALL_MAPS.map(map => {
-            const unlocked = stars >= map.requiredStars;
+            const mapReqOk = !map.requiredMapIds || map.requiredMapIds.every(id => mapsCompleted.includes(id));
+            const unlocked = stars >= map.requiredStars && mapReqOk;
             const completed = mapsCompleted.includes(map.id);
             const quests = getQuestsForMap(map.id);
             return (
@@ -98,8 +99,8 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
                   </div>
                 )}
                 {!unlocked && (
-                  <span className="text-muted-foreground text-xs font-mono">
-                    Requires {map.requiredStars}⭐
+                  <span className="text-muted-foreground text-xs font-mono text-center">
+                    Requires {map.requiredStars}⭐{map.requiredMapIds ? ' + clear base trilogy' : ''}
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground">{map.slots.length} slots</span>

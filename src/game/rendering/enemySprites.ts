@@ -13,6 +13,9 @@ import baronSprite from '../../assets/sprites/enemy-baron.png';
 import healerSprite from '../../assets/sprites/enemy-healer.png';
 import stealthSprite from '../../assets/sprites/enemy-stealth.png';
 import splitterSprite from '../../assets/sprites/enemy-splitter.png';
+import belvethSprite from '../../assets/sprites/belveth.png';
+import lissandraSprite from '../../assets/sprites/lissandra.png';
+import swainSprite from '../../assets/sprites/swain.png';
 
 const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   normal: minionSprite,
@@ -27,6 +30,9 @@ const ENEMY_SPRITE_MAP: Record<EnemyType, string> = {
   dragon_earth: dragonEarthSprite,
   dragon_air: dragonAirSprite,
   boss: baronSprite,
+  void_empress: belvethSprite,
+  ice_witch: lissandraSprite,
+  noxian_grand_general: swainSprite,
 };
 
 // Cache cleaned (background-removed) sprites
@@ -100,7 +106,7 @@ export function drawEnemySprite(
   }
 
   if (img) {
-    const isBoss = type === 'boss';
+    const isBoss = type === 'boss' || type === 'void_empress' || type === 'ice_witch' || type === 'noxian_grand_general';
     const isDragon = type.startsWith('dragon_');
     const scale = isBoss ? 3.0 : isDragon ? 2.6 : 2.2;
     const s = size * scale;

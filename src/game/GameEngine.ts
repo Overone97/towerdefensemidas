@@ -73,6 +73,7 @@ export class GameEngine {
     const map = ALL_MAPS.find(m => m.id === this.saveData.currentMapId) || ALL_MAPS[0];
 
     this.enemyManager.setWaypoints(map.waypoints);
+    this.waveManager.mapId = map.id;
 
     return {
       gold: this.saveData.gold ?? 200,
@@ -793,6 +794,7 @@ export class GameEngine {
     this.particleManager.clear();
     this.floatingTextManager.clear();
     this.waveManager = new WaveManager();
+    this.waveManager.mapId = currentMapId;
     
     const inventory = this.state.inventory;
 
@@ -1012,6 +1014,7 @@ export class GameEngine {
     this.towerManager.clear();
     this.particleManager.clear();
     this.waveManager = new WaveManager();
+    this.waveManager.mapId = this.state.currentMapId;
     return true;
   }
 
@@ -1056,6 +1059,7 @@ export class GameEngine {
     this.towerManager.clear();
     this.particleManager.clear();
     this.waveManager = new WaveManager();
+    this.waveManager.mapId = map.id;
 
     // Override wave manager for dungeon
     this.waveManager.totalWaves = dungeon.totalWaves;
