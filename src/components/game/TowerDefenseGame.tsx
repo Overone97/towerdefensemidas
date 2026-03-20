@@ -56,26 +56,9 @@ const TowerDefenseGame: React.FC = () => {
     return () => clearInterval(interval);
   }, [engine]);
 
-  // Admin mode bootstrap (account-bound + hidden secret override)
+  // Admin mode bootstrap (account-bound)
   useEffect(() => {
-    const SECRET_PARAM = 'td_admin_key';
-    const SECRET_VALUE = 'midas-omega-97';
-    const STORAGE_KEY = 'td_admin_secret';
-
-    const applySecret = () => {
-      const url = new URL(window.location.href);
-      const key = url.searchParams.get(SECRET_PARAM);
-      if (key === SECRET_VALUE) {
-        localStorage.setItem(STORAGE_KEY, '1');
-        url.searchParams.delete(SECRET_PARAM);
-        window.history.replaceState({}, '', url.toString());
-      }
-      const enabled = localStorage.getItem(STORAGE_KEY) === '1';
-      engine.setAdminSecretEnabled(enabled);
-    };
-
     const applySession = async () => {
-      applySecret();
       const { data: { session } } = await supabase.auth.getSession();
       engine.setAdminByEmail(session?.user?.email);
       onStateChange();
@@ -84,7 +67,6 @@ const TowerDefenseGame: React.FC = () => {
     applySession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySecret();
       engine.setAdminByEmail(session?.user?.email);
       onStateChange();
     });
