@@ -246,25 +246,34 @@ function applyColorTint(source: HTMLCanvasElement, tintColor: string): HTMLCanva
   c.width = source.width;
   c.height = source.height;
   const ctx = c.getContext('2d')!;
-  // Draw original
+
+  // Base sprite
   ctx.drawImage(source, 0, 0);
-  // Apply tint using multiply composite
-  ctx.globalCompositeOperation = 'multiply';
+
+  // Vivid skin recolor (less dark than multiply-only)
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.globalAlpha = 0.5;
   ctx.fillStyle = tintColor;
   ctx.fillRect(0, 0, c.width, c.height);
-  // Restore alpha from original
-  ctx.globalCompositeOperation = 'destination-in';
-  ctx.drawImage(source, 0, 0);
-  ctx.globalCompositeOperation = 'source-over';
-  // Add a slight brightness boost
-  ctx.globalAlpha = 0.15;
+
+  // Add punch / flash feeling
   ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = 0.28;
   ctx.fillStyle = tintColor;
   ctx.fillRect(0, 0, c.width, c.height);
+
+  // Small universal highlight to avoid muddy dark skins
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // Keep original alpha
   ctx.globalCompositeOperation = 'destination-in';
-  ctx.drawImage(source, 0, 0);
-  ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
+  ctx.drawImage(source, 0, 0);
+
+  ctx.globalCompositeOperation = 'source-over';
   return c;
 }
 
