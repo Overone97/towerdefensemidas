@@ -74,7 +74,7 @@ export class GameEngine {
     this.enemyManager.setWaypoints(map.waypoints);
 
     return {
-      gold: 200,
+      gold: this.saveData.gold ?? 200,
       baseHp: 20 + talentBonus.extraHp,
       maxBaseHp: 20 + talentBonus.extraHp,
       currentWave: 0,
@@ -742,20 +742,24 @@ export class GameEngine {
 
   restart(): void {
     const currentMapId = this.state.currentMapId || this.saveData.currentMapId || 'plains';
+    const preservedGold = this.state.gold;
     this.enemyManager.clear();
     this.towerManager.clear();
     this.particleManager.clear();
     this.floatingTextManager.clear();
     this.waveManager = new WaveManager();
     
-    const talentBonus = getTalentBonus(this.saveData.talents);
     const inventory = this.state.inventory;
 
     this.state = {
       ...this.createInitialState(),
+      gold: preservedGold,
       inventory,
       currentMapId,
     };
+
+    this.saveData.gold = this.state.gold;
+    this.persistSave();
     
     const map = this.getMap();
     this.enemyManager.setWaypoints(map.waypoints);
@@ -1153,6 +1157,7 @@ export class GameEngine {
   private persistSave(): void {
     this.saveData.inventory = inventoryToSaveData(this.state.inventory);
     this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+    this.saveData.gold = this.state.gold;
     writeSave(this.saveData);
   }
 }
