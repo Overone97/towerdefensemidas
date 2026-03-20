@@ -164,6 +164,7 @@ import yuumiImg from '@/assets/sprites/yuumi.png';
 import zacImg from '@/assets/sprites/zac.png';
 import zeriImg from '@/assets/sprites/zeri.png';
 import zoeImg from '@/assets/sprites/zoe.png';
+import jinxCowgirlSkinImg from '@/assets/skins/jinx-cowgirl.jpg';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
@@ -211,6 +212,10 @@ const SPRITE_MAP: Record<string, string> = {
   taliyah: taliyahImg, taric: taricImg, twitch: twitchImg, vex: vexImg,
   viego: viegoImg, xayah: xayahImg, yone: yoneImg, yuumi: yuumiImg,
   zac: zacImg, zeri: zeriImg, zoe: zoeImg,
+};
+
+const SKIN_SPRITE_MAP: Record<string, string> = {
+  jinx_neon: jinxCowgirlSkinImg,
 };
 
 // Image cache (cleaned versions without background)
@@ -315,6 +320,9 @@ export function preloadLolSprites() {
   for (const [key, src] of Object.entries(SPRITE_MAP)) {
     getOrLoadImage(src, key);
   }
+  for (const [skinId, src] of Object.entries(SKIN_SPRITE_MAP)) {
+    getOrLoadImage(src, `skin:${skinId}`);
+  }
 }
 
 preloadLolSprites();
@@ -328,16 +336,22 @@ export function drawLolSprite(
   animFrame: number,
   isAttacking: boolean,
   attackAnimTimer: number,
-  skinColor?: string
+  skinColor?: string,
+  skinId?: string,
 ) {
   const src = SPRITE_MAP[charId];
   if (!src) return false;
 
   getOrLoadImage(src, charId);
 
-  // Use skin-tinted version if skinColor is provided
+  // Priority: dedicated skin sprite > tinted variant > base sprite
   let img: HTMLCanvasElement | null = null;
-  if (skinColor) {
+  if (skinId && SKIN_SPRITE_MAP[skinId]) {
+    const key = `skin:${skinId}`;
+    getOrLoadImage(SKIN_SPRITE_MAP[skinId], key);
+    img = imageCache.get(key) || null;
+  }
+  if (!img && skinColor) {
     img = getSkinSprite(charId, skinColor);
   }
   if (!img) {

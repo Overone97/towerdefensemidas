@@ -58,7 +58,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
       {/* Hero preview panel */}
       <div className="mb-3 rounded-xl border border-border/70 bg-black/25 p-3 flex flex-col sm:flex-row items-center gap-3 sticky top-0 z-10 backdrop-blur-sm">
         <div className="w-[132px] h-[132px] rounded-lg border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent flex items-center justify-center">
-          <SkinPreviewCanvas championId={championId} tintColor={focusedSkin?.bodyColor} size={86} canvasSize={120} className="w-[120px] h-[120px]" />
+          <SkinPreviewCanvas championId={championId} tintColor={focusedSkin?.bodyColor} skinId={focusedSkin?.id} size={86} canvasSize={120} className="w-[120px] h-[120px]" />
         </div>
         <div className="flex-1">
           <div className="text-sm font-bold text-foreground">{focusedSkin?.name || 'Apparence par défaut'}</div>
@@ -107,7 +107,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-12 h-12 rounded border border-white/10 bg-black/30 flex items-center justify-center overflow-hidden">
-                  <SkinPreviewCanvas championId={championId} tintColor={skin.bodyColor} size={28} canvasSize={48} className="w-12 h-12" />
+                  <SkinPreviewCanvas championId={championId} tintColor={skin.bodyColor} skinId={skin.id} size={28} canvasSize={48} className="w-12 h-12" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold truncate">{skin.name}</div>
