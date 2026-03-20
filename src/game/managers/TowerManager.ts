@@ -528,11 +528,25 @@ export class TowerManager {
 
         case 'single':
         default:
-          this.projectiles.push({
-            id: nextProjectileId++, x: unit.x, y: unit.y,
-            targetX: target.x, targetY: target.y,
-            speed: 400, damage: stats.attack, targetId: target.id, alive: true,
-          });
+          if (unit.config.id === 'sivir') {
+            this.projectiles.push({
+              id: nextProjectileId++, x: unit.x, y: unit.y,
+              targetX: target.x, targetY: target.y,
+              speed: 440, damage: stats.attack, targetId: target.id, alive: true,
+              projectileType: 'sivir_boomerang',
+              bouncesRemaining: 4,
+              bounceRange: 120,
+              hitEnemyIds: [],
+              rotation: 0,
+              sourceUnitId: unit.id,
+            });
+          } else {
+            this.projectiles.push({
+              id: nextProjectileId++, x: unit.x, y: unit.y,
+              targetX: target.x, targetY: target.y,
+              speed: 400, damage: stats.attack, targetId: target.id, alive: true,
+            });
+          }
           break;
       }
 
@@ -555,7 +569,20 @@ export class TowerManager {
 
       if (!proj.pierce) {
         const target = enemies.find(e => e.id === proj.targetId && e.alive);
-        if (target) { proj.targetX = target.x; proj.targetY = target.y; }
+        if (target) {
+          proj.targetX = target.x; proj.targetY = target.y;
+        } else if (proj.projectileType === 'sivir_boomerang' && (proj.bouncesRemaining || 0) > 0) {
+          const nextBounce = this.findBounceTargetFromPoint(proj.x, proj.y, enemies, proj.bounceRange || 120, proj.hitEnemyIds || []);
+          if (nextBounce) {
+            proj.targetId = nextBounce.id;
+            proj.targetX = nextBounce.x;
+            proj.targetY = nextBounce.y;
+          } else {
+            proj.alive = false;
+          }
+        } else {
+          proj.alive = false;
+        }
       }
 
       const dx = proj.targetX - proj.x; const dy = proj.targetY - proj.y;
@@ -565,6 +592,9 @@ export class TowerManager {
       const move = proj.speed * dt;
       proj.x += (dx / dist) * move;
       proj.y += (dy / dist) * move;
+      if (proj.projectileType === 'sivir_boomerang') {
+        proj.rotation = (proj.rotation || 0) + dt * 20;
+      }
 
       if (proj.pierce) {
         if (!proj.hitEnemies) proj.hitEnemies = [];
@@ -579,8 +609,30 @@ export class TowerManager {
           }
         }
       } else if (dist < 8) {
+        damages.push({ enemyId: proj.targetId, damage: proj.damage, unitId: proj.sourceUnitId });
+
+        if (proj.projectileType === 'sivir_boomerang') {
+          const alreadyHit = new Set(proj.hitEnemyIds || []);
+          alreadyHit.add(proj.targetId);
+          proj.hitEnemyIds = Array.from(alreadyHit);
+          const bouncesRemaining = (proj.bouncesRemaining || 0) - 1;
+          proj.bouncesRemaining = bouncesRemaining;
+
+          if (bouncesRemaining >= 0) {
+            const nextTarget = this.findBounceTargetFromPoint(proj.x, proj.y, enemies, proj.bounceRange || 120, proj.hitEnemyIds);
+            if (nextTarget) {
+              proj.targetId = nextTarget.id;
+              proj.targetX = nextTarget.x;
+              proj.targetY = nextTarget.y;
+              continue;
+            }
+          }
+
+          proj.alive = false;
+          continue;
+        }
+
         proj.alive = false;
-        damages.push({ enemyId: proj.targetId, damage: proj.damage });
         if (proj.aoeRadius) {
           for (const e of enemies) {
             if (!e.alive || e.id === proj.targetId) continue;
@@ -732,6 +784,20 @@ export class TowerManager {
       if (!e.alive || excludeIds.includes(e.id)) continue;
       const d = Math.sqrt((e.x - from.x) ** 2 + (e.y - from.y) ** 2);
       if (d < closestDist) { closest = e; closestDist = d; }
+    }
+    return closest;
+  }
+
+  private findBounceTargetFromPoint(x: number, y: number, enemies: Enemy[], range: number, excludeIds: number[]): Enemy | null {
+    let closest: Enemy | null = null;
+    let closestDist = range;
+    for (const e of enemies) {
+      if (!e.alive || excludeIds.includes(e.id)) continue;
+      const d = Math.sqrt((e.x - x) ** 2 + (e.y - y) ** 2);
+      if (d <= closestDist) {
+        closest = e;
+        closestDist = d;
+      }
     }
     return closest;
   }

@@ -946,6 +946,40 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
   for (const proj of projectiles) {
     if (!proj.alive) continue;
 
+    if (proj.projectileType === 'sivir_boomerang') {
+      const dx = proj.targetX - proj.x;
+      const dy = proj.targetY - proj.y;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.translate(proj.x, proj.y);
+      ctx.rotate(angle + (proj.rotation || 0));
+
+      const trail = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+      trail.addColorStop(0, 'rgba(255, 216, 120, 0.95)');
+      trail.addColorStop(0.6, 'rgba(255, 185, 70, 0.35)');
+      trail.addColorStop(1, 'rgba(255, 185, 70, 0)');
+      ctx.fillStyle = trail;
+      ctx.beginPath();
+      ctx.arc(0, 0, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffd166';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, -Math.PI * 0.8, Math.PI * 0.8);
+      ctx.stroke();
+
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#fff4bf';
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, -Math.PI * 0.75, Math.PI * 0.75);
+      ctx.stroke();
+
+      ctx.restore();
+      continue;
+    }
+
     if (proj.pierce) {
       ctx.fillStyle = '#88aaff';
       ctx.beginPath();
