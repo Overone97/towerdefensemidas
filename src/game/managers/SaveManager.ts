@@ -16,6 +16,7 @@ export interface SaveData {
   totalSummons: number;
   talents: Record<string, number>;
   stars: number;
+  gold: number;
   highScore: number;
   mapsCompleted: string[];
   questsCompleted: string[];
@@ -49,6 +50,7 @@ function defaultSave(): SaveData {
     totalSummons: 0,
     talents: {},
     stars: 0,
+    gold: 200,
     highScore: 0,
     mapsCompleted: [],
     questsCompleted: [],
