@@ -20,8 +20,8 @@ export const ALL_SKINS: SkinDef[] = [
   { id: 'garen_infernal', championId: 'garen', name: 'Garen Infernal', bodyColor: '#9b2c2c', detailColor: '#742a2a', weaponColor: '#feb2b2', unlockCondition: { type: 'shop', cost: 25 } },
 
   // ── Jinx ──
-  { id: 'jinx_neon', championId: 'jinx', name: 'Jinx Néon', bodyColor: '#00ffcc', detailColor: '#00cc99', weaponColor: '#ff00ff', unlockCondition: { type: 'shop', cost: 20 } },
-  { id: 'jinx_dark', championId: 'jinx', name: 'Jinx Ombre', bodyColor: '#1a1a2e', detailColor: '#16213e', weaponColor: '#e94560', unlockCondition: { type: 'shop', cost: 40 } },
+  { id: 'jinx_neon', championId: 'jinx', name: 'Jinx Cow-Girl', bodyColor: '#ff9f43', detailColor: '#8e5a2a', weaponColor: '#ffd166', unlockCondition: { type: 'shop', cost: 20 } },
+  { id: 'jinx_dark', championId: 'jinx', name: 'Jinx Déesse des Enfers', bodyColor: '#ff2d55', detailColor: '#7a1028', weaponColor: '#ff9aa2', unlockCondition: { type: 'shop', cost: 40 } },
 
   // ── Yasuo ──
   { id: 'yasuo_storm', championId: 'yasuo', name: 'Yasuo Tempête', bodyColor: '#1e3a5f', detailColor: '#0f2b46', weaponColor: '#63b3ed', unlockCondition: { type: 'shop', cost: 30 } },
@@ -50,7 +50,7 @@ export const ALL_SKINS: SkinDef[] = [
   { id: 'thresh_deep', championId: 'thresh', name: 'Thresh Abyssal', bodyColor: '#0a3d62', detailColor: '#082032', weaponColor: '#00e6e6', unlockCondition: { type: 'shop', cost: 35 } },
 
   // ── Teemo ──
-  { id: 'teemo_devil', championId: 'teemo', name: 'Teemo Diable', bodyColor: '#cc0000', detailColor: '#990000', weaponColor: '#ff6600', unlockCondition: { type: 'shop', cost: 20 } },
+  { id: 'teemo_devil', championId: 'teemo', name: 'Teemo Mushroom King', bodyColor: '#7bed9f', detailColor: '#2ed573', weaponColor: '#fffa65', unlockCondition: { type: 'shop', cost: 20 } },
 ];
 
 export function getSkinsForChampion(championId: string): SkinDef[] {

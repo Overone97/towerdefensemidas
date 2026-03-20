@@ -2,6 +2,56 @@ import { CharacterConfig } from '../types';
 import { RARITY_COLORS } from '../data/characterData';
 import { drawLolSprite, hasLolSprite } from './lolSprites';
 
+function drawSkinOverlay(ctx: CanvasRenderingContext2D, skinId: string | undefined, x: number, y: number, size: number): void {
+  if (!skinId) return;
+
+  ctx.save();
+  switch (skinId) {
+    case 'jinx_neon': // cow-girl
+      ctx.fillStyle = '#6b3f1d';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.75, size * 0.55, size * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(x - size * 0.35, y - size * 0.95, size * 0.7, size * 0.25);
+      break;
+    case 'jinx_dark': // infernal goddess horns
+      ctx.fillStyle = '#ff4d6d';
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.35, y - size * 0.85);
+      ctx.lineTo(x - size * 0.15, y - size * 1.25);
+      ctx.lineTo(x - size * 0.02, y - size * 0.85);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + size * 0.35, y - size * 0.85);
+      ctx.lineTo(x + size * 0.15, y - size * 1.25);
+      ctx.lineTo(x + size * 0.02, y - size * 0.85);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'teemo_devil': // mushroom king cap
+      ctx.fillStyle = '#7bed9f';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.78, size * 0.58, size * 0.26, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fffa65';
+      ctx.beginPath();
+      ctx.arc(x - size * 0.18, y - size * 0.78, size * 0.06, 0, Math.PI * 2);
+      ctx.arc(x + size * 0.12, y - size * 0.74, size * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    default:
+      // Generic flashy aura for custom skins
+      ctx.strokeStyle = 'rgba(255, 220, 120, 0.7)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+  }
+  ctx.restore();
+}
+
 export function drawCharacterSprite(
   ctx: CanvasRenderingContext2D,
   config: CharacterConfig,
@@ -12,7 +62,8 @@ export function drawCharacterSprite(
   isAttacking: boolean,
   attackAnimTimer: number,
   stars: number = 1,
-  originalConfig?: CharacterConfig // original config to detect skin changes
+  originalConfig?: CharacterConfig,
+  skinId?: string,
 ): void {
   ctx.save();
   const bob = Math.sin(animFrame * 0.08) * 1.5;
@@ -23,14 +74,13 @@ export function drawCharacterSprite(
   ctx.shadowColor = rarityColor;
   ctx.shadowBlur = config.rarity === 'legendary' ? 12 : config.rarity === 'epic' ? 8 : 4;
 
-  // Star-based glow effect
   if (stars >= 2) {
     const glowColor = stars === 3 ? '#ffaa00' : '#44ccff';
     const glowSize = stars === 3 ? 20 : 14;
     const pulse = 1 + Math.sin(animFrame * 0.05) * 0.15;
     ctx.shadowColor = glowColor;
     ctx.shadowBlur = glowSize * pulse;
-    
+
     ctx.globalAlpha = 0.15 + Math.sin(animFrame * 0.04) * 0.05;
     ctx.fillStyle = glowColor;
     ctx.beginPath();
@@ -39,7 +89,6 @@ export function drawCharacterSprite(
     ctx.globalAlpha = 1;
   }
 
-  // Determine if skin colors differ from original (skin is equipped)
   const hasSkin = originalConfig && (
     config.bodyColor !== originalConfig.bodyColor ||
     config.detailColor !== originalConfig.detailColor ||
@@ -49,8 +98,8 @@ export function drawCharacterSprite(
 
   if (hasLolSprite(config.id)) {
     drawLolSprite(ctx, config.id, x, cy, size, animFrame, isAttacking, attackAnimTimer, skinColor);
+    drawSkinOverlay(ctx, skinId, x, cy, size);
 
-    // Attack flash
     if (isAttacking && attackAnimTimer > 0) {
       ctx.globalAlpha = 0.3;
       ctx.fillStyle = config.weaponColor;
@@ -63,7 +112,6 @@ export function drawCharacterSprite(
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
 
-    // Draw star indicators
     if (stars >= 2) {
       const starY = cy - size - 6;
       ctx.font = `${stars === 3 ? 9 : 8}px sans-serif`;
@@ -80,7 +128,6 @@ export function drawCharacterSprite(
     return;
   }
 
-  // Fallback: simple colored square
   ctx.fillStyle = config.bodyColor;
   ctx.fillRect(x - hs, cy - hs, size, size);
 
