@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { getSkinsForChampion, getUnlockDescription } from '../../game/data/skinData';
+import React from 'react';
+import { getSkinsForChampion } from '../../game/data/skinData';
 import SkinPreviewCanvas from './SkinPreviewCanvas';
 
 interface SkinSelectorProps {
@@ -27,12 +27,6 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
 }) => {
   const skins = getSkinsForChampion(championId);
   const equippedSkinId = equippedSkins[championId];
-  const [focusedSkinId, setFocusedSkinId] = useState<string | null>(equippedSkinId || skins[0]?.id || null);
-
-  const focusedSkin = useMemo(() => {
-    if (!focusedSkinId) return null;
-    return skins.find(s => s.id === focusedSkinId) || null;
-  }, [focusedSkinId, skins]);
 
   if (skins.length === 0) {
     return (
@@ -47,51 +41,31 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
   }
 
   return (
-    <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-3 w-[min(92vw,760px)] shadow-xl max-h-[78vh] overflow-y-auto overflow-x-hidden">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-foreground font-bold text-sm">🛍️ Boutique Skins — {championName}</h3>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
-      </div>
-
-      <div className="text-xs text-muted-foreground mb-3">⭐ {stars} étoiles disponibles</div>
-
-      {/* Hero preview panel */}
-      <div className="mb-3 rounded-xl border border-border/70 bg-black/25 p-3 flex flex-col sm:flex-row items-center gap-3 sticky top-0 z-10 backdrop-blur-sm">
-        <div className="w-[132px] h-[132px] rounded-lg border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent flex items-center justify-center">
-          <SkinPreviewCanvas championId={championId} tintColor={focusedSkin?.bodyColor} skinId={focusedSkin?.id} size={86} canvasSize={120} className="w-[120px] h-[120px]" />
+    <div className="bg-[#06080fcc] backdrop-blur-md border border-white/10 rounded-xl p-4 w-[min(96vw,1020px)] shadow-2xl max-h-[86vh] overflow-y-auto overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-foreground font-bold text-base">🛍️ Boutique Skins — {championName}</h3>
+          <p className="text-[11px] text-muted-foreground">Vitrine premium • aperçu visuel • equip instantané</p>
         </div>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-foreground">{focusedSkin?.name || 'Apparence par défaut'}</div>
-          <div className="text-xs text-muted-foreground mb-2">Aperçu in-game sans fond (style LoL + style TDV).</div>
-          {focusedSkin ? (
-            <div className="flex gap-1.5">
-              <span className="w-5 h-5 rounded border border-white/20" style={{ background: focusedSkin.bodyColor }} />
-              <span className="w-5 h-5 rounded border border-white/20" style={{ background: focusedSkin.detailColor }} />
-              <span className="w-5 h-5 rounded border border-white/20" style={{ background: focusedSkin.weaponColor }} />
-            </div>
-          ) : (
-            <div className="text-xs text-green-400 font-semibold">Skin de base équipé</div>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="px-2.5 py-1 rounded bg-black/35 border border-yellow-400/30 text-yellow-300 text-xs font-bold">⭐ {stars}</div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {/* Default card */}
+      <div className="mb-4 flex items-center gap-2">
         <button
-          onClick={() => { setFocusedSkinId(null); onUnequip(championId); }}
-          className={`rounded-lg border p-2 text-left transition-all ${
-            !equippedSkinId ? 'border-primary bg-primary/10' : 'border-border/60 bg-muted/20 hover:bg-muted/35'
+          onClick={() => onUnequip(championId)}
+          className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${
+            !equippedSkinId ? 'bg-primary text-primary-foreground border-primary' : 'bg-black/30 border-white/15 hover:bg-black/45'
           }`}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-12 rounded border border-border flex items-center justify-center text-[10px] font-bold">DEFAULT</div>
-            <div>
-              <div className="text-xs font-bold">Skin Classique</div>
-              <div className="text-[10px] text-muted-foreground">Inclus</div>
-            </div>
-          </div>
+          Skin classique
         </button>
+        {!equippedSkinId && <span className="text-[11px] text-green-400">✓ Équipé actuellement</span>}
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {skins.map((skin) => {
           const isUnlocked = unlockedSkins.includes(skin.id);
           const isEquipped = equippedSkinId === skin.id;
@@ -100,41 +74,56 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
           return (
             <div
               key={skin.id}
-              onMouseEnter={() => setFocusedSkinId(skin.id)}
-              className={`rounded-lg border p-2 transition-all ${
-                isEquipped ? 'border-primary bg-primary/10' : isUnlocked ? 'border-border/60 bg-muted/20' : 'border-yellow-500/30 bg-yellow-500/5'
+              className={`rounded-xl overflow-hidden border bg-[#0b0f1a] transition-all ${
+                isEquipped ? 'border-cyan-400/80 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]' : 'border-white/10 hover:border-white/25'
               }`}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-12 h-12 rounded border border-white/10 bg-black/30 flex items-center justify-center overflow-hidden">
-                  <SkinPreviewCanvas championId={championId} tintColor={skin.bodyColor} skinId={skin.id} size={28} canvasSize={48} className="w-12 h-12" />
+              <div className="relative h-52 bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
+                <SkinPreviewCanvas
+                  championId={championId}
+                  tintColor={skin.bodyColor}
+                  skinId={skin.id}
+                  size={118}
+                  canvasSize={220}
+                  className="w-full h-full"
+                />
+
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#8b1a1a] border border-[#d6b06a]/70 text-[10px] text-[#f4e2b5] font-bold tracking-wide">
+                  SKIN
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold truncate">{skin.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{getUnlockDescription(skin)}</div>
+
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent">
+                  <div className="text-sm font-bold text-white drop-shadow">{skin.name}</div>
+                  <div className="text-[11px] text-yellow-300 font-semibold">{skin.unlockCondition.cost} ⭐</div>
                 </div>
               </div>
 
-              {isUnlocked ? (
-                <button
-                  onClick={() => (isEquipped ? onUnequip(championId) : onEquip(championId, skin.id))}
-                  className={`w-full text-xs px-2 py-1 rounded font-bold ${
-                    isEquipped ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-accent'
-                  }`}
-                >
-                  {isEquipped ? '✓ Équipé' : 'Équiper'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => canAfford && onBuy(skin.id)}
-                  disabled={!canAfford}
-                  className={`w-full text-xs px-2 py-1 rounded font-bold ${
-                    canAfford ? 'bg-yellow-600 text-white hover:bg-yellow-500' : 'bg-muted/50 text-muted-foreground cursor-not-allowed'
-                  }`}
-                >
-                  Acheter — {skin.unlockCondition.cost} ⭐
-                </button>
-              )}
+              <div className="p-2">
+                {isUnlocked ? (
+                  <button
+                    onClick={() => (isEquipped ? onUnequip(championId) : onEquip(championId, skin.id))}
+                    className={`w-full text-xs px-2 py-1.5 rounded font-bold ${
+                      isEquipped
+                        ? 'bg-cyan-500 text-slate-950'
+                        : 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                    }`}
+                  >
+                    {isEquipped ? '✓ Équipé' : 'Équiper'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => canAfford && onBuy(skin.id)}
+                    disabled={!canAfford}
+                    className={`w-full text-xs px-2 py-1.5 rounded font-bold ${
+                      canAfford
+                        ? 'bg-yellow-600 text-white hover:bg-yellow-500'
+                        : 'bg-slate-700/60 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Acheter ({skin.unlockCondition.cost}⭐)
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
