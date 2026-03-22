@@ -95,7 +95,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
       style={{
         width: size,
         height: size,
-        imageRendering: 'pixelated',
+        imageRendering: 'auto',
         borderRadius: 4,
       }}
     />
