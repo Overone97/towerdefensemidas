@@ -170,6 +170,13 @@ import jinxMushroomQueenSkinImg from '@/assets/skins/jinx-mushroom-queen.jpg';
 import teemoMushroomKingSkinImg from '@/assets/skins/teemo-mushroom-king.jpg';
 import yasuoStormSkinImg from '@/assets/skins/yasuo-storm.jpg';
 import luxCosmicEmpressSkinImg from '@/assets/skins/lux-cosmic-empress.jpg';
+import garenSteelSkinImg from '@/assets/skins/garen-steel.jpg';
+import garenInfernalSkinImg from '@/assets/skins/garen-infernal.jpg';
+import ahriSpiritSkinImg from '@/assets/skins/ahri-spirit.jpg';
+import dariusFrozenSkinImg from '@/assets/skins/darius-frozen.jpg';
+import katarinaJadeSkinImg from '@/assets/skins/katarina-jade.jpg';
+import ezrealArcadeSkinImg from '@/assets/skins/ezreal-arcade.jpg';
+import threshDeepSkinImg from '@/assets/skins/thresh-deep.jpg';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
@@ -226,6 +233,13 @@ const SKIN_SPRITE_MAP: Record<string, string> = {
   teemo_devil: teemoMushroomKingSkinImg,
   yasuo_storm: yasuoStormSkinImg,
   lux_cosmic: luxCosmicEmpressSkinImg,
+  garen_steel: garenSteelSkinImg,
+  garen_infernal: garenInfernalSkinImg,
+  ahri_spirit: ahriSpiritSkinImg,
+  darius_frozen: dariusFrozenSkinImg,
+  katarina_jade: katarinaJadeSkinImg,
+  ezreal_arcade: ezrealArcadeSkinImg,
+  thresh_deep: threshDeepSkinImg,
 };
 
 // Image cache (cleaned versions without background)
