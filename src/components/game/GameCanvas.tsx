@@ -270,7 +270,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onStateChange, onFishCa
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className="cursor-pointer"
-        style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+        style={{ imageRendering: 'auto', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
       />
       {/* Speed toggle floats on canvas */}
       <div className="absolute top-2 right-2 flex gap-1" style={{ transform: `scale(${1/scale})`, transformOrigin: 'top right' }}>

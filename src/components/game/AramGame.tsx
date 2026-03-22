@@ -588,7 +588,7 @@ const AramGame: React.FC<Props> = ({ isDuo, onExit }) => {
       <div className="relative w-screen h-screen overflow-hidden bg-black">
         <div className="absolute inset-0 flex items-center justify-center">
           <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT}
-            style={{ imageRendering: 'pixelated', width: CANVAS_WIDTH, height: CANVAS_HEIGHT, transform: `scale(${scale})`, transformOrigin: 'center center', opacity: 0.3 }}
+            style={{ imageRendering: 'auto', width: CANVAS_WIDTH, height: CANVAS_HEIGHT, transform: `scale(${scale})`, transformOrigin: 'center center', opacity: 0.3 }}
           />
         </div>
         <AramAugmentPicker choices={aram.augmentChoices} wave={aram.currentWave} onPick={handleAugmentPick} />
