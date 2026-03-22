@@ -110,8 +110,8 @@ export const ALL_MAPS: MapDef[] = [
     description: 'Ascension I — corruption and impossible swarms.',
     requiredStars: 24,
     requiredMapIds: ['plains', 'forest', 'volcano'],
-    bgColor: '#140b24',
-    pathColor: '#3d2a5c',
+    bgColor: '#1b1233',
+    pathColor: '#7a54c9',
     waypoints: [
       { x: 0, y: 90 }, { x: 620, y: 90 }, { x: 620, y: 180 }, { x: 180, y: 180 },
       { x: 180, y: 280 }, { x: 700, y: 280 }, { x: 700, y: 390 }, { x: 80, y: 390 }, { x: 770, y: 450 },
@@ -128,8 +128,8 @@ export const ALL_MAPS: MapDef[] = [
     description: 'Ascension II — frozen lanes and brutal elites.',
     requiredStars: 30,
     requiredMapIds: ['plains', 'forest', 'volcano'],
-    bgColor: '#091522',
-    pathColor: '#24455a',
+    bgColor: '#0b1b2f',
+    pathColor: '#5ca6d1',
     waypoints: [
       { x: 0, y: 430 }, { x: 170, y: 430 }, { x: 170, y: 290 }, { x: 520, y: 290 },
       { x: 520, y: 120 }, { x: 240, y: 120 }, { x: 240, y: 210 }, { x: 700, y: 210 }, { x: 770, y: 210 },
@@ -146,8 +146,8 @@ export const ALL_MAPS: MapDef[] = [
     description: 'Ascension III — final gauntlet for endgame players.',
     requiredStars: 36,
     requiredMapIds: ['plains', 'forest', 'volcano'],
-    bgColor: '#1d0b10',
-    pathColor: '#4a1f28',
+    bgColor: '#2a0e14',
+    pathColor: '#a3364c',
     waypoints: [
       { x: 0, y: 260 }, { x: 240, y: 260 }, { x: 240, y: 80 }, { x: 560, y: 80 },
       { x: 560, y: 420 }, { x: 140, y: 420 }, { x: 140, y: 180 }, { x: 700, y: 180 }, { x: 770, y: 180 },
