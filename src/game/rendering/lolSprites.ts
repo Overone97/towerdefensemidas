@@ -165,6 +165,11 @@ import zacImg from '@/assets/sprites/zac.png';
 import zeriImg from '@/assets/sprites/zeri.png';
 import zoeImg from '@/assets/sprites/zoe.png';
 import jinxCowgirlSkinImg from '@/assets/skins/jinx-cowgirl.jpg';
+import jinxInfernalGoddessSkinImg from '@/assets/skins/jinx-infernal-goddess.jpg';
+import jinxMushroomQueenSkinImg from '@/assets/skins/jinx-mushroom-queen.jpg';
+import teemoMushroomKingSkinImg from '@/assets/skins/teemo-mushroom-king.jpg';
+import yasuoStormSkinImg from '@/assets/skins/yasuo-storm.jpg';
+import luxCosmicEmpressSkinImg from '@/assets/skins/lux-cosmic-empress.jpg';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
@@ -216,6 +221,11 @@ const SPRITE_MAP: Record<string, string> = {
 
 const SKIN_SPRITE_MAP: Record<string, string> = {
   jinx_neon: jinxCowgirlSkinImg,
+  jinx_dark: jinxInfernalGoddessSkinImg,
+  jinx_mushroom: jinxMushroomQueenSkinImg,
+  teemo_devil: teemoMushroomKingSkinImg,
+  yasuo_storm: yasuoStormSkinImg,
+  lux_cosmic: luxCosmicEmpressSkinImg,
 };
 
 // Image cache (cleaned versions without background)
