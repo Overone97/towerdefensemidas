@@ -78,12 +78,12 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
                 isEquipped ? 'border-cyan-400/80 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]' : 'border-white/10 hover:border-white/25'
               }`}
             >
-              <div className="relative h-52 bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
+              <div className="relative h-52 overflow-hidden bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
                 <SkinPreviewCanvas
                   championId={championId}
                   tintColor={skin.bodyColor}
                   skinId={skin.id}
-                  size={118}
+                  size={90}
                   canvasSize={220}
                   className="w-full h-full"
                 />
