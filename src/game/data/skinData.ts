@@ -16,7 +16,7 @@ export interface SkinDef {
 
 export const ALL_SKINS: SkinDef[] = [
   // ── Garen ──
-  { id: 'garen_steel', championId: 'garen', name: 'Garen Acier', bodyColor: '#4a5568', detailColor: '#2d3748', weaponColor: '#e2e8f0', unlockCondition: { type: 'shop', cost: 10 } },
+  { id: 'garen_steel', championId: 'garen', name: 'Garen Gardien Doré', bodyColor: '#f5d76e', detailColor: '#d4af37', weaponColor: '#fff4c2', unlockCondition: { type: 'shop', cost: 10 } },
   { id: 'garen_infernal', championId: 'garen', name: 'Garen Infernal', bodyColor: '#9b2c2c', detailColor: '#742a2a', weaponColor: '#feb2b2', unlockCondition: { type: 'shop', cost: 25 } },
 
   // ── Jinx ──
@@ -26,32 +26,32 @@ export const ALL_SKINS: SkinDef[] = [
 
   // ── Yasuo ──
   { id: 'yasuo_storm', championId: 'yasuo', name: 'Yasuo Tempête', bodyColor: '#1e3a5f', detailColor: '#0f2b46', weaponColor: '#63b3ed', unlockCondition: { type: 'shop', cost: 30 } },
-  { id: 'yasuo_blood', championId: 'yasuo', name: 'Yasuo Sang', bodyColor: '#6b0000', detailColor: '#4a0000', weaponColor: '#ff4444', unlockCondition: { type: 'shop', cost: 50 } },
+  { id: 'yasuo_blood', championId: 'yasuo', name: 'Yasuo Ronin Lunaire', bodyColor: '#274b96', detailColor: '#12284f', weaponColor: '#63b3ed', unlockCondition: { type: 'shop', cost: 50 } },
 
   // ── Lux ──
   { id: 'lux_cosmic', championId: 'lux', name: 'Lux Cosmique', bodyColor: '#553399', detailColor: '#44227a', weaponColor: '#ffdd88', unlockCondition: { type: 'shop', cost: 35 } },
-  { id: 'lux_ice', championId: 'lux', name: 'Lux Givrée', bodyColor: '#bee3f8', detailColor: '#90cdf4', weaponColor: '#ffffff', unlockCondition: { type: 'shop', cost: 20 } },
+  { id: 'lux_ice', championId: 'lux', name: 'Lux Reine de Glace', bodyColor: '#8fd3ff', detailColor: '#4da3d9', weaponColor: '#e8faff', unlockCondition: { type: 'shop', cost: 20 } },
 
   // ── Zed ──
   { id: 'zed_galaxy', championId: 'zed', name: 'Zed Galaxie', bodyColor: '#0d0221', detailColor: '#1a0533', weaponColor: '#cc44ff', unlockCondition: { type: 'shop', cost: 50 } },
 
   // ── Ahri ──
-  { id: 'ahri_spirit', championId: 'ahri', name: 'Ahri Spirituelle', bodyColor: '#e6ccff', detailColor: '#d4aaff', weaponColor: '#9955ff', unlockCondition: { type: 'shop', cost: 30 } },
+  { id: 'ahri_spirit', championId: 'ahri', name: 'Ahri Reine Astrale', bodyColor: '#8a63ff', detailColor: '#4f2fbf', weaponColor: '#6ec8ff', unlockCondition: { type: 'shop', cost: 30 } },
 
   // ── Darius ──
-  { id: 'darius_frozen', championId: 'darius', name: 'Darius Givré', bodyColor: '#4299e1', detailColor: '#2b6cb0', weaponColor: '#bee3f8', unlockCondition: { type: 'shop', cost: 25 } },
+  { id: 'darius_frozen', championId: 'darius', name: 'Darius Exécuteur Sanguin', bodyColor: '#7a1010', detailColor: '#2a0505', weaponColor: '#ff4a4a', unlockCondition: { type: 'shop', cost: 25 } },
 
   // ── Katarina ──
-  { id: 'katarina_jade', championId: 'katarina', name: 'Katarina Jade', bodyColor: '#276749', detailColor: '#22543d', weaponColor: '#68d391', unlockCondition: { type: 'shop', cost: 40 } },
+  { id: 'katarina_jade', championId: 'katarina', name: 'Katarina Reine Cendre', bodyColor: '#3a3a3a', detailColor: '#1f1f1f', weaponColor: '#ff7a2f', unlockCondition: { type: 'shop', cost: 40 } },
 
   // ── Ezreal ──
-  { id: 'ezreal_arcade', championId: 'ezreal', name: 'Ezreal Arcade', bodyColor: '#ff6699', detailColor: '#ff3366', weaponColor: '#ffff00', unlockCondition: { type: 'shop', cost: 30 } },
+  { id: 'ezreal_arcade', championId: 'ezreal', name: 'Ezreal Voyageur Temporel', bodyColor: '#2b4fa3', detailColor: '#1e2a4a', weaponColor: '#63c7ff', unlockCondition: { type: 'shop', cost: 30 } },
 
   // ── Thresh ──
-  { id: 'thresh_deep', championId: 'thresh', name: 'Thresh Abyssal', bodyColor: '#0a3d62', detailColor: '#082032', weaponColor: '#00e6e6', unlockCondition: { type: 'shop', cost: 35 } },
+  { id: 'thresh_deep', championId: 'thresh', name: 'Thresh Geôlier Spectral Royal', bodyColor: '#19c29b', detailColor: '#0f5e4e', weaponColor: '#7df7d6', unlockCondition: { type: 'shop', cost: 35 } },
 
   // ── Teemo ──
-  { id: 'teemo_devil', championId: 'teemo', name: 'Teemo Mushroom King', bodyColor: '#7bed9f', detailColor: '#2ed573', weaponColor: '#fffa65', unlockCondition: { type: 'shop', cost: 20 } },
+  { id: 'teemo_devil', championId: 'teemo', name: 'Teemo Capitaine Toxic', bodyColor: '#5da13a', detailColor: '#2d4b1f', weaponColor: '#9ef542', unlockCondition: { type: 'shop', cost: 20 } },
 ];
 
 export function getSkinsForChampion(championId: string): SkinDef[] {

@@ -167,7 +167,6 @@ import zoeImg from '@/assets/sprites/zoe.png';
 import jinxCowgirlSkinImg from '@/assets/skins/jinx-cowgirl.jpg';
 import jinxInfernalGoddessSkinImg from '@/assets/skins/jinx-infernal-goddess.jpg';
 import jinxMushroomQueenSkinImg from '@/assets/skins/jinx-mushroom-queen.jpg';
-import teemoMushroomKingSkinImg from '@/assets/skins/teemo-mushroom-king.jpg';
 import yasuoStormSkinImg from '@/assets/skins/yasuo-storm.jpg';
 import luxCosmicEmpressSkinImg from '@/assets/skins/lux-cosmic-empress.jpg';
 import garenSteelSkinImg from '@/assets/skins/garen-steel.jpg';
@@ -176,7 +175,16 @@ import ahriSpiritSkinImg from '@/assets/skins/ahri-spirit.jpg';
 import dariusFrozenSkinImg from '@/assets/skins/darius-frozen.jpg';
 import katarinaJadeSkinImg from '@/assets/skins/katarina-jade.jpg';
 import ezrealArcadeSkinImg from '@/assets/skins/ezreal-arcade.jpg';
-import threshDeepSkinImg from '@/assets/skins/thresh-deep.jpg';
+import ahriAstralQueenSkinImg from '@/assets/skins/ahri-astral-queen.jpg';
+import luxIceSkinImg from '@/assets/skins/lux-ice.jpg';
+import zedGalaxySkinImg from '@/assets/skins/zed-galaxy.jpg';
+import dariusBloodSkinImg from '@/assets/skins/darius-blood.jpg';
+import katarinaAshQueenSkinImg from '@/assets/skins/katarina-ash-queen.jpg';
+import ezrealTimeTravelerSkinImg from '@/assets/skins/ezreal-time-traveler.jpg';
+import threshRoyalJailerSkinImg from '@/assets/skins/thresh-royal-jailer.jpg';
+import teemoToxicCaptainSkinImg from '@/assets/skins/teemo-toxic-captain.jpg';
+import yasuoRoninMoonSkinImg from '@/assets/skins/yasuo-ronin-moon.jpg';
+import garenGoldenGuardianSkinImg from '@/assets/skins/garen-golden-guardian.jpg';
 
 // Map character IDs to their sprite imports
 const SPRITE_MAP: Record<string, string> = {
@@ -230,16 +238,21 @@ const SKIN_SPRITE_MAP: Record<string, string> = {
   jinx_neon: jinxCowgirlSkinImg,
   jinx_dark: jinxInfernalGoddessSkinImg,
   jinx_mushroom: jinxMushroomQueenSkinImg,
-  teemo_devil: teemoMushroomKingSkinImg,
+
+  // Updated to newest dedicated visuals
+  teemo_devil: teemoToxicCaptainSkinImg,
   yasuo_storm: yasuoStormSkinImg,
+  yasuo_blood: yasuoRoninMoonSkinImg,
   lux_cosmic: luxCosmicEmpressSkinImg,
-  garen_steel: garenSteelSkinImg,
+  lux_ice: luxIceSkinImg,
+  zed_galaxy: zedGalaxySkinImg,
+  ahri_spirit: ahriAstralQueenSkinImg,
+  darius_frozen: dariusBloodSkinImg,
+  katarina_jade: katarinaAshQueenSkinImg,
+  ezreal_arcade: ezrealTimeTravelerSkinImg,
+  thresh_deep: threshRoyalJailerSkinImg,
+  garen_steel: garenGoldenGuardianSkinImg,
   garen_infernal: garenInfernalSkinImg,
-  ahri_spirit: ahriSpiritSkinImg,
-  darius_frozen: dariusFrozenSkinImg,
-  katarina_jade: katarinaJadeSkinImg,
-  ezreal_arcade: ezrealArcadeSkinImg,
-  thresh_deep: threshDeepSkinImg,
 };
 
 // Image cache (cleaned versions without background)
