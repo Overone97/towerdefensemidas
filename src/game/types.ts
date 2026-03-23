@@ -203,6 +203,12 @@ export interface AoeWaveState {
   alive: boolean;
 }
 
+export interface MidrunChoice {
+  id: string;
+  title: string;
+  description: string;
+}
+
 export interface GameState {
   gold: number;
   baseHp: number;

@@ -98,6 +98,11 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handlePickMidrunChoice = useCallback((choiceId: string) => {
+    engine.pickMidrunChoice(choiceId);
+    onStateChange();
+  }, [engine, onStateChange]);
+
   const handleToggleAutoWave = useCallback(() => {
     engine.state.autoWave = !engine.state.autoWave;
     if (engine.state.autoWave && !engine.state.waveActive) {
@@ -469,6 +474,30 @@ const TowerDefenseGame: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Mid-run choices */}
+      {state.midrunChoiceOpen && (state.midrunChoices?.length || 0) > 0 && (
+        <div className="absolute inset-0 z-35 bg-black/65 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="w-[min(92vw,820px)] rounded-xl border border-white/15 bg-[#0a0f19] p-4">
+            <div className="text-center mb-3">
+              <h3 className="text-lg font-bold text-amber-200">⚖️ Choix stratégique</h3>
+              <p className="text-xs text-muted-foreground">Prends une décision avant de lancer la prochaine vague.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {state.midrunChoices!.map(choice => (
+                <button
+                  key={choice.id}
+                  onClick={() => handlePickMidrunChoice(choice.id)}
+                  className="text-left rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 p-3 transition-colors"
+                >
+                  <div className="text-sm font-bold text-foreground mb-1">{choice.title}</div>
+                  <div className="text-xs text-muted-foreground">{choice.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Game Over / Victory overlay */}
       {(state.gameOver || state.victory) && (
