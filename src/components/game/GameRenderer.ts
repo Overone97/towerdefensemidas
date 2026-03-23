@@ -139,6 +139,27 @@ function getMapTheme(mapId: string) {
         treeLeaf: '#1a3a5a', treeTrunk: '#0a1e2e', treeShadow: '#061428',
         waterColor: '#00aaff',
       };
+    case 'void_rift':
+      return {
+        grassLight: '#1d1232', grassDark: '#0d0718', grassAccent: '#4a2d7a',
+        pathMain: '#4d3470', pathBorder: '#26163d', pathDetail: '#b07dff',
+        treeLeaf: '#3d2766', treeTrunk: '#26193d', treeShadow: '#120a20',
+        waterColor: '#b14cff',
+      };
+    case 'freljord_storm':
+      return {
+        grassLight: '#1a2d45', grassDark: '#0b1422', grassAccent: '#325f86',
+        pathMain: '#476f93', pathBorder: '#1f3f5d', pathDetail: '#b5ecff',
+        treeLeaf: '#2e5c82', treeTrunk: '#1c2e41', treeShadow: '#091423',
+        waterColor: '#7fd8ff',
+      };
+    case 'noxus_siege':
+      return {
+        grassLight: '#3a1720', grassDark: '#17080d', grassAccent: '#6a2434',
+        pathMain: '#6e2c3e', pathBorder: '#34131d', pathDetail: '#ff8f8f',
+        treeLeaf: '#5a1f2e', treeTrunk: '#2b1018', treeShadow: '#13070b',
+        waterColor: '#ff5252',
+      };
     default: // plains
       return {
         grassLight: '#3a8a2a', grassDark: '#2a6a1a', grassAccent: '#4a9a3a',
@@ -167,13 +188,17 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
     drawGrassBackground(ctx, w, h, theme, t);
   }
 
+  // ── Epic ascension overlays ──
+  drawAscensionAmbience(ctx, mapId, t, w, h, waypoints);
+
   // ── Path (semi-transparent on bg image maps) ──
   if (bgImg) ctx.globalAlpha = 0.5;
-  drawPath(ctx, waypoints, theme);
+  drawPath(ctx, waypoints, theme, mapId, t);
   if (bgImg) ctx.globalAlpha = 1;
 
-  // ── Decorations (skip if bg image) ──
-  if (!bgImg) {
+  // ── Decorations (skip if bg image or ascension boss maps) ──
+  const isAscensionMap = mapId === 'void_rift' || mapId === 'freljord_storm' || mapId === 'noxus_siege';
+  if (!bgImg && !isAscensionMap) {
     const mapDef = ALL_MAPS.find(m => m.id === mapId);
     const decos = getDecorations(mapId, waypoints, mapDef?.slots || state.slots);
     drawDecorations(ctx, decos, theme, mapId, t);
@@ -266,7 +291,49 @@ function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number
   ctx.globalAlpha = 1;
 }
 
-function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: ReturnType<typeof getMapTheme>): void {
+function drawAscensionAmbience(ctx: CanvasRenderingContext2D, mapId: string, t: number, w: number, h: number, waypoints: Point[]): void {
+  if (mapId !== 'void_rift' && mapId !== 'freljord_storm' && mapId !== 'noxus_siege') return;
+
+  ctx.save();
+
+  // Global vignette for boss-map feeling
+  const vignette = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.8);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, mapId === 'void_rift' ? 'rgba(30,0,50,0.42)' : mapId === 'freljord_storm' ? 'rgba(0,15,40,0.38)' : 'rgba(45,0,0,0.44)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, w, h);
+
+  // Runes/sigils near path nodes
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const p = waypoints[i];
+    const pulse = 0.35 + Math.sin(t * 2 + i) * 0.2;
+    const color = mapId === 'void_rift' ? '#b877ff' : mapId === 'freljord_storm' ? '#9fe9ff' : '#ff7d7d';
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = pulse;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 10 + (i % 3), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5 + (i % 2), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Ambient particles
+  const rand = seededRandom(mapId.charCodeAt(0) + mapId.length * 97);
+  for (let i = 0; i < 55; i++) {
+    const x = (rand() * w + t * (mapId === 'freljord_storm' ? 25 : 10) + i * 13) % w;
+    const y = (rand() * h + (mapId === 'noxus_siege' ? t * 8 : -t * 14) + i * 7) % h;
+    ctx.fillStyle = mapId === 'void_rift' ? '#d2a2ff' : mapId === 'freljord_storm' ? '#dcf7ff' : '#ffb3b3';
+    ctx.globalAlpha = 0.05 + (i % 5) * 0.01;
+    const s = mapId === 'freljord_storm' ? 1.2 : 1.6;
+    ctx.fillRect(x, y, s, s);
+  }
+
+  ctx.restore();
+}
+
+function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: ReturnType<typeof getMapTheme>, mapId: string, t: number): void {
   if (waypoints.length < 2) return;
 
   // Outer border (darker)
@@ -318,6 +385,20 @@ function drawPath(ctx: CanvasRenderingContext2D, waypoints: Point[], theme: Retu
     }
   }
   ctx.globalAlpha = 1;
+
+  if (mapId === 'void_rift' || mapId === 'freljord_storm' || mapId === 'noxus_siege') {
+    ctx.save();
+    ctx.globalAlpha = 0.24 + Math.sin(t * 1.6) * 0.06;
+    ctx.strokeStyle = mapId === 'void_rift' ? '#c08bff' : mapId === 'freljord_storm' ? '#bdf2ff' : '#ff9a9a';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(waypoints[0].x, waypoints[0].y);
+    for (let i = 1; i < waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawDecorations(ctx: CanvasRenderingContext2D, decos: ReturnType<typeof getDecorations>, theme: ReturnType<typeof getMapTheme>, mapId: string, t: number): void {
