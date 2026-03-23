@@ -239,4 +239,9 @@ export interface GameState {
   waveEnemiesKilledThisWave: number;
   gameSpeed: number;
   waveModifier?: WaveModifier;
+  ascensionWeather?: 'void' | 'freljord' | 'noxus';
+  ascensionEventLabel?: string | null;
+  ascensionEventTimer?: number;
+  ascensionCinematicTitle?: string | null;
+  ascensionCinematicTimer?: number;
 }
