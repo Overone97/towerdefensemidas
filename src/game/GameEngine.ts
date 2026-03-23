@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot, Rarity } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
@@ -48,6 +48,9 @@ export class GameEngine {
   dungeonTimer = 0;
   private ascensionEventCooldown = 12;
   private lastAscensionBossIntroWave = 0;
+  private runAttackMult = 1;
+  private runSpeedMult = 1;
+  private runRangeMult = 1;
 
   private saveData: SaveData;
   state: GameState;
@@ -117,6 +120,8 @@ export class GameEngine {
       ascensionEventTimer: 0,
       ascensionCinematicTitle: null,
       ascensionCinematicTimer: 0,
+      midrunChoiceOpen: false,
+      midrunChoices: [],
     };
   }
 
@@ -163,7 +168,12 @@ export class GameEngine {
     const { activeSynergies, unitBonuses } = computeSynergies(this.towerManager.units);
     this.state.activeSynergies = activeSynergies;
     this.towerManager.synergyBonuses = unitBonuses;
-    this.towerManager.talentBonus = talentBonus;
+    this.towerManager.talentBonus = {
+      ...talentBonus,
+      attackMult: talentBonus.attackMult * this.runAttackMult,
+      speedMult: talentBonus.speedMult * this.runSpeedMult,
+      rangeMult: talentBonus.rangeMult * this.runRangeMult,
+    };
     this.towerManager.setWaypoints(this.getWaypoints());
 
     // Stealth reveal: units with canRevealStealth reveal stealthed enemies in range
@@ -440,8 +450,51 @@ export class GameEngine {
     }
   }
 
+  private shouldOfferMidrunChoice(): boolean {
+    return !this.state.endlessMode && this.state.currentWave > 0 && this.state.currentWave % 7 === 0 && !this.state.midrunChoiceOpen;
+  }
+
+  private generateMidrunChoices(): MidrunChoice[] {
+    return [
+      { id: 'greed', title: '💰 Pacte de cupidité', description: '+180 or maintenant, mais -1 PV max de base.' },
+      { id: 'fortify', title: '🛡️ Serment du bastion', description: '+2 PV de base max et +2 PV soignés.' },
+      { id: 'fury', title: '⚔️ Fureur tactique', description: '+12% dégâts de tours ce run, mais ennemis +8% vitesse.' },
+    ];
+  }
+
+  pickMidrunChoice(choiceId: string): boolean {
+    if (!this.state.midrunChoiceOpen) return false;
+
+    if (choiceId === 'greed') {
+      this.state.gold += 180;
+      this.state.maxBaseHp = Math.max(3, this.state.maxBaseHp - 1);
+      this.state.baseHp = Math.min(this.state.baseHp, this.state.maxBaseHp);
+    } else if (choiceId === 'fortify') {
+      this.state.maxBaseHp += 2;
+      this.state.baseHp = Math.min(this.state.maxBaseHp, this.state.baseHp + 2);
+    } else if (choiceId === 'fury') {
+      this.runAttackMult *= 1.12;
+      for (const e of this.enemyManager.enemies) {
+        if (!e.alive) continue;
+        e.baseSpeed *= 1.08;
+      }
+    } else {
+      return false;
+    }
+
+    this.state.midrunChoiceOpen = false;
+    this.state.midrunChoices = [];
+    this.persistSave();
+    return true;
+  }
+
   startWave(): boolean {
     if (this.state.waveActive || this.state.gameOver || this.state.victory) return false;
+    if (this.shouldOfferMidrunChoice()) {
+      this.state.midrunChoices = this.generateMidrunChoices();
+      this.state.midrunChoiceOpen = true;
+      return false;
+    }
     const config = this.waveManager.startWave();
     if (!config) return false;
     soundManager.playWaveStart();
@@ -872,6 +925,11 @@ export class GameEngine {
     this.floatingTextManager.clear();
     this.waveManager = new WaveManager();
     this.waveManager.mapId = currentMapId;
+    this.runAttackMult = 1;
+    this.runSpeedMult = 1;
+    this.runRangeMult = 1;
+    this.ascensionEventCooldown = 12;
+    this.lastAscensionBossIntroWave = 0;
     
     const inventory = this.state.inventory;
 
