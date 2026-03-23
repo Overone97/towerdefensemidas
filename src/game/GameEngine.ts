@@ -46,6 +46,8 @@ export class GameEngine {
   dailyQuests: DailyQuestState;
   activeDungeon: DungeonDef | null = null;
   dungeonTimer = 0;
+  private ascensionEventCooldown = 12;
+  private lastAscensionBossIntroWave = 0;
 
   private saveData: SaveData;
   state: GameState;
@@ -110,12 +112,18 @@ export class GameEngine {
       equipmentInventory: this.saveData.equipmentInventory || [],
       lastDrop: null,
       gameSpeed: this.saveData.gameSpeed || 1,
+      ascensionWeather: null,
+      ascensionEventLabel: null,
+      ascensionEventTimer: 0,
+      ascensionCinematicTitle: null,
+      ascensionCinematicTimer: 0,
     };
   }
 
   update(dt: number): void {
     this.applyAdminCheats();
     if (this.state.gameOver || this.state.victory) return;
+    this.updateAscensionSystems(dt);
 
     // Dungeon timer
     if (this.activeDungeon?.rules.timeLimit) {
@@ -361,6 +369,75 @@ export class GameEngine {
 
     // Check achievements
     this.checkAchievements();
+  }
+
+  private isAscensionMap(mapId: string): boolean {
+    return mapId === 'void_rift' || mapId === 'freljord_storm' || mapId === 'noxus_siege';
+  }
+
+  private updateAscensionSystems(dt: number): void {
+    const mapId = this.state.currentMapId;
+    if (!this.isAscensionMap(mapId)) {
+      this.state.ascensionWeather = undefined;
+      this.state.ascensionEventLabel = null;
+      this.state.ascensionEventTimer = 0;
+      this.state.ascensionCinematicTitle = null;
+      this.state.ascensionCinematicTimer = 0;
+      return;
+    }
+
+    this.state.ascensionWeather = mapId === 'void_rift' ? 'void' : mapId === 'freljord_storm' ? 'freljord' : 'noxus';
+
+    if (this.state.ascensionCinematicTimer && this.state.ascensionCinematicTimer > 0) {
+      this.state.ascensionCinematicTimer = Math.max(0, this.state.ascensionCinematicTimer - dt);
+      if (this.state.ascensionCinematicTimer <= 0) this.state.ascensionCinematicTitle = null;
+    }
+
+    if (this.state.ascensionEventTimer && this.state.ascensionEventTimer > 0) {
+      this.state.ascensionEventTimer = Math.max(0, this.state.ascensionEventTimer - dt);
+      if (this.state.ascensionEventTimer <= 0) this.state.ascensionEventLabel = null;
+    }
+
+    if (!this.state.waveActive) return;
+
+    // Boss intro cinematic on major waves
+    if (this.state.currentWave % 10 === 0 && this.state.currentWave !== this.lastAscensionBossIntroWave) {
+      this.lastAscensionBossIntroWave = this.state.currentWave;
+      this.state.ascensionCinematicTitle =
+        mapId === 'void_rift' ? '⚠️ BEL\'VETH AWAKENS' :
+        mapId === 'freljord_storm' ? '⚠️ LISSANDRA RISES' :
+        '⚠️ SWAIN DESCENDS';
+      this.state.ascensionCinematicTimer = 2.6;
+      soundManager.playWaveStart();
+    }
+
+    this.ascensionEventCooldown -= dt;
+    if (this.ascensionEventCooldown > 0) return;
+    this.ascensionEventCooldown = 14 + Math.random() * 7;
+
+    // Environment events: map flavor + gameplay pressure
+    if (mapId === 'void_rift') {
+      this.state.ascensionEventLabel = '🜂 Rift Pulse: -1 HP base';
+      this.state.ascensionEventTimer = 2.2;
+      if (this.enemyManager.getAliveEnemies().length > 0) {
+        this.state.baseHp = Math.max(1, this.state.baseHp - 1);
+        this.screenShake.trigger(4, 0.2);
+      }
+    } else if (mapId === 'freljord_storm') {
+      this.state.ascensionEventLabel = '❄ Blizzard: tours ralenties';
+      this.state.ascensionEventTimer = 2.2;
+      for (const unit of this.towerManager.units) {
+        unit.attackCooldown += 0.8;
+      }
+    } else {
+      this.state.ascensionEventLabel = '🩸 War Drums: ennemis renforcés';
+      this.state.ascensionEventTimer = 2.2;
+      for (const e of this.enemyManager.enemies) {
+        if (!e.alive) continue;
+        e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.08);
+        e.baseSpeed *= 1.06;
+      }
+    }
   }
 
   startWave(): boolean {

@@ -217,6 +217,75 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, wayp
   drawUnits(ctx, state.placedUnits, state.selectedUnitId, state.enemies, equippedSkins || {});
   drawProjectiles(ctx, state.projectiles);
   drawBase(ctx, waypoints);
+  drawAscensionWeather(ctx, state, t, w, h);
+  drawAscensionHudOverlays(ctx, state, w);
+}
+
+function drawAscensionWeather(ctx: CanvasRenderingContext2D, state: GameState, t: number, w: number, h: number): void {
+  if (!state.ascensionWeather) return;
+  ctx.save();
+
+  if (state.ascensionWeather === 'void') {
+    for (let i = 0; i < 120; i++) {
+      const x = (i * 53 + t * 18) % w;
+      const y = (i * 29 + t * 7) % h;
+      ctx.fillStyle = 'rgba(196, 124, 255, 0.12)';
+      ctx.fillRect(x, y, 1.6, 1.6);
+    }
+  } else if (state.ascensionWeather === 'freljord') {
+    for (let i = 0; i < 140; i++) {
+      const x = (i * 41 - t * 90) % w;
+      const y = (i * 17 + t * 36) % h;
+      ctx.strokeStyle = 'rgba(220,245,255,0.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 5, y + 8);
+      ctx.stroke();
+    }
+  } else if (state.ascensionWeather === 'noxus') {
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 67 + t * 24) % w;
+      const y = (i * 31 - t * 20) % h;
+      ctx.fillStyle = 'rgba(255,95,95,0.16)';
+      ctx.beginPath();
+      ctx.arc(x, y, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawAscensionHudOverlays(ctx: CanvasRenderingContext2D, state: GameState, w: number): void {
+  if (state.ascensionCinematicTitle && (state.ascensionCinematicTimer || 0) > 0) {
+    ctx.save();
+    const a = Math.min(1, (state.ascensionCinematicTimer || 0) / 1.0);
+    ctx.globalAlpha = 0.85 * a;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(140, 24, w - 280, 58);
+    ctx.strokeStyle = '#ffcc88';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(140, 24, w - 280, 58);
+    ctx.fillStyle = '#ffe7b3';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(state.ascensionCinematicTitle, w / 2, 60);
+    ctx.restore();
+  }
+
+  if (state.ascensionEventLabel && (state.ascensionEventTimer || 0) > 0) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(18, 88, 280, 26);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.strokeRect(18, 88, 280, 26);
+    ctx.fillStyle = '#ffdf9f';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(state.ascensionEventLabel, 28, 106);
+    ctx.restore();
+  }
 }
 
 function drawGrassBackground(ctx: CanvasRenderingContext2D, w: number, h: number, theme: ReturnType<typeof getMapTheme>, t: number): void {
