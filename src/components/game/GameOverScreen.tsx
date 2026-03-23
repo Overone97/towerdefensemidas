@@ -16,6 +16,7 @@ interface GameOverScreenProps {
   endlessMode: boolean;
   leaderboard: LeaderboardEntry[];
   mapId: string;
+  damageStats: { config: { name: string }; totalDamage: number; waveDamage: number; dps: number }[];
   onRestart: () => void;
 }
 
@@ -75,6 +76,22 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, s
         ) : (
           <p className="text-green-400 text-xs font-mono mb-4">✓ Score soumis au classement mondial !</p>
         )}
+
+        {/* Run recap */}
+        <div className="mb-4 text-left">
+          <h3 className="text-sm font-bold text-muted-foreground mb-2 text-center">📊 Résumé du run</h3>
+          <div className="space-y-1 max-h-32 overflow-y-auto">
+            {damageStats.slice(0, 4).map((s, i) => (
+              <div key={`${s.config.name}-${i}`} className="flex justify-between text-xs font-mono px-2 py-1 rounded text-muted-foreground bg-muted/20">
+                <span>#{i + 1} {s.config.name}</span>
+                <span>{Math.floor(s.totalDamage)} dmg</span>
+              </div>
+            ))}
+            {damageStats.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center">Aucun dégâts enregistré</p>
+            )}
+          </div>
+        </div>
 
         {/* Cloud Leaderboard */}
         <div className="mb-4 text-left">

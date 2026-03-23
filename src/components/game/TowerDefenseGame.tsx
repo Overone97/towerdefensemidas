@@ -481,6 +481,7 @@ const TowerDefenseGame: React.FC = () => {
             endlessMode={state.endlessMode}
             leaderboard={engine.getEndlessLeaderboard()}
             mapId={state.currentMapId}
+            damageStats={engine.getDamageStats()}
             onRestart={handleRestart}
           />
         </div>
