@@ -1,5 +1,5 @@
 import { PlacedUnit, SynergyBonus, ActiveSynergy } from '../types';
-import { CHARACTER_ELEMENTS, PAIR_SYNERGIES, ELEMENT_SYNERGIES, Element } from '../data/synergyData';
+import { CHARACTER_ELEMENTS, PAIR_SYNERGIES, ELEMENT_SYNERGIES, COMPOSITION_SYNERGIES, Element } from '../data/synergyData';
 
 function mergeBonuses(a: SynergyBonus, b: SynergyBonus): SynergyBonus {
   return {
@@ -45,6 +45,28 @@ export function computeSynergies(units: PlacedUnit[]): {
       if (pair.bonus.extraHp) {
         globalBonus = mergeBonuses(globalBonus, { extraHp: pair.bonus.extraHp });
       }
+    }
+  }
+
+  // Composition synergies (cross-build expression)
+  const uniqueElements = new Set<Element>();
+  for (const u of units) {
+    const el = CHARACTER_ELEMENTS[u.config.id];
+    if (el) uniqueElements.add(el);
+  }
+
+  for (const comp of COMPOSITION_SYNERGIES) {
+    const charsOk = !comp.requiredCharIds || comp.requiredCharIds.every(id => charIds.has(id));
+    const elementsOk = !comp.requiredUniqueElements || uniqueElements.size >= comp.requiredUniqueElements;
+    if (!charsOk || !elementsOk) continue;
+
+    activeSynergies.push({ name: comp.name, description: comp.description, bonus: comp.bonus });
+    for (const u of units) {
+      const existing = unitBonusMap.get(u.id) || { ...EMPTY_BONUS };
+      unitBonusMap.set(u.id, mergeBonuses(existing, comp.bonus));
+    }
+    if (comp.bonus.extraHp) {
+      globalBonus = mergeBonuses(globalBonus, { extraHp: comp.bonus.extraHp });
     }
   }
 

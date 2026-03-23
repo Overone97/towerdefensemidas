@@ -55,6 +55,15 @@ export interface ElementSynergyDef {
   thresholds: { count: number; name: string; description: string; bonus: SynergyBonus }[];
 }
 
+export interface CompositionSynergyDef {
+  id: string;
+  name: string;
+  requiredCharIds?: string[];
+  requiredUniqueElements?: number;
+  description: string;
+  bonus: SynergyBonus;
+}
+
 export const PAIR_SYNERGIES: PairSynergyDef[] = [
   // Original synergies
   { id: 'inferno_duo', name: '🔥 Inferno Duo', char1Id: 'annie', char2Id: 'rumble', description: '+20% ATK', bonus: { attackMult: 1.2 } },
@@ -87,6 +96,30 @@ export const PAIR_SYNERGIES: PairSynergyDef[] = [
   { id: 'ocean_tide', name: '🌊 Ocean Tide', char1Id: 'nami', char2Id: 'nautilus', description: '+25% Slow & +2HP', bonus: { slowMult: 1.25, extraHp: 2 } },
   { id: 'dark_magic', name: '🌙 Dark Magic', char1Id: 'veigar', char2Id: 'syndra', description: '+35% ATK', bonus: { attackMult: 1.35 } },
   { id: 'zaun_toxic', name: '☣️ Zaun Toxic', char1Id: 'singed', char2Id: 'viktor', description: '+30% DoT & Range', bonus: { dotMult: 1.3, rangeMult: 1.2 } },
+];
+
+export const COMPOSITION_SYNERGIES: CompositionSynergyDef[] = [
+  {
+    id: 'prismatic_council',
+    name: '🌈 Prismatic Council',
+    requiredUniqueElements: 4,
+    description: '4 éléments différents: +18% ATK/SPD/RNG à toute l’équipe',
+    bonus: { attackMult: 1.18, speedMult: 1.18, rangeMult: 1.18 },
+  },
+  {
+    id: 'duelist_trinity',
+    name: '🗡️ Duelist Trinity',
+    requiredCharIds: ['yasuo', 'irelia', 'fiora'],
+    description: 'Yasuo + Irelia + Fiora: +30% ATK SPD, +12% ATK',
+    bonus: { speedMult: 1.3, attackMult: 1.12 },
+  },
+  {
+    id: 'arcane_constellation',
+    name: '🔮 Arcane Constellation',
+    requiredCharIds: ['lux', 'syndra', 'veigar'],
+    description: 'Lux + Syndra + Veigar: +25% ATK, +20% Range',
+    bonus: { attackMult: 1.25, rangeMult: 1.2 },
+  },
 ];
 
 export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
