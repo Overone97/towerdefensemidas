@@ -155,6 +155,11 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
+  const handleUpgradeAscension = useCallback((upgradeId: string) => {
+    engine.upgradeAscension(upgradeId);
+    onStateChange();
+  }, [engine, onStateChange]);
+
   const handleSelectMap = useCallback((mapId: string) => {
     engine.setMap(mapId);
     setScreen('game');
@@ -255,7 +260,10 @@ const TowerDefenseGame: React.FC = () => {
       <TalentTree
         talents={saveData.talents}
         stars={state.stars}
+        ascensionPoints={saveData.ascensionPoints || 0}
+        ascensionUpgrades={saveData.ascensionUpgrades || {}}
         onUpgradeTalent={handleUpgradeTalent}
+        onUpgradeAscension={handleUpgradeAscension}
         onBack={() => setScreen('game')}
       />
     );

@@ -17,6 +17,13 @@ export const TALENTS: TalentDef[] = [
   { id: 'summon_discount', name: 'Charm', icon: '🎲', description: 'Summon cost', maxLevel: 5, costPerLevel: 3, effectPerLevel: '-5%' },
 ];
 
+export const ASCENSION_UPGRADES: TalentDef[] = [
+  { id: 'asc_power', name: 'Relique de Guerre', icon: '🔥', description: 'ATK globale (run)', maxLevel: 10, costPerLevel: 2, effectPerLevel: '+3%' },
+  { id: 'asc_haste', name: 'Relique des Vents', icon: '🌪️', description: 'Vitesse d’attaque globale (run)', maxLevel: 10, costPerLevel: 2, effectPerLevel: '+3%' },
+  { id: 'asc_fortune', name: 'Relique d’Or', icon: '🪙', description: 'Gold gagné (run)', maxLevel: 10, costPerLevel: 2, effectPerLevel: '+5%' },
+  { id: 'asc_guard', name: 'Relique du Bastion', icon: '🏰', description: 'PV de base max (run)', maxLevel: 8, costPerLevel: 3, effectPerLevel: '+1' },
+];
+
 export function getTalentBonus(talents: Record<string, number>) {
   return {
     attackMult: 1 + (talents['atk_boost'] || 0) * 0.05,
@@ -25,5 +32,14 @@ export function getTalentBonus(talents: Record<string, number>) {
     goldMult: 1 + (talents['gold_boost'] || 0) * 0.1,
     extraHp: (talents['hp_boost'] || 0) * 2,
     summonDiscount: 1 - (talents['summon_discount'] || 0) * 0.05,
+  };
+}
+
+export function getAscensionBonus(upgrades: Record<string, number>) {
+  return {
+    attackMult: 1 + (upgrades['asc_power'] || 0) * 0.03,
+    speedMult: 1 + (upgrades['asc_haste'] || 0) * 0.03,
+    goldMult: 1 + (upgrades['asc_fortune'] || 0) * 0.05,
+    extraHp: (upgrades['asc_guard'] || 0) * 1,
   };
 }
