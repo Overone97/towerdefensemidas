@@ -26,6 +26,8 @@ export interface SaveData {
   gameSpeed: number;
   prestige: number;
   tutorialCompleted: boolean;
+  ascensionPoints: number;
+  ascensionUpgrades: Record<string, number>;
   /** dungeon completions: dungeonId → ISO date string of last completion */
   dungeonCompletions: Record<string, string>;
   /** Unlocked skin ids */

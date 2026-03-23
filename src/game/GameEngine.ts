@@ -13,7 +13,7 @@ import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
 import { getGachaCost } from './data/gachaData';
-import { TALENTS } from './data/talentData';
+import { TALENTS, ASCENSION_UPGRADES } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
@@ -75,6 +75,7 @@ export class GameEngine {
       nextInstanceId = Math.max(...inventory.map(c => c.instanceId)) + 1;
     }
     const talentBonus = getTalentBonus(this.saveData.talents);
+    const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
     const map = ALL_MAPS.find(m => m.id === this.saveData.currentMapId) || ALL_MAPS[0];
 
     this.enemyManager.setWaypoints(map.waypoints);
@@ -82,8 +83,8 @@ export class GameEngine {
 
     return {
       gold: this.saveData.gold ?? 200,
-      baseHp: 20 + talentBonus.extraHp,
-      maxBaseHp: 20 + talentBonus.extraHp,
+      baseHp: 20 + talentBonus.extraHp + ascensionBonus.extraHp,
+      maxBaseHp: 20 + talentBonus.extraHp + ascensionBonus.extraHp,
       currentWave: 0,
       waveActive: false,
       enemies: [],
@@ -143,6 +144,7 @@ export class GameEngine {
     this.waveManager.update(dt, this.enemyManager);
 
     const talentBonus = getTalentBonus(this.saveData.talents);
+    const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
 
     const { reachedEnd, dotKills, dotDamages, splitSpawns } = this.enemyManager.update(dt);
     // Track DOT damages from Singed/Teemo etc.
@@ -170,8 +172,8 @@ export class GameEngine {
     this.towerManager.synergyBonuses = unitBonuses;
     this.towerManager.talentBonus = {
       ...talentBonus,
-      attackMult: talentBonus.attackMult * this.runAttackMult,
-      speedMult: talentBonus.speedMult * this.runSpeedMult,
+      attackMult: talentBonus.attackMult * ascensionBonus.attackMult * this.runAttackMult,
+      speedMult: talentBonus.speedMult * ascensionBonus.speedMult * this.runSpeedMult,
       rangeMult: talentBonus.rangeMult * this.runRangeMult,
     };
     this.towerManager.setWaypoints(this.getWaypoints());
@@ -207,7 +209,7 @@ export class GameEngine {
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (unitId) this.trackDamage(unitId, damage);
       if (result.killed && enemy) {
-        const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
+        const goldEarned = Math.floor(result.reward * talentBonus.goldMult * ascensionBonus.goldMult);
         this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
@@ -246,7 +248,7 @@ export class GameEngine {
 
     // Process DOT kills (Singed poison, burn effects) — award gold & score
     for (const enemy of dotKills) {
-      const goldEarned = Math.floor(enemy.reward * talentBonus.goldMult);
+      const goldEarned = Math.floor(enemy.reward * talentBonus.goldMult * ascensionBonus.goldMult);
       this.state.gold += goldEarned;
       this.state.score += enemy.reward;
       this.state.enemiesKilled++;
@@ -343,6 +345,12 @@ export class GameEngine {
         // Dungeon completion — rewards handled by completeDungeon()
         this.completeDungeon();
       } else {
+        // Ascension meta currency (account-wide progression)
+        if (this.state.currentMapId === 'void_rift' || this.state.currentMapId === 'freljord_storm' || this.state.currentMapId === 'noxus_siege') {
+          const reward = this.state.currentMapId === 'void_rift' ? 2 : this.state.currentMapId === 'freljord_storm' ? 3 : 4;
+          this.saveData.ascensionPoints = (this.saveData.ascensionPoints || 0) + reward;
+          this.floatingTextManager.spawn(390, 36, `+${reward} Ascension`, '#9df7ff', 13);
+        }
         // Normal map completion
         if (!this.saveData.mapsCompleted.includes(this.state.currentMapId)) {
           this.saveData.stars += 3;
@@ -737,7 +745,8 @@ export class GameEngine {
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (result.killed && enemy) {
         const talentBonus = getTalentBonus(this.saveData.talents);
-        const goldEarned = Math.floor(result.reward * talentBonus.goldMult);
+        const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
+        const goldEarned = Math.floor(result.reward * talentBonus.goldMult * ascensionBonus.goldMult);
         this.state.gold += goldEarned;
         this.state.score += result.reward;
         this.state.enemiesKilled++;
@@ -776,6 +785,19 @@ export class GameEngine {
     this.saveData.stars -= def.costPerLevel;
     this.saveData.talents[talentId] = currentLevel + 1;
     this.state.stars = this.saveData.stars;
+    this.persistSave();
+    return true;
+  }
+
+  upgradeAscension(upgradeId: string): boolean {
+    const def = ASCENSION_UPGRADES.find(t => t.id === upgradeId);
+    if (!def) return false;
+    const currentLevel = this.saveData.ascensionUpgrades[upgradeId] || 0;
+    if (currentLevel >= def.maxLevel) return false;
+    if ((this.saveData.ascensionPoints || 0) < def.costPerLevel) return false;
+
+    this.saveData.ascensionPoints -= def.costPerLevel;
+    this.saveData.ascensionUpgrades[upgradeId] = currentLevel + 1;
     this.persistSave();
     return true;
   }
