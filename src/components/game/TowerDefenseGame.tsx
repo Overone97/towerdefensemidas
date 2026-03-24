@@ -34,6 +34,9 @@ const TowerDefenseGame: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('game');
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
   const [skinChampionId, setSkinChampionId] = useState<string | null>(null);
+  const [cinematicTitle, setCinematicTitle] = useState<string | null>(null);
+  const [cinematicSubtitle, setCinematicSubtitle] = useState<string | null>(null);
+  const [cinematicTimer, setCinematicTimer] = useState(0);
 
   const onStateChange = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -42,6 +45,13 @@ const TowerDefenseGame: React.FC = () => {
   const engine = engineRef.current;
   const state = engine.state;
   const saveData = engine.getSaveData();
+
+  const ascensionMapTitle = (mapId: string) => {
+    if (mapId === 'void_rift') return { title: 'VOID RIFT', sub: 'The Empress Watches' };
+    if (mapId === 'freljord_storm') return { title: 'FRELJORD STORM', sub: 'Ice Never Forgives' };
+    if (mapId === 'noxus_siege') return { title: 'NOXUS SIEGE', sub: 'Only the Strong Rule' };
+    return null;
+  };
 
   // Poll for new achievements
   useEffect(() => {
@@ -55,6 +65,44 @@ const TowerDefenseGame: React.FC = () => {
     }, 500);
     return () => clearInterval(interval);
   }, [engine]);
+
+  // Cinematic timer tick
+  useEffect(() => {
+    if (cinematicTimer <= 0) return;
+    const t = setTimeout(() => setCinematicTimer(v => Math.max(0, v - 0.05)), 50);
+    return () => clearTimeout(t);
+  }, [cinematicTimer]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Escape' || e.key === ' ') && cinematicTimer > 0) {
+        setCinematicTimer(0);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cinematicTimer]);
+
+  // Map intro cinematic
+  useEffect(() => {
+    if (screen !== 'game') return;
+    const m = ascensionMapTitle(state.currentMapId);
+    if (!m || state.currentWave !== 0) return;
+    setCinematicTitle(m.title);
+    setCinematicSubtitle(m.sub);
+    setCinematicTimer(2.8);
+  }, [screen, state.currentMapId, state.currentWave]);
+
+  // Boss entrance cinematic
+  useEffect(() => {
+    if (screen !== 'game') return;
+    if (state.currentWave <= 0 || state.currentWave % 10 !== 0 || !state.waveActive) return;
+    const m = ascensionMapTitle(state.currentMapId);
+    if (!m) return;
+    setCinematicTitle(`BOSS WAVE ${state.currentWave}`);
+    setCinematicSubtitle('Prepare your defense');
+    setCinematicTimer(2.2);
+  }, [screen, state.currentMapId, state.currentWave, state.waveActive]);
 
   // Admin mode bootstrap (account-bound)
   useEffect(() => {
@@ -503,6 +551,19 @@ const TowerDefenseGame: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official cinematic overlay */}
+      {cinematicTimer > 0 && cinematicTitle && (
+        <div className="absolute inset-0 z-38 pointer-events-none">
+          <div className="absolute inset-0 bg-black/35" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,760px)] rounded-xl border border-amber-200/35 bg-gradient-to-b from-[#121724]/95 to-[#070a12]/95 p-6 text-center shadow-[0_0_40px_rgba(251,191,36,0.2)]">
+            <div className="text-[11px] tracking-[0.35em] text-amber-200/70 mb-1">CINEMATIC</div>
+            <div className="text-3xl md:text-4xl font-extrabold text-amber-100 drop-shadow-[0_0_12px_rgba(251,191,36,0.35)]">{cinematicTitle}</div>
+            {cinematicSubtitle && <div className="mt-2 text-sm text-slate-200/80">{cinematicSubtitle}</div>}
+            <div className="mt-3 text-[10px] text-slate-300/70">Press ESC or SPACE to skip</div>
           </div>
         </div>
       )}
