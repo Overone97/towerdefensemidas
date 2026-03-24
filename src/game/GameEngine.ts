@@ -8,7 +8,7 @@ import { ScreenShake } from './managers/ScreenShake';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
 import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
-import { getTalentBonus } from './data/talentData';
+import { getTalentBonus, getAscensionBonus } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
