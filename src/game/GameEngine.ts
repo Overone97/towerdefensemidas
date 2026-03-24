@@ -8,7 +8,7 @@ import { ScreenShake } from './managers/ScreenShake';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
 import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
-import { getTalentBonus, getAscensionBonus } from './data/talentData';
+import { getTalentBonus, getAscensionBonus, getAscensionUpgradeCost, getAscensionSpent } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
@@ -81,6 +81,16 @@ export class GameEngine {
     this.enemyManager.setWaypoints(map.waypoints);
     this.waveManager.mapId = map.id;
 
+    const oldAsc = this.saveData.ascensionUpgrades || {};
+    const migratedAsc: Record<string, number> = {
+      ...oldAsc,
+      ...(oldAsc['asc_power'] ? { asc_atk_damage: oldAsc['asc_power'] } : {}),
+      ...(oldAsc['asc_haste'] ? { asc_atk_speed: oldAsc['asc_haste'] } : {}),
+      ...(oldAsc['asc_fortune'] ? { asc_eco_kill: oldAsc['asc_fortune'] } : {}),
+      ...(oldAsc['asc_guard'] ? { asc_def_hp: oldAsc['asc_guard'] } : {}),
+    };
+    this.saveData.ascensionUpgrades = migratedAsc;
+
     return {
       gold: this.saveData.gold ?? 200,
       baseHp: 20 + talentBonus.extraHp + ascensionBonus.extraHp,
@@ -102,7 +112,7 @@ export class GameEngine {
       enemiesKilled: 0,
       totalWaves: TOTAL_WAVES,
       inventory,
-      gachaCost: Math.floor(getGachaCost(this.saveData.totalSummons) * talentBonus.summonDiscount),
+      gachaCost: Math.floor(getGachaCost(this.saveData.totalSummons) * talentBonus.summonDiscount * (1 - ascensionBonus.summonDiscount)),
       totalSummons: this.saveData.totalSummons,
       activeTab: 'game',
       activeSynergies: [],
@@ -505,6 +515,12 @@ export class GameEngine {
     }
     const config = this.waveManager.startWave();
     if (!config) return false;
+    const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
+    if (ascensionBonus.waveIncome > 0) {
+      const income = Math.floor(ascensionBonus.waveIncome);
+      this.state.gold += income;
+      this.floatingTextManager.spawn(392, 38, `+${income}💰 rente`, '#ffd36a', 11);
+    }
     soundManager.playWaveStart();
     this.state.waveActive = true;
     this.state.waveEnemiesKilledThisWave = 0;
@@ -529,7 +545,8 @@ export class GameEngine {
     this.state.totalSummons++;
     this.saveData.totalSummons = this.state.totalSummons;
     const talentBonus = getTalentBonus(this.saveData.talents);
-    this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount);
+    const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
+    this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount * (1 - ascensionBonus.summonDiscount));
 
     // Random pick from all available characters
     const config = available[Math.floor(Math.random() * available.length)];
@@ -794,9 +811,15 @@ export class GameEngine {
     if (!def) return false;
     const currentLevel = this.saveData.ascensionUpgrades[upgradeId] || 0;
     if (currentLevel >= def.maxLevel) return false;
-    if ((this.saveData.ascensionPoints || 0) < def.costPerLevel) return false;
 
-    this.saveData.ascensionPoints -= def.costPerLevel;
+    const spent = getAscensionSpent(this.saveData.ascensionUpgrades || {});
+    if (def.requiredSpent && spent < def.requiredSpent) return false;
+    if (def.prerequisites && !def.prerequisites.every(id => (this.saveData.ascensionUpgrades[id] || 0) > 0)) return false;
+
+    const cost = getAscensionUpgradeCost(upgradeId, currentLevel);
+    if ((this.saveData.ascensionPoints || 0) < cost) return false;
+
+    this.saveData.ascensionPoints -= cost;
     this.saveData.ascensionUpgrades[upgradeId] = currentLevel + 1;
     this.persistSave();
     return true;
