@@ -21,17 +21,20 @@ import TeamSidebar from './TeamSidebar';
 import TutorialOverlay from './TutorialOverlay';
 import SkinSelector from './SkinSelector';
 import AramGame from './AramGame';
+import MainMenuScreen from './MainMenuScreen';
+import OptionsScreen from './OptionsScreen';
+import CreditsScreen from './CreditsScreen';
 import { getSkinsForChampion } from '../../game/data/skinData';
 import { supabase } from '@/integrations/supabase/client';
 
-type Screen = 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo' | 'skin_shop';
+type Screen = 'menu' | 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo' | 'skin_shop' | 'options' | 'credits';
 
 const TowerDefenseGame: React.FC = () => {
   const engineRef = useRef(new GameEngine());
   const [, forceUpdate] = useState(0);
   const [lastSummon, setLastSummon] = useState<OwnedCharacter | null>(null);
   const [revealChar, setRevealChar] = useState<OwnedCharacter | null>(null);
-  const [screen, setScreen] = useState<Screen>('game');
+  const [screen, setScreen] = useState<Screen>('menu');
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
   const [skinChampionId, setSkinChampionId] = useState<string | null>(null);
   const [cinematicTitle, setCinematicTitle] = useState<string | null>(null);
@@ -302,6 +305,27 @@ const TowerDefenseGame: React.FC = () => {
     }, 300);
     return () => clearInterval(interval);
   }, [engine, state]);
+
+  if (screen === 'menu') {
+    return (
+      <MainMenuScreen
+        onStart={() => setScreen('game')}
+        onOpenMaps={() => setScreen('maps')}
+        onOpenTalents={() => setScreen('talents')}
+        onOpenSkins={() => setScreen('skin_shop')}
+        onOpenOptions={() => setScreen('options')}
+        onOpenCredits={() => setScreen('credits')}
+      />
+    );
+  }
+
+  if (screen === 'options') {
+    return <OptionsScreen onBack={() => setScreen('menu')} />;
+  }
+
+  if (screen === 'credits') {
+    return <CreditsScreen onBack={() => setScreen('menu')} />;
+  }
 
   if (screen === 'talents') {
     return (
