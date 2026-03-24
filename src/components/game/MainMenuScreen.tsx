@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import menuBg from '@/assets/ui/main-menu-bg.jpg';
 
 interface MainMenuScreenProps {
   onStart: () => void;
@@ -8,6 +9,20 @@ interface MainMenuScreenProps {
   onOpenOptions: () => void;
   onOpenCredits: () => void;
 }
+
+const MenuButton: React.FC<{ label: string; onClick: () => void; icon?: string; full?: boolean; primary?: boolean }> = ({ label, onClick, icon, full, primary }) => (
+  <button
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-md border font-semibold transition-all ${
+      primary
+        ? 'w-full py-3 text-black border-yellow-100 bg-gradient-to-r from-yellow-500 via-amber-300 to-yellow-500 shadow-[0_0_24px_rgba(250,204,21,0.35)] hover:brightness-110'
+        : `${full ? 'w-full' : 'w-full'} py-2.5 text-blue-100 border-blue-300/35 bg-[#0a1a3a]/65 hover:bg-[#102652]/80`
+    }`}
+  >
+    {!primary && <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity bg-[linear-gradient(120deg,transparent,rgba(125,211,252,0.12),transparent)]" />}
+    <span className="relative z-10 text-sm tracking-wide">{icon ? `${icon} ${label}` : label}</span>
+  </button>
+);
 
 const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
   onStart,
@@ -20,54 +35,35 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
-    const t = setInterval(() => setPulse(p => !p), 1300);
+    const t = setInterval(() => setPulse(p => !p), 1200);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="relative h-screen overflow-hidden bg-[#050913] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(57,125,255,0.18),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,215,120,0.14),transparent_35%),radial-gradient(circle_at_40%_80%,rgba(120,66,255,0.16),transparent_45%)]" />
-      <div className="absolute inset-0 opacity-20 [background:linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] animate-pulse" />
+    <div className="relative h-screen overflow-hidden text-white">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${menuBg})` }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050913]/55 via-[#050913]/35 to-[#050913]/60" />
 
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <div className="text-center mb-8">
-          <div className="text-xs tracking-[0.35em] text-yellow-300/80 mb-2">TOWER DEFENSE MIDAS</div>
-          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-b from-yellow-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_4px_18px_rgba(255,214,120,0.35)]">
+      <div className="relative z-10 h-full flex items-center justify-center px-6">
+        <div className="w-full max-w-[420px] text-center">
+          <div className="text-[10px] tracking-[0.35em] text-yellow-200/80 mb-2">TOWER DEFENSE MIDAS</div>
+          <h1 className="text-5xl font-extrabold bg-gradient-to-b from-yellow-100 via-yellow-300 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_4px_16px_rgba(255,214,120,0.45)]">
             TOWER OF LEGEND
           </h1>
-          <p className="text-sm text-blue-100/70 mt-3">Menu principal • édition officielle</p>
-        </div>
+          <p className="text-xs text-blue-100/75 mt-1 mb-5">Menu principal • édition officielle</p>
 
-        <div className="relative w-full max-w-md space-y-2">
-          <div className="pointer-events-none absolute -left-14 top-5 hidden md:flex flex-col items-center gap-3 opacity-70">
-            <div className="w-8 h-8 rounded-full border border-cyan-300/40 bg-cyan-400/10 shadow-[0_0_20px_rgba(34,211,238,0.25)]" />
-            <div className="w-0.5 h-10 bg-gradient-to-b from-cyan-300/70 to-transparent" />
-            <div className="w-6 h-6 rotate-45 border border-cyan-300/35 bg-cyan-400/10" />
-          </div>
-          <div className="pointer-events-none absolute -right-14 top-5 hidden md:flex flex-col items-center gap-3 opacity-70">
-            <div className="w-8 h-8 rounded-full border border-amber-300/40 bg-amber-400/10 shadow-[0_0_20px_rgba(251,191,36,0.25)]" />
-            <div className="w-0.5 h-10 bg-gradient-to-b from-amber-300/70 to-transparent" />
-            <div className="w-6 h-6 rotate-45 border border-amber-300/35 bg-amber-400/10" />
-          </div>
-          <button
-            onClick={onStart}
-            className={`w-full py-3 rounded-lg border font-bold text-lg transition-all ${
-              pulse
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-300 text-black border-yellow-200 shadow-[0_0_30px_rgba(251,191,36,0.45)]'
-                : 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black border-yellow-100'
-            }`}
-          >
-            ▶ START
-          </button>
+          <div className={`rounded-xl border border-blue-200/20 bg-[#08122a]/55 backdrop-blur-sm p-3 space-y-2 ${pulse ? 'shadow-[0_0_24px_rgba(59,130,246,0.2)]' : ''}`}>
+            <MenuButton label="START" onClick={onStart} icon="▶" primary />
 
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={onOpenMaps} className="relative overflow-hidden py-2.5 rounded-lg border border-blue-300/30 bg-blue-500/10 hover:bg-blue-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(125,211,252,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🗺️ Cartes</button>
-            <button onClick={onOpenTalents} className="relative overflow-hidden py-2.5 rounded-lg border border-purple-300/30 bg-purple-500/10 hover:bg-purple-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(196,181,253,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🌳 Talents</button>
-            <button onClick={onOpenSkins} className="relative overflow-hidden py-2.5 rounded-lg border border-pink-300/30 bg-pink-500/10 hover:bg-pink-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(249,168,212,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🎨 Skins</button>
-            <button onClick={onOpenOptions} className="relative overflow-hidden py-2.5 rounded-lg border border-slate-300/30 bg-slate-500/10 hover:bg-slate-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(226,232,240,0.14),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">⚙️ Options</button>
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              <MenuButton label="Cartes" onClick={onOpenMaps} icon="🗺️" />
+              <MenuButton label="Talents" onClick={onOpenTalents} icon="🌳" />
+              <MenuButton label="Skins" onClick={onOpenSkins} icon="🎨" />
+              <MenuButton label="Options" onClick={onOpenOptions} icon="⚙️" />
+            </div>
 
-          <button onClick={onOpenCredits} className="w-full py-2 rounded-lg border border-amber-200/30 bg-amber-500/10 hover:bg-amber-500/20">📜 Crédits</button>
+            <MenuButton label="Crédits" onClick={onOpenCredits} icon="📜" full />
+          </div>
         </div>
       </div>
     </div>
