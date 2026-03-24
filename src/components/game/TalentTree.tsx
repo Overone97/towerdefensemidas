@@ -13,9 +13,9 @@ interface TalentTreeProps {
 }
 
 const BRANCH_STYLE = {
-  attack: { edge: '#ef4444', node: 'border-red-500/60', glow: 'shadow-[0_0_22px_rgba(239,68,68,0.35)]' },
-  defense: { edge: '#38bdf8', node: 'border-sky-400/60', glow: 'shadow-[0_0_22px_rgba(56,189,248,0.35)]' },
-  economy: { edge: '#f59e0b', node: 'border-amber-400/60', glow: 'shadow-[0_0_22px_rgba(245,158,11,0.35)]' },
+  attack: { edge: '#ef4444', node: 'border-red-500/70', glow: 'shadow-[0_0_26px_rgba(239,68,68,0.4)]', label: '⚔️ Voie de la Guerre' },
+  defense: { edge: '#38bdf8', node: 'border-sky-400/70', glow: 'shadow-[0_0_26px_rgba(56,189,248,0.4)]', label: '🛡️ Voie du Bastion' },
+  economy: { edge: '#f59e0b', node: 'border-amber-400/70', glow: 'shadow-[0_0_26px_rgba(245,158,11,0.4)]', label: '💰 Voie de l’Or' },
 } as const;
 
 const TreeNode: React.FC<{
@@ -33,38 +33,40 @@ const TreeNode: React.FC<{
   requiredSpent?: number;
   ultimate?: boolean;
   onClick: () => void;
-}> = ({ id, name, icon, branch, x, y, level, maxLevel, locked, canBuy, cost, requiredSpent, ultimate, onClick }) => {
+}> = ({ name, icon, branch, x, y, level, maxLevel, locked, canBuy, cost, requiredSpent, ultimate, onClick }) => {
   const maxed = level >= maxLevel;
   const b = BRANCH_STYLE[branch];
 
   return (
     <button
-      key={id}
       onClick={onClick}
       disabled={!canBuy}
-      className={`absolute -translate-x-1/2 -translate-y-1/2 w-28 rounded-lg border bg-[#0b1220] p-1.5 text-left transition-all ${
-        maxed ? 'border-emerald-400/70 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.35)]' :
-        canBuy ? `${b.node} ${b.glow} hover:scale-[1.03]` :
-        locked ? 'border-white/10 opacity-45' : 'border-white/20 opacity-70'
+      className={`absolute -translate-x-1/2 -translate-y-1/2 w-32 rounded-xl border bg-[#0b1120]/95 p-2 text-left transition-all ${
+        maxed
+          ? 'border-emerald-400/80 bg-emerald-500/12 shadow-[0_0_18px_rgba(16,185,129,0.45)]'
+          : canBuy
+          ? `${b.node} ${b.glow} hover:scale-[1.04]`
+          : locked
+          ? 'border-white/10 opacity-50'
+          : 'border-white/20 opacity-80'
       }`}
       style={{ left: x, top: y }}
-      title={locked ? `Verrouillé (${requiredSpent || 0} pts requis ou prérequis)` : `${name} — coût ${cost}🜲`}
+      title={locked ? `Verrouillé (${requiredSpent || 0} points requis + prérequis)` : `${name} — coût ${cost}🜲`}
     >
-      <div className="text-xs font-bold truncate">{icon} {name}</div>
-      <div className="text-[10px] font-mono text-muted-foreground">Lv {level}/{maxLevel} {ultimate ? '• ULT' : ''}</div>
-      {!maxed && <div className="text-[10px] font-mono text-amber-300">{cost} 🜲</div>}
-      {locked && <div className="text-[9px] text-red-300">🔒 requis non atteints</div>}
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-xs font-bold truncate">{icon} {name}</div>
+        {ultimate && <span className="text-[10px] text-yellow-300">ULT</span>}
+      </div>
+      <div className="text-[10px] font-mono text-muted-foreground">Niveau {level}/{maxLevel}</div>
+      <div className="mt-1 text-[10px] font-mono">
+        {maxed ? <span className="text-emerald-300">MAX</span> : <span className="text-amber-300">{cost} 🜲</span>}
+      </div>
+      {locked && <div className="text-[9px] text-red-300 mt-0.5">🔒 non débloqué</div>}
     </button>
   );
 };
 
-const TalentTree: React.FC<TalentTreeProps> = ({
-  stars,
-  ascensionPoints,
-  ascensionUpgrades,
-  onUpgradeAscension,
-  onBack,
-}) => {
+const TalentTree: React.FC<TalentTreeProps> = ({ stars, ascensionPoints, ascensionUpgrades, onUpgradeAscension, onBack }) => {
   const spent = getAscensionSpent(ascensionUpgrades || {});
   const ascBonus = getAscensionBonus(ascensionUpgrades || {});
 
@@ -95,29 +97,48 @@ const TalentTree: React.FC<TalentTreeProps> = ({
   }, [nodes]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#060b14] text-foreground">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <Button variant="outline" size="sm" onClick={onBack}>← Back</Button>
-        <h2 className="font-bold font-mono">🌳 Arbre de Talents Ascension</h2>
-        <div className="flex items-center gap-3 text-xs font-mono">
+    <div className="flex flex-col h-screen bg-[#050913] text-foreground">
+      <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0b1323]">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_10%_50%,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_90%_50%,rgba(245,158,11,0.35),transparent_35%)]" />
+        <Button variant="outline" size="sm" onClick={onBack} className="relative z-10">← Back</Button>
+        <h2 className="relative z-10 font-bold tracking-wide text-lg text-yellow-100 drop-shadow-[0_0_8px_rgba(250,204,21,0.35)]">🌳 ARBRE D’ASCENSION</h2>
+        <div className="relative z-10 flex items-center gap-3 text-xs font-mono">
           <span className="text-yellow-400">⭐ {stars}</span>
           <span className="text-cyan-300">🜲 {ascensionPoints}</span>
-          <span className="text-purple-300">Spent: {spent}</span>
+          <span className="text-violet-300">Spent: {spent}</span>
         </div>
       </div>
 
-      <div className="px-4 py-2 text-[11px] text-muted-foreground border-b border-white/10 flex flex-wrap gap-3">
+      <div className="px-4 py-2 text-[11px] text-muted-foreground border-b border-white/10 flex flex-wrap items-center gap-3 bg-[#0a101d]">
         <span className="text-red-300">Rouge: Attaque</span>
         <span className="text-sky-300">Bleu: Défense</span>
         <span className="text-amber-300">Or: Économie</span>
-        <span>Gates: 8 / 16 / 28 points dépensés</span>
+        <span>Paliers de déblocage: 8 / 16 / 28 points</span>
       </div>
 
       <div className="flex-1 overflow-auto p-3">
-        <div className="relative mx-auto rounded-xl border border-white/10 bg-gradient-to-b from-[#0a1222] to-[#070c16]" style={{ width: 1040, height: 520 }}>
-          <svg width="1040" height="520" className="absolute inset-0 pointer-events-none">
+        <div className="relative mx-auto rounded-2xl border border-white/10 bg-gradient-to-b from-[#0a1222] to-[#070c16] shadow-[inset_0_0_120px_rgba(0,0,0,0.35)]" style={{ width: 1040, height: 540 }}>
+          <div className="absolute top-2 left-10 text-[11px] text-red-200/80">{BRANCH_STYLE.attack.label}</div>
+          <div className="absolute top-2 left-[410px] text-[11px] text-sky-200/80">{BRANCH_STYLE.defense.label}</div>
+          <div className="absolute top-2 right-12 text-[11px] text-amber-200/80">{BRANCH_STYLE.economy.label}</div>
+
+          <svg width="1040" height="540" className="absolute inset-0 pointer-events-none">
+            <defs>
+              <filter id="lineGlow"><feGaussianBlur stdDeviation="1.5" result="coloredBlur" /><feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+            </defs>
             {lines.map((l, i) => (
-              <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.color} strokeOpacity={l.active ? 0.8 : 0.25} strokeWidth={l.active ? 3 : 2} />
+              <line
+                key={i}
+                x1={l.x1}
+                y1={l.y1}
+                x2={l.x2}
+                y2={l.y2}
+                stroke={l.color}
+                strokeOpacity={l.active ? 0.95 : 0.25}
+                strokeWidth={l.active ? 3.5 : 2}
+                strokeDasharray={l.active ? '0' : '6 5'}
+                filter={l.active ? 'url(#lineGlow)' : undefined}
+              />
             ))}
           </svg>
 
@@ -143,7 +164,7 @@ const TalentTree: React.FC<TalentTreeProps> = ({
         </div>
       </div>
 
-      <div className="px-4 py-2 border-t border-white/10 text-xs font-mono text-muted-foreground flex flex-wrap gap-3">
+      <div className="px-4 py-2 border-t border-white/10 text-xs font-mono text-muted-foreground flex flex-wrap gap-3 bg-[#0a101d]">
         <span>ATK x{ascBonus.attackMult.toFixed(2)}</span>
         <span>SPD x{ascBonus.speedMult.toFixed(2)}</span>
         <span>Gold x{ascBonus.goldMult.toFixed(2)}</span>
