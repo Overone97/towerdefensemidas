@@ -33,12 +33,22 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
         <div className="text-center mb-8">
           <div className="text-xs tracking-[0.35em] text-yellow-300/80 mb-2">TOWER DEFENSE MIDAS</div>
           <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-b from-yellow-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_4px_18px_rgba(255,214,120,0.35)]">
-            LEGACY OF NEXUS
+            TOWER OF LEGEND
           </h1>
           <p className="text-sm text-blue-100/70 mt-3">Menu principal • édition officielle</p>
         </div>
 
-        <div className="w-full max-w-md space-y-2">
+        <div className="relative w-full max-w-md space-y-2">
+          <div className="pointer-events-none absolute -left-14 top-5 hidden md:flex flex-col items-center gap-3 opacity-70">
+            <div className="w-8 h-8 rounded-full border border-cyan-300/40 bg-cyan-400/10 shadow-[0_0_20px_rgba(34,211,238,0.25)]" />
+            <div className="w-0.5 h-10 bg-gradient-to-b from-cyan-300/70 to-transparent" />
+            <div className="w-6 h-6 rotate-45 border border-cyan-300/35 bg-cyan-400/10" />
+          </div>
+          <div className="pointer-events-none absolute -right-14 top-5 hidden md:flex flex-col items-center gap-3 opacity-70">
+            <div className="w-8 h-8 rounded-full border border-amber-300/40 bg-amber-400/10 shadow-[0_0_20px_rgba(251,191,36,0.25)]" />
+            <div className="w-0.5 h-10 bg-gradient-to-b from-amber-300/70 to-transparent" />
+            <div className="w-6 h-6 rotate-45 border border-amber-300/35 bg-amber-400/10" />
+          </div>
           <button
             onClick={onStart}
             className={`w-full py-3 rounded-lg border font-bold text-lg transition-all ${
@@ -51,10 +61,10 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
           </button>
 
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={onOpenMaps} className="py-2.5 rounded-lg border border-blue-300/30 bg-blue-500/10 hover:bg-blue-500/20">🗺️ Cartes</button>
-            <button onClick={onOpenTalents} className="py-2.5 rounded-lg border border-purple-300/30 bg-purple-500/10 hover:bg-purple-500/20">🌳 Talents</button>
-            <button onClick={onOpenSkins} className="py-2.5 rounded-lg border border-pink-300/30 bg-pink-500/10 hover:bg-pink-500/20">🎨 Skins</button>
-            <button onClick={onOpenOptions} className="py-2.5 rounded-lg border border-slate-300/30 bg-slate-500/10 hover:bg-slate-500/20">⚙️ Options</button>
+            <button onClick={onOpenMaps} className="relative overflow-hidden py-2.5 rounded-lg border border-blue-300/30 bg-blue-500/10 hover:bg-blue-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(125,211,252,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🗺️ Cartes</button>
+            <button onClick={onOpenTalents} className="relative overflow-hidden py-2.5 rounded-lg border border-purple-300/30 bg-purple-500/10 hover:bg-purple-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(196,181,253,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🌳 Talents</button>
+            <button onClick={onOpenSkins} className="relative overflow-hidden py-2.5 rounded-lg border border-pink-300/30 bg-pink-500/10 hover:bg-pink-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(249,168,212,0.15),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">🎨 Skins</button>
+            <button onClick={onOpenOptions} className="relative overflow-hidden py-2.5 rounded-lg border border-slate-300/30 bg-slate-500/10 hover:bg-slate-500/20 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent,rgba(226,232,240,0.14),transparent)] before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500">⚙️ Options</button>
           </div>
 
           <button onClick={onOpenCredits} className="w-full py-2 rounded-lg border border-amber-200/30 bg-amber-500/10 hover:bg-amber-500/20">📜 Crédits</button>
