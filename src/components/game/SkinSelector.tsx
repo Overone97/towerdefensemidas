@@ -65,7 +65,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
         {!equippedSkinId && <span className="text-[11px] text-green-400">✓ Équipé actuellement</span>}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 items-start">
         {skins.map((skin) => {
           const isUnlocked = unlockedSkins.includes(skin.id);
           const isEquipped = equippedSkinId === skin.id;
@@ -74,12 +74,15 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
           return (
             <div
               key={skin.id}
-              className={`rounded-xl overflow-hidden border bg-[#0b0f1a] transition-all ${
-                isEquipped ? 'border-cyan-400/80 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]' : 'border-white/10 hover:border-white/25'
+              className={`relative isolate rounded-xl overflow-hidden border bg-[#0b0f1a] transition-all min-h-[288px] ${
+                isEquipped
+                  ? 'border-cyan-400/80 shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_26px_rgba(34,211,238,0.20)]'
+                  : 'border-white/10 hover:border-white/25 hover:shadow-[0_0_18px_rgba(148,163,184,0.18)]'
               }`}
             >
               <div className="relative h-56 overflow-hidden bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
-                <div className="absolute inset-2 rounded-lg border border-white/10" />
+                <div className="absolute inset-2 rounded-lg border border-white/10 shadow-[inset_0_0_24px_rgba(56,189,248,0.08)]" />
+                <div className="absolute inset-2 rounded-lg pointer-events-none ring-1 ring-cyan-300/10" />
                 <div className="absolute inset-0 flex items-center justify-center px-2 pt-2 pb-12">
                   <SkinPreviewCanvas
                     championId={championId}
@@ -101,7 +104,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
                 </div>
               </div>
 
-              <div className="p-2">
+              <div className="p-2 min-h-[64px]">
                 {isUnlocked ? (
                   <button
                     onClick={() => (isEquipped ? onUnequip(championId) : onEquip(championId, skin.id))}
