@@ -19,10 +19,18 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, skinId, siz
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // HiDPI render for sharper previews (less pixelized)
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    if (canvas.width !== canvasSize * dpr) canvas.width = canvasSize * dpr;
+    if (canvas.height !== canvasSize * dpr) canvas.height = canvasSize * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
 
     if (hasLolSprite(championId)) {
-      drawLolSprite(ctx, championId, canvas.width / 2, canvas.height / 2 + 1, size, 20, false, 0, tintColor, skinId);
+      drawLolSprite(ctx, championId, canvasSize / 2, canvasSize / 2 + 1, size, 20, false, 0, tintColor, skinId);
       return;
     }
 
@@ -31,7 +39,7 @@ const SkinPreviewCanvas: React.FC<Props> = ({ championId, tintColor, skinId, siz
     ctx.beginPath();
     ctx.arc(canvas.width / 2, canvas.height / 2, size * 0.22, 0, Math.PI * 2);
     ctx.fill();
-  }, [championId, tintColor, skinId, size]);
+  }, [championId, tintColor, skinId, size, canvasSize]);
 
   return <canvas ref={ref} width={canvasSize} height={canvasSize} className={className || ''} />;
 };
