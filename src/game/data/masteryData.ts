@@ -17,6 +17,8 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
       { atLevel: 3, championId: 'jarvan' },
       { atLevel: 6, championId: 'fiora' },
       { atLevel: 9, championId: 'leona' },
+      { atLevel: 12, championId: 'xinzhao' },
+      { atLevel: 15, championId: 'lucian' },
     ],
   },
   {
@@ -26,6 +28,8 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
       { atLevel: 3, championId: 'syndra' },
       { atLevel: 6, championId: 'veigar' },
       { atLevel: 9, championId: 'viktor' },
+      { atLevel: 12, championId: 'orianna' },
+      { atLevel: 15, championId: 'xerath' },
     ],
   },
   {
@@ -35,6 +39,8 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
       { atLevel: 3, championId: 'twitch' },
       { atLevel: 6, championId: 'vayne' },
       { atLevel: 9, championId: 'caitlyn' },
+      { atLevel: 12, championId: 'ashe' },
+      { atLevel: 15, championId: 'quinn' },
     ],
   },
 ];
