@@ -28,6 +28,8 @@ export interface SaveData {
   tutorialCompleted: boolean;
   ascensionPoints: number;
   ascensionUpgrades: Record<string, number>;
+  championMasteryXP: Record<string, number>;
+  championMasteryLevel: Record<string, number>;
   /** dungeon completions: dungeonId → ISO date string of last completion */
   dungeonCompletions: Record<string, string>;
   /** Unlocked skin ids */
@@ -62,6 +64,10 @@ function defaultSave(): SaveData {
     gameSpeed: 1,
     prestige: 0,
     tutorialCompleted: false,
+    ascensionPoints: 0,
+    ascensionUpgrades: {},
+    championMasteryXP: {},
+    championMasteryLevel: {},
     dungeonCompletions: {},
     unlockedSkins: [],
     equippedSkins: {},
