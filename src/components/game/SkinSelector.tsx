@@ -65,7 +65,7 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
         {!equippedSkinId && <span className="text-[11px] text-green-400">✓ Équipé actuellement</span>}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {skins.map((skin) => {
           const isUnlocked = unlockedSkins.includes(skin.id);
           const isEquipped = equippedSkinId === skin.id;
@@ -78,15 +78,18 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
                 isEquipped ? 'border-cyan-400/80 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]' : 'border-white/10 hover:border-white/25'
               }`}
             >
-              <div className="relative h-52 overflow-hidden bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
-                <SkinPreviewCanvas
-                  championId={championId}
-                  tintColor={skin.bodyColor}
-                  skinId={skin.id}
-                  size={90}
-                  canvasSize={220}
-                  className="w-full h-full"
-                />
+              <div className="relative h-56 overflow-hidden bg-gradient-to-b from-slate-700/40 to-slate-900/70 flex items-center justify-center">
+                <div className="absolute inset-2 rounded-lg border border-white/10" />
+                <div className="absolute inset-0 flex items-center justify-center px-2 pt-2 pb-12">
+                  <SkinPreviewCanvas
+                    championId={championId}
+                    tintColor={skin.bodyColor}
+                    skinId={skin.id}
+                    size={104}
+                    canvasSize={360}
+                    className="w-full h-full max-w-[230px] max-h-[180px]"
+                  />
+                </div>
 
                 <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#8b1a1a] border border-[#d6b06a]/70 text-[10px] text-[#f4e2b5] font-bold tracking-wide">
                   SKIN
