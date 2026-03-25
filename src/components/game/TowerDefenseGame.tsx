@@ -421,6 +421,7 @@ const TowerDefenseGame: React.FC = () => {
                     onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
                     onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
                     onClose={() => {}}
+                    embedded
                   />
                 </div>
               );
