@@ -16,8 +16,59 @@
     <meta name="twitter:description" content="Défends ta base, améliore tes unités et grimpe dans le leaderboard." />
   </head>
 
-  <body>
+  <body style="margin:0;background:#070d16;color:#fff;">
+    <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,Segoe UI,Arial;">
+      <div style="max-width:760px;width:100%;border:1px solid rgba(125,211,252,.35);background:rgba(14,27,45,.65);border-radius:12px;padding:16px;">
+        <h2 style="margin:0 0 8px 0;font-size:22px;">🎮 Tower of Legend démarre...</h2>
+        <p id="boot-message" style="margin:0 0 10px 0;opacity:.9;font-size:14px;">Chargement en cours. Si ça reste bloqué, utilise le bouton reset.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="boot-reload" style="padding:8px 12px;border-radius:8px;border:1px solid #7dd3fc55;background:#0b2740;color:#dbeafe;cursor:pointer;">Recharger</button>
+          <button id="boot-reset" style="padding:8px 12px;border-radius:8px;border:1px solid #fca5a555;background:#3b0f19;color:#ffe4e6;cursor:pointer;">Reset save locale</button>
+        </div>
+      </div>
+    </div>
+
     <div id="root"></div>
+
+    <script>
+      (function () {
+        const fallback = document.getElementById('boot-fallback');
+        const msg = document.getElementById('boot-message');
+        const reloadBtn = document.getElementById('boot-reload');
+        const resetBtn = document.getElementById('boot-reset');
+
+        if (reloadBtn) reloadBtn.onclick = () => location.reload();
+        if (resetBtn) resetBtn.onclick = () => {
+          try { localStorage.removeItem('td_save_v1'); } catch {}
+          location.reload();
+        };
+
+        window.addEventListener('error', (e) => {
+          if (!msg) return;
+          msg.textContent = 'Erreur détectée: ' + (e.message || 'unknown error');
+        });
+        window.addEventListener('unhandledrejection', (e) => {
+          if (!msg) return;
+          const reason = (e.reason && (e.reason.message || e.reason.toString())) || 'unhandled rejection';
+          msg.textContent = 'Erreur détectée: ' + reason;
+        });
+
+        // Hide fallback once React mounts content in #root
+        const root = document.getElementById('root');
+        const startedAt = Date.now();
+        const interval = setInterval(() => {
+          if (root && root.childNodes.length > 0) {
+            if (fallback) fallback.style.display = 'none';
+            clearInterval(interval);
+            return;
+          }
+          if (Date.now() - startedAt > 12000 && msg) {
+            msg.textContent = 'Le jeu semble bloqué. Clique sur "Reset save locale" puis recharge.';
+          }
+        }, 300);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
