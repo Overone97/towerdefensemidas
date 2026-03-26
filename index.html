@@ -43,17 +43,22 @@
           location.reload();
         };
 
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('reset_save') === '1') {
+          try { localStorage.removeItem('td_save_v1'); } catch {}
+          url.searchParams.delete('reset_save');
+          window.location.replace(url.toString());
+          return;
+        }
+
         window.addEventListener('error', (e) => {
-          if (!msg) return;
-          msg.textContent = 'Erreur détectée: ' + (e.message || 'unknown error');
+          if (msg) msg.textContent = 'Erreur détectée: ' + (e.message || 'unknown error');
         });
         window.addEventListener('unhandledrejection', (e) => {
-          if (!msg) return;
           const reason = (e.reason && (e.reason.message || e.reason.toString())) || 'unhandled rejection';
-          msg.textContent = 'Erreur détectée: ' + reason;
+          if (msg) msg.textContent = 'Erreur détectée: ' + reason;
         });
 
-        // Hide fallback once React mounts content in #root
         const root = document.getElementById('root');
         const startedAt = Date.now();
         const interval = setInterval(() => {
@@ -63,12 +68,14 @@
             return;
           }
           if (Date.now() - startedAt > 12000 && msg) {
-            msg.textContent = 'Le jeu semble bloqué. Clique sur "Reset save locale" puis recharge.';
+            msg.textContent = 'Le jeu semble bloqué. Clique sur "Reset save locale" puis recharge. Si ça persiste, ouvre dans Chrome/Safari.';
           }
         }, 300);
       })();
     </script>
 
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Legacy fallback for webviews that ignore type=module -->
+    <script nomodule src="/assets/index-legacy.js"></script>
   </body>
 </html>
