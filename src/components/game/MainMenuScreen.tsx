@@ -5,19 +5,17 @@ interface MainMenuScreenProps {
   onStart: () => void;
   onOpenMaps: () => void;
   onOpenTalents: () => void;
-  onOpenMastery: () => void;
   onOpenSkins: () => void;
   onOpenOptions: () => void;
   onOpenCredits: () => void;
 }
 
-type MenuAction = 'start' | 'maps' | 'talents' | 'mastery' | 'skins' | 'options' | 'credits';
+type MenuAction = 'start' | 'maps' | 'talents' | 'skins' | 'options' | 'credits';
 
 const actionDescription: Record<MenuAction, string> = {
   start: 'Lance directement ta session de défense.',
   maps: 'Choisis ton champ de bataille et ton niveau de risque.',
-  talents: 'Ajuste ton build et tes améliorations.',
-  mastery: 'Fais XP tes champions et débloque leur famille.',
+  talents: 'Ajuste ton build et débloque des bonus persistants.',
   skins: 'Personnalise tes champions avec tes skins exclusifs.',
   options: 'Règle audio, interface et confort de jeu.',
   credits: 'Voir les créateurs et contributeurs du projet.',
@@ -27,7 +25,6 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
   onStart,
   onOpenMaps,
   onOpenTalents,
-  onOpenMastery,
   onOpenSkins,
   onOpenOptions,
   onOpenCredits,
@@ -41,18 +38,19 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
   }, []);
 
   const particles = useMemo(
-    () => Array.from({ length: 22 }).map((_, i) => ({
-      id: i,
-      left: `${(i * 31) % 100}%`,
-      top: `${(i * 17) % 100}%`,
-      size: 2 + (i % 3),
-      delay: `${(i % 6) * 0.4}s`,
-      duration: `${4 + (i % 5)}s`,
-    })),
+    () =>
+      Array.from({ length: 24 }).map((_, i) => ({
+        id: i,
+        left: `${(i * 37) % 100}%`,
+        top: `${(i * 19) % 100}%`,
+        size: 2 + (i % 4),
+        delay: `${(i % 7) * 0.4}s`,
+        duration: `${4 + (i % 5)}s`,
+      })),
     []
   );
 
-  const Btn = ({ action, label, icon, onClick, primary = false }: { action: MenuAction; label: string; icon: string; onClick: () => void; primary?: boolean }) => (
+  const Button = ({ action, label, icon, onClick, primary = false }: { action: MenuAction; label: string; icon: string; onClick: () => void; primary?: boolean }) => (
     <button
       onClick={onClick}
       onMouseEnter={() => setActive(action)}
@@ -74,9 +72,21 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${menuBg})` }} />
       <div className="absolute inset-0 bg-gradient-to-b from-[#050913]/55 via-[#050913]/35 to-[#050913]/60" />
 
+      {/* ambient particles */}
       <div className="absolute inset-0 pointer-events-none">
         {particles.map(p => (
-          <span key={p.id} className="absolute rounded-full bg-cyan-200/40 animate-pulse" style={{ left: p.left, top: p.top, width: p.size, height: p.size, animationDelay: p.delay, animationDuration: p.duration }} />
+          <span
+            key={p.id}
+            className="absolute rounded-full bg-cyan-200/40 animate-pulse"
+            style={{
+              left: p.left,
+              top: p.top,
+              width: p.size,
+              height: p.size,
+              animationDelay: p.delay,
+              animationDuration: p.duration,
+            }}
+          />
         ))}
       </div>
 
@@ -87,19 +97,20 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
             TOWER OF LEGEND
           </h1>
           <p className="text-xs text-blue-100/75 mt-1">Menu principal • édition officielle</p>
+
           <div className="mt-2 text-[11px] text-cyan-100/80 min-h-5">{actionDescription[active]}</div>
 
           <div className={`mt-4 rounded-xl border border-blue-200/20 bg-[#08122a]/58 backdrop-blur-sm p-3 space-y-2 ${pulse ? 'shadow-[0_0_24px_rgba(59,130,246,0.2)]' : ''}`}>
-            <Btn action="start" label="START" icon="▶" onClick={onStart} primary />
+            <Button action="start" label="START" icon="▶" onClick={onStart} primary />
 
             <div className="grid grid-cols-2 gap-2">
-              <Btn action="maps" label="Cartes" icon="🗺️" onClick={onOpenMaps} />
-              <Btn action="talents" label="Talents" icon="🌳" onClick={onOpenTalents} />
-              <Btn action="mastery" label="Maîtrise" icon="🧬" onClick={onOpenMastery} />
-              <Btn action="skins" label="Skins" icon="🎨" onClick={onOpenSkins} />
-              <Btn action="options" label="Options" icon="⚙️" onClick={onOpenOptions} />
-              <Btn action="credits" label="Crédits" icon="📜" onClick={onOpenCredits} />
+              <Button action="maps" label="Cartes" icon="🗺️" onClick={onOpenMaps} />
+              <Button action="talents" label="Talents" icon="🌳" onClick={onOpenTalents} />
+              <Button action="skins" label="Skins" icon="🎨" onClick={onOpenSkins} />
+              <Button action="options" label="Options" icon="⚙️" onClick={onOpenOptions} />
             </div>
+
+            <Button action="credits" label="Crédits" icon="📜" onClick={onOpenCredits} />
           </div>
         </div>
       </div>

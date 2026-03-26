@@ -14,7 +14,6 @@ import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
 import { getGachaCost } from './data/gachaData';
 import { TALENTS, ASCENSION_UPGRADES } from './data/talentData';
-import { MASTERY_PATHS, STARTER_CHAMPIONS, masteryXpForNextLevel } from './data/masteryData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipmentData';
 import { getQuestsForMap, QuestContext } from './data/questData';
@@ -70,77 +69,8 @@ export class GameEngine {
     return this.getMap().waypoints;
   }
 
-  private ensureStarterRoster(inventory: OwnedCharacter[]): OwnedCharacter[] {
-    if (inventory.length > 0) return inventory;
-    const starters: OwnedCharacter[] = [];
-    for (const id of STARTER_CHAMPIONS) {
-      const config = ALL_CHARACTERS.find(c => c.id === id);
-      if (!config) continue;
-      starters.push({ instanceId: nextInstanceId++, config, level: 1, equipment: {}, stars: 1 });
-    }
-    return starters;
-  }
-
-  private hasChampionOwned(configId: string): boolean {
-    return this.state.inventory.some(c => c.config.id === configId);
-  }
-
-  private grantChampionUnlock(configId: string): void {
-    if (this.hasChampionOwned(configId)) return;
-    const config = ALL_CHARACTERS.find(c => c.id === configId);
-    if (!config) return;
-    this.state.inventory.push({ instanceId: nextInstanceId++, config, level: 1, equipment: {}, stars: 1 });
-    this.floatingTextManager.spawn(390, 56, `🔓 ${config.name}`, '#9df7ff', 12);
-  }
-
-  private grantMasteryXp(championId: string, amount: number): void {
-    if (amount <= 0) return;
-    if (!this.saveData.championMasteryXP) this.saveData.championMasteryXP = {};
-    if (!this.saveData.championMasteryLevel) this.saveData.championMasteryLevel = {};
-
-    this.saveData.championMasteryXP[championId] = (this.saveData.championMasteryXP[championId] || 0) + amount;
-    if (!this.saveData.championMasteryLevel[championId]) this.saveData.championMasteryLevel[championId] = 1;
-
-    let lvl = this.saveData.championMasteryLevel[championId];
-    let xp = this.saveData.championMasteryXP[championId];
-    while (lvl < 10) {
-      const need = masteryXpForNextLevel(lvl);
-      if (xp < need) break;
-      xp -= need;
-      lvl += 1;
-    }
-    this.saveData.championMasteryLevel[championId] = lvl;
-    this.saveData.championMasteryXP[championId] = xp;
-
-    // Unlock chain rewards for mastery families
-    for (const path of MASTERY_PATHS) {
-      if (path.rootChampionId !== championId) continue;
-      for (const u of path.unlocks) {
-        if (lvl >= u.atLevel) this.grantChampionUnlock(u.championId);
-      }
-    }
-  }
-
-  private grantWaveMasteryXp(): void {
-    const uniquePlaced = new Set(this.towerManager.units.map(u => u.config.id));
-    if (uniquePlaced.size === 0) return;
-    const base = Math.max(1, Math.floor(this.state.waveEnemiesKilledThisWave / 12));
-    for (const id of uniquePlaced) {
-      this.grantMasteryXp(id, base);
-    }
-    this.persistSave();
-  }
-
-  getMasterySnapshot() {
-    return {
-      xp: this.saveData.championMasteryXP || {},
-      level: this.saveData.championMasteryLevel || {},
-      paths: MASTERY_PATHS,
-    };
-  }
-
   private createInitialState(): GameState {
-    const inventory = this.ensureStarterRoster(saveDataToInventory(this.saveData));
+    const inventory = saveDataToInventory(this.saveData);
     if (inventory.length > 0) {
       nextInstanceId = Math.max(...inventory.map(c => c.instanceId)) + 1;
     }
@@ -210,7 +140,6 @@ export class GameEngine {
     this.applyAdminCheats();
     if (this.state.gameOver || this.state.victory) return;
     this.updateAscensionSystems(dt);
-    const wasWaveActive = this.state.waveActive;
 
     // Dungeon timer
     if (this.activeDungeon?.rules.timeLimit) {
@@ -407,10 +336,6 @@ export class GameEngine {
     this.state.waveEnemiesSpawned = this.waveManager.spawned;
     this.state.waveEnemiesTotal = this.waveManager.enemyCount;
     this.state.waveModifier = this.waveManager.currentModifier;
-
-    if (wasWaveActive && !this.state.waveActive) {
-      this.grantWaveMasteryXp();
-    }
 
     // Track max wave
     if (this.state.currentWave > this.saveData.stats.maxWaveReached) {
