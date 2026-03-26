@@ -312,7 +312,6 @@ const TowerDefenseGame: React.FC = () => {
         onStart={() => setScreen('game')}
         onOpenMaps={() => setScreen('maps')}
         onOpenTalents={() => setScreen('talents')}
-        onOpenMastery={() => setScreen('talents')}
         onOpenSkins={() => setScreen('skin_shop')}
         onOpenOptions={() => setScreen('options')}
         onOpenCredits={() => setScreen('credits')}
