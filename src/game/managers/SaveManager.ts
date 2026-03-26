@@ -62,6 +62,8 @@ function defaultSave(): SaveData {
     gameSpeed: 1,
     prestige: 0,
     tutorialCompleted: false,
+    ascensionPoints: 0,
+    ascensionUpgrades: {},
     dungeonCompletions: {},
     unlockedSkins: [],
     equippedSkins: {},
