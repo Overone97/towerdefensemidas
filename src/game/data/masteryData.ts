@@ -16,7 +16,6 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
     unlocks: [
       { atLevel: 3, championId: 'jarvan' },
       { atLevel: 6, championId: 'fiora' },
-      { atLevel: 9, championId: 'leona' },
     ],
   },
   {
@@ -25,7 +24,6 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
     unlocks: [
       { atLevel: 3, championId: 'syndra' },
       { atLevel: 6, championId: 'veigar' },
-      { atLevel: 9, championId: 'viktor' },
     ],
   },
   {
@@ -34,7 +32,6 @@ export const MASTERY_PATHS: ChampionMasteryPath[] = [
     unlocks: [
       { atLevel: 3, championId: 'twitch' },
       { atLevel: 6, championId: 'vayne' },
-      { atLevel: 9, championId: 'caitlyn' },
     ],
   },
 ];
