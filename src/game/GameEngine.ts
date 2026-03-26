@@ -103,7 +103,7 @@ export class GameEngine {
 
     let lvl = this.saveData.championMasteryLevel[championId];
     let xp = this.saveData.championMasteryXP[championId];
-    while (lvl < 15) {
+    while (lvl < 10) {
       const need = masteryXpForNextLevel(lvl);
       if (xp < need) break;
       xp -= need;
