@@ -188,6 +188,9 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                             <span className="text-[9px] font-mono text-muted-foreground">
                               Lv.{char.level} {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {dps}dps
                             </span>
+                            <span className="text-[8px] font-mono text-cyan-300/80">
+                              XP {char.xp || 0}
+                            </span>
                           </div>
                         </button>
 

@@ -12,7 +12,7 @@ export interface LeaderboardEntry {
 }
 
 export interface SaveData {
-  inventory: { configId: string; level: number; equipment?: EquippedItems; stars?: number }[];
+  inventory: { configId: string; level: number; xp?: number; equipment?: EquippedItems; stars?: number }[];
   equipmentInventory: string[];
   totalSummons: number;
   unlockedCharacters: string[];
@@ -145,11 +145,11 @@ export function saveDataToInventory(data: SaveData): OwnedCharacter[] {
     .map(item => {
       const config = ALL_CHARACTERS.find(c => c.id === item.configId);
       if (!config) return null;
-      return { instanceId: id++, config, level: item.level, equipment: item.equipment || {}, stars: item.stars || 1 } as OwnedCharacter;
+      return { instanceId: id++, config, level: item.level, xp: item.xp || 0, equipment: item.equipment || {}, stars: item.stars || 1 } as OwnedCharacter;
     })
     .filter(Boolean) as OwnedCharacter[];
 }
 
-export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number; equipment?: EquippedItems; stars?: number }[] {
-  return inventory.map(c => ({ configId: c.config.id, level: c.level, equipment: c.equipment, stars: c.stars }));
+export function inventoryToSaveData(inventory: OwnedCharacter[]): { configId: string; level: number; xp?: number; equipment?: EquippedItems; stars?: number }[] {
+  return inventory.map(c => ({ configId: c.config.id, level: c.level, xp: c.xp || 0, equipment: c.equipment, stars: c.stars }));
 }
