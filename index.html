@@ -54,17 +54,6 @@
 
         const root = document.getElementById('root');
         const startedAt = Date.now();
-        let legacyInjected = false;
-
-        const injectLegacy = () => {
-          if (legacyInjected) return;
-          legacyInjected = true;
-          const s = document.createElement('script');
-          s.src = '/assets/index-legacy.js';
-          s.defer = true;
-          document.body.appendChild(s);
-          if (msg) msg.textContent = 'Mode compatibilité activé...';
-        };
 
         const interval = setInterval(() => {
           if (root && root.childNodes.length > 0) {
@@ -73,18 +62,13 @@
             return;
           }
 
-          const elapsed = Date.now() - startedAt;
-          if (elapsed > 3500 && !legacyInjected) injectLegacy();
-
-          if (elapsed > 12000 && msg) {
-            msg.textContent = 'Le jeu semble bloqué. Clique sur "Reset save locale" puis recharge. Si ça persiste, ouvre dans Chrome/Safari.';
+          if (Date.now() - startedAt > 12000 && msg) {
+            msg.textContent = 'Le jeu semble bloqué. Clique sur "Reset save locale" puis recharge. Si ça persiste, fais un hard refresh (Ctrl+F5).';
           }
         }, 300);
       })();
     </script>
 
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Legacy fallback for webviews that ignore type=module -->
-    <script nomodule src="/assets/index-legacy.js"></script>
   </body>
 </html>

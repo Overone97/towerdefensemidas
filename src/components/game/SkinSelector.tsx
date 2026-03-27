@@ -24,7 +24,6 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
   onEquip,
   onUnequip,
   onClose,
-  embedded = false,
 }) => {
   const skins = getSkinsForChampion(championId);
   const equippedSkinId = equippedSkins[championId];
@@ -140,4 +139,3 @@ const SkinSelector: React.FC<SkinSelectorProps> = ({
 };
 
 export default SkinSelector;
-ector;

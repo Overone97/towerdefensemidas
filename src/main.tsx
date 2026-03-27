@@ -18,9 +18,17 @@ function renderBootError(message: string) {
   `;
 }
 
+const clearLocalSave = () => {
+  try {
+    localStorage.removeItem("td_save_v1");
+  } catch (error) {
+    console.warn("[boot] impossible de supprimer la sauvegarde locale", error);
+  }
+};
+
 const url = new URL(window.location.href);
 if (url.searchParams.get("reset_save") === "1") {
-  try { localStorage.removeItem("td_save_v1"); } catch {}
+  clearLocalSave();
   url.searchParams.delete("reset_save");
   window.location.replace(url.toString());
 }
@@ -29,7 +37,7 @@ try {
   const raw = localStorage.getItem("td_save_v1");
   if (raw) JSON.parse(raw);
 } catch {
-  try { localStorage.removeItem("td_save_v1"); } catch {}
+  clearLocalSave();
 }
 
 window.addEventListener("error", (e) => {
@@ -47,6 +55,7 @@ try {
   const el = document.getElementById("root");
   if (!el) throw new Error("Missing #root element");
   createRoot(el).render(<App />);
-} catch (err: any) {
-  renderBootError(err?.stack || err?.message || String(err));
+} catch (err: unknown) {
+  const message = err instanceof Error ? (err.stack || err.message) : String(err);
+  renderBootError(message);
 }
