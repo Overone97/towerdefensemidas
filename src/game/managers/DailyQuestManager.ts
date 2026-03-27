@@ -28,13 +28,13 @@ const QUEST_TEMPLATES = [
 ];
 
 function getTodayString(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString('en-CA'); // format YYYY-MM-DD en timezone locale
 }
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const copy = [...arr];
   let s = seed;
-  const next = () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
+  const next = () => { s = (s * 16807 + 1) % 2147483647; return s / 2147483647; };
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(next() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];

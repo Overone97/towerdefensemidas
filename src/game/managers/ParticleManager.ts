@@ -256,11 +256,14 @@ export class ParticleManager {
   }
 
   update(dt: number): void {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    let i = this.particles.length;
+    while (i-- > 0) {
       const p = this.particles[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.particles.splice(i, 1);
+        // O(1) removal: swap with last element then pop
+        this.particles[i] = this.particles[this.particles.length - 1];
+        this.particles.pop();
         continue;
       }
       p.vx *= (p.friction ?? 1);
@@ -315,8 +318,9 @@ export class ParticleManager {
 
   private addParticle(p: Particle): void {
     if (this.particles.length >= MAX_PARTICLES) {
-      this.particles.shift(); // drop oldest
+      this.particles[0] = p; // Overwrite oldest instead of shift (O(1))
+    } else {
+      this.particles.push(p);
     }
-    this.particles.push(p);
   }
 }

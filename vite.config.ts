@@ -5,6 +5,7 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
+    target: "es2020",
     rollupOptions: {
       output: {
         // Keep stable entry filename to avoid stale HTML -> missing hashed JS white screens
@@ -17,9 +18,6 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    hmr: {
-      overlay: false,
-    },
   },
   plugins: [react()],
   resolve: {

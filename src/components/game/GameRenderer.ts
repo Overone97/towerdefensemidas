@@ -11,6 +11,8 @@ import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
 import aramBg from '../../assets/maps/aram-bg.jpg';
 
+let _lastFishTimerTs = 0;
+
 const MAP_BG_IMAGES: Record<string, string> = {
   plains: plainsBg,
   forest: forestBg,
@@ -34,7 +36,7 @@ function getMapBgImage(mapId: string): HTMLImageElement | null {
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
-    s = (s * 16807 + 0) % 2147483647;
+    s = (s * 16807 + 1) % 2147483647;
     return s / 2147483647;
   };
 }
@@ -1313,9 +1315,11 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
   const LAND_X = POND_X + POND_RX + 20;
   const LAND_Y = POND_Y - 5;
 
-  const dt = 1 / 60;
+  const now = performance.now();
+  const fishDt = _lastFishTimerTs > 0 ? Math.min((now - _lastFishTimerTs) / 1000, 0.1) : 1/60;
+  _lastFishTimerTs = now;
   if (!fishState.caught) {
-    fishState.timer += dt;
+    fishState.timer += fishDt;
     if (!fishState.visible) {
       if (fishState.timer >= fishState.nextAppear) {
         fishState.visible = true;
@@ -1325,7 +1329,7 @@ function drawPond(ctx: CanvasRenderingContext2D, t: number): void {
         fishState.y = POND_Y;
       }
     } else {
-      fishState.jumpPhase += dt;
+      fishState.jumpPhase += fishDt;
       if (fishState.jumpPhase > TOTAL_FISH_DUR) {
         fishState.visible = false;
         fishState.timer = 0;

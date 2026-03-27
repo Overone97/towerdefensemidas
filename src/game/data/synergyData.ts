@@ -131,6 +131,7 @@ export const ELEMENT_SYNERGIES: ElementSynergyDef[] = [
   { element: 'ice', thresholds: [
     { count: 2, name: 'Frost', description: '+20% Slow', bonus: { slowMult: 1.2 } },
     { count: 3, name: 'Blizzard', description: '+35% Slow', bonus: { slowMult: 1.35 } },
+    { count: 5, name: 'Permafrost', description: '+50% Slow duration / stacking', bonus: { slowMult: 1.5 } },
   ]},
   { element: 'shadow', thresholds: [
     { count: 2, name: 'Dusk', description: '+15% SPD', bonus: { speedMult: 1.15 } },

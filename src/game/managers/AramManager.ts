@@ -60,6 +60,7 @@ export class AramManager {
   private enemyPool: { type: EnemyType; weight: number }[] = [];
   private totalWeight = 0;
   private bossSpawned = false;
+  private _waveCompletionPending = false;
 
   // Events
   activeEvent: AramEvent | null = null;
@@ -192,6 +193,7 @@ export class AramManager {
     this.speedMult = config.enemySpeedMultiplier;
     this.rewardMult = config.enemyRewardMultiplier;
     this.bossSpawned = false;
+    this._waveCompletionPending = false;
     this.enemyPool = getAramEnemyPool(this.currentWave);
     this.totalWeight = this.enemyPool.reduce((s, e) => s + e.weight, 0);
     this.waveActive = true;
@@ -268,14 +270,19 @@ export class AramManager {
       this.spawnTimer = this.spawnInterval;
     }
 
-    // Check wave complete
+    // Check wave complete (délai d'un tick pour laisser les splitter children se résoudre)
     if (this.spawned >= this.enemyCount && enemyManager.getAliveEnemies().length === 0) {
-      this.waveActive = false;
+      if (!this._waveCompletionPending) {
+        this._waveCompletionPending = true; // attendre un tick de plus
+      } else {
+        this._waveCompletionPending = false;
+        this.waveActive = false;
 
-      // Every 5 waves: augment pick THEN champion pick
-      if (this.currentWave % 5 === 0) {
-        this.augmentChoices = rollAugments(this.ownedAugments);
-        this.phase = 'augment_pick';
+        // Every 5 waves: augment pick THEN champion pick
+        if (this.currentWave % 5 === 0) {
+          this.augmentChoices = rollAugments(this.ownedAugments);
+          this.phase = 'augment_pick';
+        }
       }
     }
   }
@@ -397,7 +404,7 @@ export class AramManager {
           { x: wp[Math.floor(wp.length * 0.5)].x, y: wp[Math.floor(wp.length * 0.5)].y },
           { x: wp[Math.floor(wp.length * 0.72)].x, y: wp[Math.floor(wp.length * 0.72)].y },
         ];
-        const slot = Math.min(this.getShopStack('pink_ward') - 1, wardSpots.length - 1);
+        const slot = Math.min(stacks, wardSpots.length - 1); // stacks = valeur avant incrément (index 0-based correct)
         const spot = wardSpots[Math.max(0, slot)];
         this.pinkWards.push({ x: spot.x, y: spot.y, radius: 110 });
         break;

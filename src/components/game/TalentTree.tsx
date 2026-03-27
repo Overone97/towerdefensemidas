@@ -51,7 +51,7 @@ const TreeNode: React.FC<{
           : 'border-white/20 opacity-80'
       }`}
       style={{ left: x, top: y }}
-      title={locked ? `Verrouillé (${requiredSpent || 0} points requis + prérequis)` : `${name} — coût ${cost}🜲`}
+      title={locked ? `Verrouillé${(requiredSpent ?? 0) > 0 ? ` (${requiredSpent} points requis)` : ''} — prérequis non remplis` : `${name} — coût ${cost}🜲`}
     >
       <div className="flex items-center justify-between mb-1">
         <div className="text-xs font-bold truncate">{icon} {name}</div>
@@ -117,7 +117,7 @@ const TalentTree: React.FC<TalentTreeProps> = ({ stars, ascensionPoints, ascensi
       </div>
 
       <div className="flex-1 overflow-auto p-3">
-        <div className="relative mx-auto rounded-2xl border border-white/10 bg-gradient-to-b from-[#0a1222] to-[#070c16] shadow-[inset_0_0_120px_rgba(0,0,0,0.35)]" style={{ width: 1040, height: 540 }}>
+        <div className="relative mx-auto rounded-2xl border border-white/10 bg-gradient-to-b from-[#0a1222] to-[#070c16] shadow-[inset_0_0_120px_rgba(0,0,0,0.35)]" style={{ width: 1040, minHeight: 540, maxWidth: '100%', overflowX: 'auto' }}>
           <div className="absolute top-2 left-10 text-[11px] text-red-200/80">{BRANCH_STYLE.attack.label}</div>
           <div className="absolute top-2 left-[410px] text-[11px] text-sky-200/80">{BRANCH_STYLE.defense.label}</div>
           <div className="absolute top-2 right-12 text-[11px] text-amber-200/80">{BRANCH_STYLE.economy.label}</div>

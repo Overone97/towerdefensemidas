@@ -80,8 +80,9 @@ export function computeSynergies(units: PlacedUnit[]): {
   for (const elSynergy of ELEMENT_SYNERGIES) {
     const count = elementCounts.get(elSynergy.element) || 0;
     // Find the highest threshold met
+    const sortedThresholds = [...elSynergy.thresholds].sort((a, b) => a.count - b.count);
     let bestThreshold = null;
-    for (const t of elSynergy.thresholds) {
+    for (const t of sortedThresholds) {
       if (count >= t.count) bestThreshold = t;
     }
     if (bestThreshold) {
