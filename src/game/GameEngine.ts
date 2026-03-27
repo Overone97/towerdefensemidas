@@ -35,6 +35,16 @@ export const fishState = {
   caught: false,
 };
 
+const UNIT_XP = {
+  kill: 12,
+  bossKill: 48,
+  waveClear: 18,
+};
+
+function getXpToNextLevel(level: number): number {
+  return 30 + (level - 1) * 18;
+}
+
 export class GameEngine {
   enemyManager = new EnemyManager();
   private adminMode = false;
@@ -226,6 +236,7 @@ export class GameEngine {
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
         this.grantUnlockShards(Math.max(1, Math.ceil(result.reward * 0.35)));
+        this.awardUnitXp(unitId, enemy.type === 'boss' ? UNIT_XP.bossKill : UNIT_XP.kill);
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#ffdd44', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
@@ -351,6 +362,7 @@ export class GameEngine {
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
+      this.awardWaveXp();
       soundManager.playVictory();
 
       if (this.activeDungeon) {
@@ -552,11 +564,33 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config,
       level: 1,
+      xp: 0,
       equipment: {},
       stars: 1,
     };
     this.state.inventory.push(character);
     return character;
+  }
+
+  private awardUnitXp(characterInstanceId: number, amount: number): void {
+    if (amount <= 0) return;
+    const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
+    if (!character) return;
+
+    character.xp = (character.xp || 0) + amount;
+    while (character.level < 50 && (character.xp || 0) >= getXpToNextLevel(character.level)) {
+      character.xp = (character.xp || 0) - getXpToNextLevel(character.level);
+      character.level += 1;
+    }
+  }
+
+  private awardWaveXp(): void {
+    const placedIds = new Set(this.state.placedUnits.map(unit => unit.characterInstanceId));
+    for (const character of this.state.inventory) {
+      if (placedIds.has(character.instanceId)) {
+        this.awardUnitXp(character.instanceId, UNIT_XP.waveClear);
+      }
+    }
   }
 
   unlockCharacter(championId: string): OwnedCharacter | null {
@@ -1026,6 +1060,7 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config: fizz,
       level: 1,
+      xp: 0,
       equipment: {},
       stars: 1,
     };
