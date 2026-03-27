@@ -63,10 +63,10 @@ export class WaveManager {
     const modifier = getWaveModifier(((wave - 1) % 100) + 1);
     return {
       waveNumber: wave,
-      enemyCount: 5 + Math.floor(wave * 2),
+      enemyCount: Math.min(5 + Math.floor(wave * 2), 80),
       spawnInterval: Math.max(250, 1000 - wave * 20),
       enemyHpMultiplier: scaleFactor * 1.5,
-      enemySpeedMultiplier: 1 + (wave - 1) * 0.03,
+      enemySpeedMultiplier: Math.min(1 + (wave - 1) * 0.03, 3.0),
       enemyRewardMultiplier: 1 + (wave - 1) * 0.15,
       modifier,
     };

@@ -90,6 +90,29 @@ export function loadSave(): SaveData {
     if (merged.mapsCompleted) {
       merged.mapsCompleted = merged.mapsCompleted.filter((id: string) => validMapIds.includes(id));
     }
+    // Validation des plages numériques pour prévenir la triche localStorage
+    const def = defaultSave();
+    merged.gold = typeof merged.gold === 'number' && merged.gold >= 0 && merged.gold <= 999999
+      ? merged.gold : def.gold;
+    merged.stars = typeof merged.stars === 'number' && merged.stars >= 0 && merged.stars <= 99999
+      ? merged.stars : def.stars;
+    merged.highScore = typeof merged.highScore === 'number' && merged.highScore >= 0
+      ? merged.highScore : def.highScore;
+    merged.prestige = typeof merged.prestige === 'number' && merged.prestige >= 0 && merged.prestige <= 100
+      ? merged.prestige : def.prestige;
+    if (typeof merged.gameSpeed === 'number') {
+      merged.gameSpeed = Math.min(Math.max(merged.gameSpeed, 0.5), 3);
+    } else {
+      merged.gameSpeed = def.gameSpeed;
+    }
+    // Filtrer les items d'inventaire invalides
+    if (Array.isArray(merged.inventory)) {
+      merged.inventory = merged.inventory.filter((item: unknown) =>
+        item && typeof item.configId === 'string' &&
+        typeof item.level === 'number' && item.level >= 1 && item.level <= 50 &&
+        typeof item.stars === 'number' && item.stars >= 1 && item.stars <= 3
+      );
+    }
     return merged;
   } catch {
     return defaultSave();

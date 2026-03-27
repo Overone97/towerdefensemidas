@@ -20,9 +20,10 @@ interface GameOverScreenProps {
   onRestart: () => void;
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, starsEarned, endlessMode, leaderboard, mapId, onRestart }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, starsEarned, endlessMode, leaderboard, mapId, damageStats, onRestart }) => {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('td_player_name') || '');
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [cloudLeaderboard, setCloudLeaderboard] = useState<CloudLeaderboardEntry[]>([]);
   const [loadingLb, setLoadingLb] = useState(true);
 
@@ -35,9 +36,15 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, s
 
   const handleSubmit = async () => {
     if (!playerName.trim()) return;
+    setSubmitError(null);
     localStorage.setItem('td_player_name', playerName);
-    await submitScore(playerName.trim(), score, wave, mapId);
-    setSubmitted(true);
+    try {
+      await submitScore(playerName.trim(), score, wave, mapId);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('[GameOverScreen] Score submission failed:', err);
+      setSubmitError('Erreur lors de la soumission. Réessaie.');
+    }
   };
 
   return (
@@ -60,18 +67,23 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ victory, score, wave, s
 
         {/* Score submission */}
         {!submitted ? (
-          <div className="mb-4 flex gap-2">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Ton pseudo..."
-              maxLength={20}
-              className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm font-mono"
-            />
-            <Button onClick={handleSubmit} size="sm" disabled={!playerName.trim()}>
-              📤 Submit
-            </Button>
+          <div className="mb-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Ton pseudo..."
+                maxLength={20}
+                className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm font-mono"
+              />
+              <Button onClick={handleSubmit} size="sm" disabled={!playerName.trim()}>
+                📤 Submit
+              </Button>
+            </div>
+            {submitError && (
+              <p className="text-red-400 text-xs mt-1">{submitError}</p>
+            )}
           </div>
         ) : (
           <p className="text-green-400 text-xs font-mono mb-4">✓ Score soumis au classement mondial !</p>

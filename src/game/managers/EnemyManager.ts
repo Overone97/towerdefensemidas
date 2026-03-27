@@ -9,6 +9,17 @@ export class EnemyManager {
   private waypoints: Point[] = WAYPOINTS;
   waveModifier: WaveModifier = null;
 
+  private _aliveEnemies: Enemy[] = [];
+  private _targetableEnemies: Enemy[] = [];
+  private _cachesDirty = true;
+
+  private rebuildCaches(): void {
+    if (!this._cachesDirty) return;
+    this._aliveEnemies = this.enemies.filter(e => e.alive);
+    this._targetableEnemies = this._aliveEnemies.filter(e => !e.stealthed);
+    this._cachesDirty = false;
+  }
+
   setWaypoints(wp: Point[]): void {
     this.waypoints = wp;
   }
@@ -76,6 +87,7 @@ export class EnemyManager {
     }
 
     this.enemies.push(enemy);
+    this._cachesDirty = true;
   }
 
   update(dt: number): { reachedEnd: Enemy[]; dotKills: Enemy[]; dotDamages: { unitId: number; damage: number }[]; splitSpawns: Enemy[] } {
@@ -103,6 +115,7 @@ export class EnemyManager {
       // Stealth reveal check: reveal when HP drops below 50%
       if (enemy.stealthed && enemy.hp / enemy.maxHp <= 0.5) {
         enemy.stealthed = false;
+        this._cachesDirty = true;
       }
 
       // Earth dragon shield regen
@@ -160,6 +173,7 @@ export class EnemyManager {
             };
             this.enemies.push(minion);
           }
+          this._cachesDirty = true;
         }
       }
 
@@ -186,6 +200,7 @@ export class EnemyManager {
               alive: true, statusEffects: [], animFrame: Math.random() * 100,
             });
           }
+          this._cachesDirty = true;
         }
       }
 
@@ -219,7 +234,10 @@ export class EnemyManager {
               const amount = Math.min(18, target.hp);
               target.hp -= amount;
               drained += amount;
-              if (target.hp <= 0) target.alive = false;
+              if (target.hp <= 0) {
+                target.alive = false;
+                this._cachesDirty = true;
+              }
             }
           }
           enemy.hp = Math.min(enemy.maxHp, enemy.hp + drained * 0.45);
@@ -235,6 +253,7 @@ export class EnemyManager {
           splitSpawns.push(...splits);
         }
         dotKills.push(enemy);
+        this._cachesDirty = true;
         continue;
       }
 
@@ -242,6 +261,7 @@ export class EnemyManager {
       if (nextIdx >= this.waypoints.length) {
         reachedEnd.push(enemy);
         enemy.alive = false;
+        this._cachesDirty = true;
         continue;
       }
 
@@ -259,6 +279,7 @@ export class EnemyManager {
         if (enemy.waypointIndex + 1 >= this.waypoints.length) {
           reachedEnd.push(enemy);
           enemy.alive = false;
+          this._cachesDirty = true;
           continue;
         }
       }
@@ -274,6 +295,7 @@ export class EnemyManager {
     }
 
     this.enemies = this.enemies.filter(e => e.alive);
+    this._cachesDirty = true;
     return { reachedEnd, dotKills, dotDamages, splitSpawns };
   }
 
@@ -321,6 +343,7 @@ export class EnemyManager {
       });
     }
     this.enemies.push(...children);
+    this._cachesDirty = true;
     return children;
   }
 
@@ -397,6 +420,7 @@ export class EnemyManager {
     enemy.hp -= effectiveDamage;
     if (enemy.hp <= 0) {
       enemy.alive = false;
+      this._cachesDirty = true;
       const isSplitter = enemy.type === 'splitter';
       if (isSplitter) {
         this.spawnSplitChildren(enemy);
@@ -407,12 +431,14 @@ export class EnemyManager {
   }
 
   getAliveEnemies(): Enemy[] {
-    return this.enemies.filter(e => e.alive);
+    this.rebuildCaches();
+    return this._aliveEnemies;
   }
 
   /** Get targetable enemies (excludes stealthed) */
   getTargetableEnemies(): Enemy[] {
-    return this.enemies.filter(e => e.alive && !e.stealthed);
+    this.rebuildCaches();
+    return this._targetableEnemies;
   }
 
   /** Get ice dragons for tower slow aura */
@@ -424,5 +450,6 @@ export class EnemyManager {
 
   clear(): void {
     this.enemies = [];
+    this._cachesDirty = true;
   }
 }

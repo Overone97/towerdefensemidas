@@ -13,6 +13,7 @@ class SoundManager {
   private _muted = false;
   private _musicMuted = false;
   private _volume = 0.5;
+  private _musicLoopTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   get muted() { return this._muted; }
   get musicMuted() { return this._musicMuted; }
@@ -38,7 +39,9 @@ class SoundManager {
         return null;
       }
     }
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx.state === 'suspended' || (this.ctx.state as string) === 'interrupted') {
+      this.ctx.resume();
+    }
     return this.ctx;
   }
 
@@ -67,6 +70,10 @@ class SoundManager {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(this.sfxGain!);
+    osc.onended = () => {
+      try { osc.disconnect(); } catch (_e) { /* noop */ }
+      try { gain.disconnect(); } catch (_e) { /* noop */ }
+    };
     osc.frequency.value = 800 * pitch;
     osc.type = 'square';
     gain.gain.setValueAtTime(0.08, t);
@@ -83,6 +90,10 @@ class SoundManager {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(this.sfxGain!);
+    osc.onended = () => {
+      try { osc.disconnect(); } catch (_e) { /* noop */ }
+      try { gain.disconnect(); } catch (_e) { /* noop */ }
+    };
     osc.frequency.setValueAtTime(1200, t);
     osc.frequency.exponentialRampToValueAtTime(400, t + 0.06);
     osc.type = 'sawtooth';
@@ -124,6 +135,10 @@ class SoundManager {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(this.sfxGain!);
+      osc.onended = () => {
+        try { osc.disconnect(); } catch (_e) { /* noop */ }
+        try { gain.disconnect(); } catch (_e) { /* noop */ }
+      };
       osc.frequency.value = freq;
       osc.type = 'sawtooth';
       const start = t + i * 0.08;
@@ -160,6 +175,10 @@ class SoundManager {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(this.sfxGain!);
+      osc.onended = () => {
+        try { osc.disconnect(); } catch (_e) { /* noop */ }
+        try { gain.disconnect(); } catch (_e) { /* noop */ }
+      };
       osc.frequency.value = freq;
       osc.type = 'triangle';
       const start = t + i * 0.1;
@@ -181,6 +200,10 @@ class SoundManager {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(this.sfxGain!);
+      osc.onended = () => {
+        try { osc.disconnect(); } catch (_e) { /* noop */ }
+        try { gain.disconnect(); } catch (_e) { /* noop */ }
+      };
       osc.frequency.value = freq;
       osc.type = 'sine';
       const start = t + i * 0.15;
@@ -201,6 +224,10 @@ class SoundManager {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(this.sfxGain!);
+      osc.onended = () => {
+        try { osc.disconnect(); } catch (_e) { /* noop */ }
+        try { gain.disconnect(); } catch (_e) { /* noop */ }
+      };
       osc.frequency.value = freq;
       osc.type = 'sawtooth';
       const start = t + i * 0.2;
@@ -219,6 +246,10 @@ class SoundManager {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(this.sfxGain!);
+    osc.onended = () => {
+      try { osc.disconnect(); } catch (_e) { /* noop */ }
+      try { gain.disconnect(); } catch (_e) { /* noop */ }
+    };
     osc.frequency.setValueAtTime(400, t);
     osc.frequency.linearRampToValueAtTime(600, t + 0.08);
     osc.type = 'sine';
@@ -238,6 +269,10 @@ class SoundManager {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(this.sfxGain!);
+      osc.onended = () => {
+        try { osc.disconnect(); } catch (_e) { /* noop */ }
+        try { gain.disconnect(); } catch (_e) { /* noop */ }
+      };
       osc.frequency.value = freq;
       osc.type = 'sine';
       gain.gain.setValueAtTime(0.1, t);
@@ -250,6 +285,10 @@ class SoundManager {
     const sGain = ctx.createGain();
     shimmer.connect(sGain);
     sGain.connect(this.sfxGain!);
+    shimmer.onended = () => {
+      try { shimmer.disconnect(); } catch (_e) { /* noop */ }
+      try { sGain.disconnect(); } catch (_e) { /* noop */ }
+    };
     shimmer.frequency.setValueAtTime(2000, t);
     shimmer.frequency.exponentialRampToValueAtTime(800, t + 0.3);
     shimmer.type = 'sine';
@@ -267,6 +306,10 @@ class SoundManager {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(this.sfxGain!);
+    osc.onended = () => {
+      try { osc.disconnect(); } catch (_e) { /* noop */ }
+      try { gain.disconnect(); } catch (_e) { /* noop */ }
+    };
     osc.frequency.value = 600;
     osc.type = 'sine';
     gain.gain.setValueAtTime(0.05, t);
@@ -283,6 +326,10 @@ class SoundManager {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(this.sfxGain!);
+    osc.onended = () => {
+      try { osc.disconnect(); } catch (_e) { /* noop */ }
+      try { gain.disconnect(); } catch (_e) { /* noop */ }
+    };
     osc.frequency.setValueAtTime(200, t);
     osc.frequency.exponentialRampToValueAtTime(60, t + 0.2);
     osc.type = 'square';
@@ -304,7 +351,14 @@ class SoundManager {
 
   stopMusic() {
     this.musicPlaying = false;
-    this.musicOscillators.forEach(o => { try { o.stop(); } catch { /* oscillator may already be stopped */ } });
+    if (this._musicLoopTimeoutId !== null) {
+      clearTimeout(this._musicLoopTimeoutId);
+      this._musicLoopTimeoutId = null;
+    }
+    this.musicOscillators.forEach(o => {
+      try { o.stop(); } catch { /* oscillator may already be stopped */ }
+      try { o.disconnect(); } catch (_e) { /* noop */ }
+    });
     this.musicOscillators = [];
   }
 
@@ -330,6 +384,10 @@ class SoundManager {
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(this.musicGain!);
+        osc.onended = () => {
+          try { osc.disconnect(); } catch (_e) { /* noop */ }
+          try { gain.disconnect(); } catch (_e) { /* noop */ }
+        };
         osc.frequency.value = freq;
         osc.type = 'sine';
         const start = t + ci * chordDuration;
@@ -346,7 +404,7 @@ class SoundManager {
 
     // Schedule next loop
     const totalDuration = chords.length * chordDuration;
-    setTimeout(() => {
+    this._musicLoopTimeoutId = setTimeout(() => {
       this.musicOscillators = [];
       this.playMusicLoop();
     }, totalDuration * 1000 - 100);

@@ -69,12 +69,23 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
             </button>
           ))}
           {[
+            { label: '📖', ariaLabel: 'Ouvrir le wiki', onClick: onOpenWiki },
+            { label: '🏆', ariaLabel: 'Classement / Succès', onClick: onOpenAchievements },
+            { label: '🎒', ariaLabel: 'Équipement / Inventaire', onClick: onOpenEquipment },
+            { label: '🎨 Skins', ariaLabel: 'Skins', onClick: onOpenSkins },
+          ].map(btn => (
+            <button
+              key={btn.ariaLabel}
+              aria-label={btn.ariaLabel}
+              onClick={btn.onClick}
+              className="px-2.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
+            >
+              {btn.label}
+            </button>
+          ))}
+          {[
             { label: 'Talents', onClick: onOpenTalents },
             { label: 'Maps', onClick: onOpenMaps },
-            { label: '📖', onClick: onOpenWiki },
-            { label: '🏆', onClick: onOpenAchievements },
-            { label: '🎒', onClick: onOpenEquipment },
-            { label: '🎨 Skins', onClick: onOpenSkins },
           ].map(btn => (
             <button
               key={btn.label}
@@ -97,12 +108,14 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         <div className="flex items-center gap-1.5">
           <AuthButton />
           <button
+            aria-label={soundManager.muted ? 'Activer le son' : 'Couper le son'}
             onClick={() => { soundManager.toggleMute(); }}
             className="px-1.5 py-1 rounded text-xs font-mono transition-colors bg-muted/70 text-muted-foreground hover:bg-accent"
           >
             {soundManager.muted ? '🔇' : '🔊'}
           </button>
           <button
+            aria-label={soundManager.musicMuted ? 'Activer la musique' : 'Couper la musique'}
             onClick={() => {
               soundManager.toggleMusic();
               if (!soundManager.musicMuted) soundManager.startMusic();

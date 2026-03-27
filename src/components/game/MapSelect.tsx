@@ -44,8 +44,12 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
             return (
               <button
                 key={map.id}
-                onClick={() => unlocked && onSelectMap(map.id)}
+                onClick={() => {
+                  if (!unlocked) { console.warn('[MapSelect] Access denied to map:', map.id); return; }
+                  onSelectMap(map.id);
+                }}
                 disabled={!unlocked}
+                aria-disabled={!unlocked}
                 className={`flex flex-col items-center gap-2 p-6 rounded-xl border-2 w-56 transition-all ${
                   unlocked
                     ? completed
@@ -118,8 +122,12 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
             return (
               <button
                 key={dungeon.id}
-                onClick={() => !completedToday && onStartDungeon(dungeon.id)}
+                onClick={() => {
+                  if (completedToday) { console.warn('[MapSelect] Access denied to dungeon:', dungeon.id); return; }
+                  onStartDungeon(dungeon.id);
+                }}
                 disabled={completedToday}
+                aria-disabled={completedToday}
                 className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 w-56 transition-all ${
                   completedToday
                     ? 'border-green-500/40 bg-green-500/5 opacity-60 cursor-not-allowed'
