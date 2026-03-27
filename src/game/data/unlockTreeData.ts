@@ -9,6 +9,7 @@ export interface CharacterUnlockNode {
   requiredMapsCompleted: number;
   requiredAchievements: number;
   requiredQuests: number;
+  themeGoalLabel: string;
 }
 
 const RARITY_WEIGHT: Record<Rarity, number> = {
@@ -20,30 +21,34 @@ const RARITY_WEIGHT: Record<Rarity, number> = {
 };
 
 const CURATED_UNLOCK_ORDER = [
-  // Starters: easy to read, basic archetypes
   'garen', 'ashe', 'leona', 'teemo', 'lux',
-
-  // Early hook: simple upgrades + first cool fantasies
   'annie', 'darius', 'jarvan', 'lissandra', 'blitzcrank',
   'yasuo', 'caitlyn', 'thresh', 'ahri', 'ezreal',
-
-  // Mid game: stronger fantasies, more style variety
   'rumble', 'jinx', 'zed', 'volibear', 'brand',
   'vayne', 'morgana', 'leesin', 'twistedfate', 'missfortune',
   'draven', 'irelia', 'lucian', 'orianna', 'ekko',
-
-  // Late-mid: more expressive and premium feeling roster
   'elise', 'jayce', 'talon', 'vi', 'xerath',
   'fiora', 'jax', 'khazix', 'leblanc', 'lulu',
   'rengar', 'swain', 'syndra', 'viktor', 'vladimir',
-
-  // Prestige layer: desirable headline champions
   'riven', 'alistar', 'anivia', 'kassadin', 'sona',
   'katarina', 'masteryi', 'shaco', 'tryndamere', 'veigar',
   'evelynn', 'urgot',
 ];
 
 const curatedOrderIndex = new Map(CURATED_UNLOCK_ORDER.map((id, index) => [id, index]));
+
+const THEME_GOALS = [
+  'Termine une wave proprement',
+  'Gagne sans paniquer',
+  'Tiens la ligne sans perdre le rythme',
+  'Écrase une vague avec style',
+  'Accumule assez d’éclats pour mériter le suivant',
+  'Valide tes objectifs avant le prochain pick',
+  'Montre que ton roster progresse vraiment',
+  'Prouve que tu maîtrises ton économie',
+  'Passe un cap et réclame ta récompense',
+  'Joue assez bien pour mériter un nouveau monstre',
+];
 
 function compareCharacters(a: CharacterConfig, b: CharacterConfig): number {
   const curatedA = curatedOrderIndex.get(a.id);
@@ -105,6 +110,19 @@ function getRequiredQuests(index: number): number {
   return 4;
 }
 
+function getThemeGoalLabel(character: CharacterConfig, index: number): string {
+  if (character.attackPattern === 'rapid') return 'Fais pleuvoir les attaques et garde la pression';
+  if (character.attackPattern === 'aoe_circle') return 'Nettoie les packs ennemis comme un porc';
+  if (character.attackPattern === 'slow') return 'Contrôle la wave avant qu’elle te marche dessus';
+  if (character.attackPattern === 'chain') return 'Fais rebondir le chaos sur toute la ligne';
+  if (character.attackPattern === 'burst') return 'Détruis une cible clé avant qu’elle respire';
+  if (character.attackPattern === 'poison' || character.attackPattern === 'poison_trail' || character.attackPattern === 'mushroom') {
+    return 'Laisse les ennemis mourir lentement, c’est plus drôle';
+  }
+  if (character.canRevealStealth) return 'Repère les menaces cachées et garde le contrôle';
+  return THEME_GOALS[index % THEME_GOALS.length];
+}
+
 function buildUnlockTree(): CharacterUnlockNode[] {
   return ORDERED_CHARACTERS.map((character, index) => {
     const rarityWeight = RARITY_WEIGHT[character.rarity];
@@ -117,6 +135,7 @@ function buildUnlockTree(): CharacterUnlockNode[] {
       requiredMapsCompleted: getRequiredMapsCompleted(index),
       requiredAchievements: getRequiredAchievements(index),
       requiredQuests: getRequiredQuests(index),
+      themeGoalLabel: getThemeGoalLabel(character, index),
     };
   });
 }

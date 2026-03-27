@@ -217,6 +217,7 @@ export interface CharacterUnlockProgress {
   requiredMapsCompleted: number;
   requiredAchievements: number;
   requiredQuests: number;
+  themeGoalLabel: string;
   unlocked: boolean;
   isNext: boolean;
   canUnlock: boolean;

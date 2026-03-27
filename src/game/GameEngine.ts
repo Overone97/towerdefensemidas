@@ -1097,6 +1097,7 @@ export class GameEngine {
         requiredMapsCompleted: node.requiredMapsCompleted,
         requiredAchievements: node.requiredAchievements,
         requiredQuests: node.requiredQuests,
+        themeGoalLabel: node.themeGoalLabel,
         unlocked: isUnlocked,
         isNext,
         canUnlock,

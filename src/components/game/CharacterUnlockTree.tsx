@@ -66,6 +66,9 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
                   <div className="text-[11px] text-muted-foreground mt-1">
                     {node.unlocked ? 'Déjà débloqué' : node.isNext ? 'Prochain déblocage' : 'Verrouillé par progression'}
                   </div>
+                  <div className="text-[11px] text-cyan-200/80 mt-1 italic">
+                    {node.themeGoalLabel}
+                  </div>
                 </div>
               </div>
 
