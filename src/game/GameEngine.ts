@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice, CharacterUnlockProgress } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice, CharacterUnlockProgress, CharacterConfig } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
@@ -41,8 +41,42 @@ const UNIT_XP = {
   waveClear: 18,
 };
 
-function getXpToNextLevel(level: number): number {
-  return 30 + (level - 1) * 18;
+const RARITY_XP_MULT: Record<Rarity, number> = {
+  common: 1,
+  uncommon: 0.96,
+  rare: 0.92,
+  epic: 0.88,
+  legendary: 0.84,
+};
+
+function getXpToNextLevel(level: number, rarity: Rarity): number {
+  const rarityTax = rarity === 'legendary' ? 12 : rarity === 'epic' ? 8 : rarity === 'rare' ? 4 : rarity === 'uncommon' ? 2 : 0;
+  return 30 + (level - 1) * 18 + rarityTax;
+}
+
+function getChampionRoleXpMult(config: CharacterConfig): number {
+  switch (config.attackPattern) {
+    case 'single':
+      return config.range >= 170 ? 0.94 : 1.04;
+    case 'rapid':
+      return 0.9;
+    case 'aoe_circle':
+      return 0.9;
+    case 'line':
+      return 0.95;
+    case 'poison':
+    case 'poison_trail':
+    case 'mushroom':
+      return 0.93;
+    case 'slow':
+      return 1.08;
+    case 'chain':
+      return 0.92;
+    case 'burst':
+      return 0.97;
+    default:
+      return 1;
+  }
 }
 
 export class GameEngine {
@@ -577,19 +611,26 @@ export class GameEngine {
     const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
     if (!character) return;
 
-    character.xp = (character.xp || 0) + amount;
-    while (character.level < 50 && (character.xp || 0) >= getXpToNextLevel(character.level)) {
-      character.xp = (character.xp || 0) - getXpToNextLevel(character.level);
+    const adjustedXp = Math.max(
+      1,
+      Math.round(amount * RARITY_XP_MULT[character.config.rarity] * getChampionRoleXpMult(character.config))
+    );
+
+    character.xp = (character.xp || 0) + adjustedXp;
+    while (character.level < 50 && (character.xp || 0) >= getXpToNextLevel(character.level, character.config.rarity)) {
+      character.xp = (character.xp || 0) - getXpToNextLevel(character.level, character.config.rarity);
       character.level += 1;
     }
   }
 
   private awardWaveXp(): void {
-    const placedIds = new Set(this.state.placedUnits.map(unit => unit.characterInstanceId));
-    for (const character of this.state.inventory) {
-      if (placedIds.has(character.instanceId)) {
-        this.awardUnitXp(character.instanceId, UNIT_XP.waveClear);
-      }
+    const placedUnits = [...this.state.placedUnits];
+    if (placedUnits.length === 0) return;
+
+    const supportPatterns = new Set(['slow', 'poison_trail', 'mushroom']);
+    for (const unit of placedUnits) {
+      const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 4 : 0;
+      this.awardUnitXp(unit.characterInstanceId, UNIT_XP.waveClear + participationBonus);
     }
   }
 
