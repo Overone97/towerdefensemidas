@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice, CharacterUnlockProgress } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
@@ -12,7 +12,6 @@ import { getTalentBonus, getAscensionBonus, getAscensionUpgradeCost, getAscensio
 import { ALL_MAPS } from './data/allMaps';
 import { TOTAL_WAVES } from './data/waveData';
 import { ALL_CHARACTERS, getCharacterUpgradeCost, getCharacterStats } from './data/characterData';
-import { getGachaCost } from './data/gachaData';
 import { TALENTS, ASCENSION_UPGRADES } from './data/talentData';
 import { rollBossDrop, ALL_EQUIPMENT, getEquipmentBonuses, EquipmentItem } from './data/equipmentData';
 import { COMPOSITE_RECIPES, findAvailableRecipes } from './data/compositeEquipmentData';
@@ -21,6 +20,7 @@ import { soundManager } from './audio/SoundManager';
 import { loadDailyQuests, saveDailyQuests, progressDailyQuest, DailyQuestState, DailyQuestEvent } from './managers/DailyQuestManager';
 import { DungeonDef, getDungeonMap, isDungeonCompletedToday, ALL_DUNGEONS } from './data/dungeonData';
 import { ALL_SKINS, checkSkinUnlock, getSkinsForChampion, getSkinById } from './data/skinData';
+import { CHARACTER_UNLOCK_TREE, getUnlockNode } from './data/unlockTreeData';
 
 let nextInstanceId = 1;
 
@@ -112,8 +112,9 @@ export class GameEngine {
       enemiesKilled: 0,
       totalWaves: TOTAL_WAVES,
       inventory,
-      gachaCost: Math.floor(getGachaCost(this.saveData.totalSummons) * talentBonus.summonDiscount * (1 - ascensionBonus.summonDiscount)),
+      gachaCost: 0,
       totalSummons: this.saveData.totalSummons,
+      unlockShards: this.saveData.unlockShards || 0,
       activeTab: 'game',
       activeSynergies: [],
       stars: this.saveData.stars,
@@ -224,6 +225,7 @@ export class GameEngine {
         this.state.score += result.reward;
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
+        this.grantUnlockShards(Math.max(1, Math.ceil(result.reward * 0.35)));
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#ffdd44', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
@@ -534,22 +536,18 @@ export class GameEngine {
   }
 
   summonCharacter(): OwnedCharacter | null {
-    const cost = this.state.gachaCost;
-    if (this.state.gold < cost) return null;
+    return null;
+  }
 
-    // Allow duplicates for merging - only exclude fizz
-    const available = ALL_CHARACTERS.filter(c => c.id !== 'fizz');
-    if (available.length === 0) return null;
+  private grantUnlockShards(amount: number): void {
+    if (amount <= 0) return;
+    this.saveData.unlockShards = (this.saveData.unlockShards || 0) + amount;
+    this.state.unlockShards = this.saveData.unlockShards;
+  }
 
-    this.state.gold -= cost;
-    this.state.totalSummons++;
-    this.saveData.totalSummons = this.state.totalSummons;
-    const talentBonus = getTalentBonus(this.saveData.talents);
-    const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
-    this.state.gachaCost = Math.floor(getGachaCost(this.state.totalSummons) * talentBonus.summonDiscount * (1 - ascensionBonus.summonDiscount));
-
-    // Random pick from all available characters
-    const config = available[Math.floor(Math.random() * available.length)];
+  private addCharacterToInventory(configId: string): OwnedCharacter | null {
+    const config = ALL_CHARACTERS.find(c => c.id === configId);
+    if (!config) return null;
     const character: OwnedCharacter = {
       instanceId: nextInstanceId++,
       config,
@@ -558,6 +556,26 @@ export class GameEngine {
       stars: 1,
     };
     this.state.inventory.push(character);
+    return character;
+  }
+
+  unlockCharacter(championId: string): OwnedCharacter | null {
+    const node = getUnlockNode(championId);
+    if (!node) return null;
+    const unlocked = new Set(this.saveData.unlockedCharacters || []);
+    if (unlocked.has(championId)) return null;
+
+    const progress = this.getCharacterUnlockProgress();
+    const current = progress.find(p => p.championId === championId);
+    if (!current || !current.canUnlock || !current.isNext) return null;
+
+    this.saveData.unlockShards -= node.shardCost;
+    this.state.unlockShards = this.saveData.unlockShards;
+    this.saveData.unlockedCharacters = [...(this.saveData.unlockedCharacters || []), championId];
+    this.state.totalSummons++;
+    this.saveData.totalSummons = this.state.totalSummons;
+
+    const character = this.addCharacterToInventory(championId);
     this.persistSave();
     return character;
   }
@@ -788,7 +806,7 @@ export class GameEngine {
     return true;
   }
 
-  setActiveTab(tab: 'game' | 'gacha'): void {
+  setActiveTab(tab: 'game' | 'progress'): void {
     this.state.activeTab = tab;
   }
 
@@ -1027,7 +1045,7 @@ export class GameEngine {
       mapsCompleted: this.saveData.mapsCompleted.length,
       wavesCompleted: this.saveData.stats.maxWaveReached,
       perfectMaps: this.saveData.stats.perfectMaps,
-      legendaryOwned: this.state.inventory.length,
+      legendaryOwned: this.state.inventory.filter(c => c.config.rarity === 'legendary').length,
       totalUnits: this.state.inventory.length,
       bossKills: this.saveData.stats.bossKills,
       maxWaveReached: this.saveData.stats.maxWaveReached,
@@ -1053,6 +1071,31 @@ export class GameEngine {
       all: ACHIEVEMENTS,
       unlocked: this.saveData.achievementsUnlocked,
     };
+  }
+
+  getCharacterUnlockProgress(): CharacterUnlockProgress[] {
+    const unlocked = new Set(this.saveData.unlockedCharacters || []);
+    const nextNode = CHARACTER_UNLOCK_TREE.find(node => !unlocked.has(node.championId));
+
+    return CHARACTER_UNLOCK_TREE.map(node => {
+      const isUnlocked = unlocked.has(node.championId);
+      const isNext = !isUnlocked && nextNode?.championId === node.championId;
+      const canUnlock = isNext
+        && (this.saveData.unlockShards || 0) >= node.shardCost
+        && this.saveData.stars >= node.requiredStars
+        && this.saveData.mapsCompleted.length >= node.requiredMapsCompleted;
+
+      return {
+        championId: node.championId,
+        order: node.order,
+        shardCost: node.shardCost,
+        requiredStars: node.requiredStars,
+        requiredMapsCompleted: node.requiredMapsCompleted,
+        unlocked: isUnlocked,
+        isNext,
+        canUnlock,
+      };
+    });
   }
 
   popNewAchievements(): string[] {
@@ -1181,6 +1224,8 @@ export class GameEngine {
     this.saveData.mapsCompleted = [];
     this.saveData.mapDeployments = {};
     this.saveData.totalSummons = 0;
+    this.saveData.unlockedCharacters = (this.saveData.unlockedCharacters || []).slice(0, 5);
+    this.saveData.unlockShards = 0;
     this.saveData.stats = {
       totalKills: 0, totalGold: 0, bossKills: 0,
       perfectMaps: 0, maxWaveReached: 0, fishCaught: this.saveData.stats.fishCaught,
@@ -1387,6 +1432,7 @@ export class GameEngine {
     this.saveData.inventory = inventoryToSaveData(this.state.inventory);
     this.saveData.equipmentInventory = [...this.state.equipmentInventory];
     this.saveData.gold = this.state.gold;
+    this.saveData.unlockShards = this.state.unlockShards;
     writeSave(this.saveData);
   }
 }
