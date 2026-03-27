@@ -19,15 +19,39 @@ const RARITY_WEIGHT: Record<Rarity, number> = {
   legendary: 7,
 };
 
-const STARTER_ORDER = ['garen', 'ashe', 'leona', 'teemo', 'lux'];
+const CURATED_UNLOCK_ORDER = [
+  // Starters: easy to read, basic archetypes
+  'garen', 'ashe', 'leona', 'teemo', 'lux',
+
+  // Early hook: simple upgrades + first cool fantasies
+  'annie', 'darius', 'jarvan', 'lissandra', 'blitzcrank',
+  'yasuo', 'caitlyn', 'thresh', 'ahri', 'ezreal',
+
+  // Mid game: stronger fantasies, more style variety
+  'rumble', 'jinx', 'zed', 'volibear', 'brand',
+  'vayne', 'morgana', 'leesin', 'twistedfate', 'missfortune',
+  'draven', 'irelia', 'lucian', 'orianna', 'ekko',
+
+  // Late-mid: more expressive and premium feeling roster
+  'elise', 'jayce', 'talon', 'vi', 'xerath',
+  'fiora', 'jax', 'khazix', 'leblanc', 'lulu',
+  'rengar', 'swain', 'syndra', 'viktor', 'vladimir',
+
+  // Prestige layer: desirable headline champions
+  'riven', 'alistar', 'anivia', 'kassadin', 'sona',
+  'katarina', 'masteryi', 'shaco', 'tryndamere', 'veigar',
+  'evelynn', 'urgot',
+];
+
+const curatedOrderIndex = new Map(CURATED_UNLOCK_ORDER.map((id, index) => [id, index]));
 
 function compareCharacters(a: CharacterConfig, b: CharacterConfig): number {
-  const aStarter = STARTER_ORDER.indexOf(a.id);
-  const bStarter = STARTER_ORDER.indexOf(b.id);
-  if (aStarter !== -1 || bStarter !== -1) {
-    if (aStarter === -1) return 1;
-    if (bStarter === -1) return -1;
-    return aStarter - bStarter;
+  const curatedA = curatedOrderIndex.get(a.id);
+  const curatedB = curatedOrderIndex.get(b.id);
+  if (curatedA !== undefined || curatedB !== undefined) {
+    if (curatedA === undefined) return 1;
+    if (curatedB === undefined) return -1;
+    return curatedA - curatedB;
   }
 
   const rarityDiff = RARITY_WEIGHT[a.rarity] - RARITY_WEIGHT[b.rarity];
