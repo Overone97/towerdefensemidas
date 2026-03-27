@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { OwnedCharacter } from '../../game/types';
 import CharacterSprite from './CharacterSprite';
 
@@ -6,6 +6,14 @@ interface StarterSummonOverlayProps {
   starters: OwnedCharacter[];
   onChoose: (instanceId: number) => void;
 }
+
+const CHAMPION_LINES: Record<string, string> = {
+  garen: 'La lame immobile. La voie la plus sûre pour ouvrir la marche.',
+  ashe: 'Le froid guide ton tir. Commence loin, frappe juste.',
+  leona: 'Le soleil avance avec toi. Tiens la ligne, coûte que coûte.',
+  teemo: 'Petit démon, gros problème. Fais du terrain ton piège.',
+  lux: 'La lumière taille le chaos. Contrôle avant destruction.',
+};
 
 const AURAS = [
   'from-cyan-500/40 via-blue-500/20 to-transparent',
@@ -15,6 +23,7 @@ const AURAS = [
 
 const StarterSummonOverlay: React.FC<StarterSummonOverlayProps> = ({ starters, onChoose }) => {
   const visibleStarters = useMemo(() => starters.slice(0, 3), [starters]);
+  const [summoningId, setSummoningId] = useState<number | null>(null);
   if (visibleStarters.length === 0) return null;
 
   return (
@@ -32,11 +41,20 @@ const StarterSummonOverlay: React.FC<StarterSummonOverlayProps> = ({ starters, o
           {visibleStarters.map((starter, index) => (
             <button
               key={starter.instanceId}
-              onClick={() => onChoose(starter.instanceId)}
-              className="group relative overflow-hidden rounded-[24px] border border-white/12 bg-black/30 px-4 py-5 text-left transition-all hover:-translate-y-1 hover:border-cyan-300/50 hover:shadow-[0_15px_40px_rgba(34,211,238,0.18)]"
+              onClick={() => {
+                setSummoningId(starter.instanceId);
+                window.setTimeout(() => onChoose(starter.instanceId), 260);
+              }}
+              disabled={summoningId !== null}
+              className={`group relative overflow-hidden rounded-[24px] border border-white/12 bg-black/30 px-4 py-5 text-left transition-all hover:-translate-y-1 hover:border-cyan-300/50 hover:shadow-[0_15px_40px_rgba(34,211,238,0.18)] ${
+                summoningId === starter.instanceId ? 'scale-[1.03] border-cyan-300/70 shadow-[0_0_50px_rgba(34,211,238,0.28)]' : ''
+              }`}
             >
               <div className={`absolute inset-0 bg-gradient-to-b ${AURAS[index % AURAS.length]} opacity-80`} />
               <div className="absolute inset-x-8 top-6 h-24 rounded-full bg-white/10 blur-3xl" />
+              {summoningId === starter.instanceId && (
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_58%)] animate-pulse" />
+              )}
 
               <div className="relative z-10 flex flex-col items-center text-center gap-3">
                 <div className="relative flex items-center justify-center w-28 h-28 rounded-full border border-white/15 bg-black/35 shadow-inner">
@@ -50,6 +68,10 @@ const StarterSummonOverlay: React.FC<StarterSummonOverlayProps> = ({ starters, o
                 <div>
                   <div className="text-lg font-extrabold text-white">{starter.config.name}</div>
                   <div className="text-[11px] uppercase tracking-[0.2em] text-slate-300/70 mt-1">Ombre éveillée</div>
+                </div>
+
+                <div className="text-[11px] text-cyan-100/90 italic min-h-[32px]">
+                  {CHAMPION_LINES[starter.config.id] || 'Un pouvoir ancien attend ton choix.'}
                 </div>
 
                 <div className="text-xs text-slate-200/85 min-h-[40px]">
