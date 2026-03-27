@@ -16,7 +16,9 @@ export default class GameErrorBoundary extends React.Component<React.PropsWithCh
   private handleSoftReset = () => {
     try {
       localStorage.removeItem('td_save_v1');
-    } catch {}
+    } catch (error) {
+      console.warn('Impossible de supprimer la sauvegarde locale', error);
+    }
     window.location.reload();
   };
 
