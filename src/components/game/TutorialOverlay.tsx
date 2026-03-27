@@ -32,7 +32,7 @@ const STEPS = [
   },
   {
     title: '⚔️ C\'est parti !',
-    description: 'Cliquez sur "Start Game" pour lancer la première vague. Bonne chance, invocateur !',
+    description: 'Choisis une des trois ombres au centre de la map pour invoquer ton premier champion, puis lance la première vague.',
     tip: '💡 N\'oubliez pas de visiter les Talents (🌟) et l\'Équipement (🎒) pour devenir plus fort.',
   },
 ];

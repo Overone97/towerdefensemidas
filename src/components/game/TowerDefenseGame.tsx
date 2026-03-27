@@ -9,6 +9,7 @@ import UnitInfoPanel from './UnitInfoPanel';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
 import CharacterUnlockTree from './CharacterUnlockTree';
+import StarterSummonOverlay from './StarterSummonOverlay';
 import SynergyPanel from './SynergyPanel';
 import TalentTree from './TalentTree';
 import MapSelect from './MapSelect';
@@ -453,6 +454,8 @@ const TowerDefenseGame: React.FC = () => {
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
   const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0;
+  const starterChoices = state.inventory.filter(c => ['garen', 'ashe', 'teemo', 'lux', 'leona'].includes(c.config.id)).slice(0, 3);
+  const showStarterSummon = state.currentWave === 0 && state.placedUnits.length === 0 && starterChoices.length >= 3;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
@@ -542,6 +545,22 @@ const TowerDefenseGame: React.FC = () => {
             />
           </div>
         </div>
+      )}
+
+      {showStarterSummon && (
+        <StarterSummonOverlay
+          starters={starterChoices}
+          onChoose={(instanceId) => {
+            const centerSlots = state.slots
+              .map((slot, index) => ({ slot, index, dist: Math.abs(slot.x - 400) + Math.abs(slot.y - 250) }))
+              .filter(({ slot }) => slot.unitId === null)
+              .sort((a, b) => a.dist - b.dist);
+            const targetSlot = centerSlots[0];
+            if (!targetSlot) return;
+            engine.placeUnit(targetSlot.index, instanceId);
+            onStateChange();
+          }}
+        />
       )}
 
       {/* Floating UnitBar / Progression - bottom */}
