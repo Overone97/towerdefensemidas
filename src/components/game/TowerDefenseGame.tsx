@@ -8,6 +8,7 @@ import UnitBar from './UnitBar';
 import UnitInfoPanel from './UnitInfoPanel';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
+import CharacterUnlockTree from './CharacterUnlockTree';
 import SynergyPanel from './SynergyPanel';
 import TalentTree from './TalentTree';
 import MapSelect from './MapSelect';
@@ -132,7 +133,11 @@ const TowerDefenseGame: React.FC = () => {
   }, [engine, state, onStateChange]);
 
   const handleSummon = useCallback(() => {
-    const result = engine.summonCharacter();
+    const progress = engine.getCharacterUnlockProgress();
+    const nextUnlock = progress.find(node => node.isNext && node.canUnlock);
+    if (!nextUnlock) return;
+
+    const result = engine.unlockCharacter(nextUnlock.championId);
     if (result) {
       setLastSummon(result);
       setRevealChar(result);
@@ -182,7 +187,7 @@ const TowerDefenseGame: React.FC = () => {
     onStateChange();
   }, [engine, onStateChange]);
 
-  const handleSetTab = useCallback((tab: 'game' | 'gacha') => {
+  const handleSetTab = useCallback((tab: 'game' | 'progress') => {
     engine.setActiveTab(tab);
     onStateChange();
   }, [engine, onStateChange]);
@@ -538,21 +543,38 @@ const TowerDefenseGame: React.FC = () => {
         </div>
       )}
 
-      {/* Floating UnitBar - bottom */}
+      {/* Floating UnitBar / Progression - bottom */}
       <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">
-          <UnitBar
-            state={state}
-            unplacedCharacters={unplacedCharacters}
-            lastSummon={lastSummon}
-            onPlaceUnit={handlePlaceUnit}
-            onSummon={handleSummon}
-            onStartWave={handleStartWave}
-            onToggleAutoWave={handleToggleAutoWave}
-            onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
-            onMerge={handleMerge}
-            mergeableGroups={engine.getMergeableGroups()}
-          />
+          {state.activeTab === 'game' ? (
+            <UnitBar
+              state={state}
+              unplacedCharacters={unplacedCharacters}
+              lastSummon={lastSummon}
+              onPlaceUnit={handlePlaceUnit}
+              onSummon={handleSummon}
+              onStartWave={handleStartWave}
+              onToggleAutoWave={handleToggleAutoWave}
+              onAutoDeploy={() => { engine.autoDeploy(); onStateChange(); }}
+              onMerge={handleMerge}
+              mergeableGroups={engine.getMergeableGroups()}
+            />
+          ) : (
+            <CharacterUnlockTree
+              progress={engine.getCharacterUnlockProgress()}
+              unlockShards={state.unlockShards}
+              stars={state.stars}
+              mapsCompleted={saveData.mapsCompleted.length}
+              onUnlock={(championId) => {
+                const result = engine.unlockCharacter(championId);
+                if (result) {
+                  setLastSummon(result);
+                  setRevealChar(result);
+                  onStateChange();
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 

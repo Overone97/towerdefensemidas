@@ -67,8 +67,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   // Summoning
   {
     id: 'first_summon',
-    name: 'Summoner',
-    description: 'Summon your first character',
+    name: 'Recruteur',
+    description: 'Débloque ton premier champion',
     icon: '✨',
     condition: (s) => s.totalSummons >= 1,
     reward: { stars: 1 },

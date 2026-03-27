@@ -1,6 +1,7 @@
 import { OwnedCharacter, EquippedItems } from '../types';
 import { ALL_CHARACTERS } from '../data/characterData';
 import { ALL_MAPS } from '../data/allMaps';
+import { getStarterChampionIds } from '../data/unlockTreeData';
 
 const SAVE_KEY = 'td_save_v1';
 
@@ -14,6 +15,8 @@ export interface SaveData {
   inventory: { configId: string; level: number; equipment?: EquippedItems; stars?: number }[];
   equipmentInventory: string[];
   totalSummons: number;
+  unlockedCharacters: string[];
+  unlockShards: number;
   talents: Record<string, number>;
   stars: number;
   gold: number;
@@ -50,6 +53,8 @@ function defaultSave(): SaveData {
     inventory: [],
     equipmentInventory: [],
     totalSummons: 0,
+    unlockedCharacters: getStarterChampionIds(),
+    unlockShards: 0,
     talents: {},
     stars: 0,
     gold: 200,
@@ -96,6 +101,13 @@ export function loadSave(): SaveData {
       ? merged.gold : def.gold;
     merged.stars = typeof merged.stars === 'number' && merged.stars >= 0 && merged.stars <= 99999
       ? merged.stars : def.stars;
+    merged.unlockShards = typeof merged.unlockShards === 'number' && merged.unlockShards >= 0 && merged.unlockShards <= 999999
+      ? merged.unlockShards : def.unlockShards;
+    if (!Array.isArray(merged.unlockedCharacters)) {
+      merged.unlockedCharacters = def.unlockedCharacters;
+    } else {
+      merged.unlockedCharacters = Array.from(new Set([...def.unlockedCharacters, ...merged.unlockedCharacters.filter((id: unknown) => typeof id === 'string')]));
+    }
     merged.highScore = typeof merged.highScore === 'number' && merged.highScore >= 0
       ? merged.highScore : def.highScore;
     merged.prestige = typeof merged.prestige === 'number' && merged.prestige >= 0 && merged.prestige <= 100

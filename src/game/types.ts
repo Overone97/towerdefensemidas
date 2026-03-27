@@ -209,6 +209,17 @@ export interface MidrunChoice {
   description: string;
 }
 
+export interface CharacterUnlockProgress {
+  championId: string;
+  order: number;
+  shardCost: number;
+  requiredStars: number;
+  requiredMapsCompleted: number;
+  unlocked: boolean;
+  isNext: boolean;
+  canUnlock: boolean;
+}
+
 export interface GameState {
   gold: number;
   baseHp: number;
@@ -232,7 +243,8 @@ export interface GameState {
   inventory: OwnedCharacter[];
   gachaCost: number;
   totalSummons: number;
-  activeTab: 'game' | 'gacha';
+  unlockShards: number;
+  activeTab: 'game' | 'progress';
   activeSynergies: ActiveSynergy[];
   stars: number;
   currentMapId: string;

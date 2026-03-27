@@ -6,7 +6,7 @@ import AuthButton from './AuthButton';
 
 export interface HUDProps {
   state: GameState;
-  onSetTab: (tab: 'game' | 'gacha') => void;
+  onSetTab: (tab: 'game' | 'progress') => void;
   onOpenTalents: () => void;
   onOpenMaps: () => void;
   onOpenWiki: () => void;
@@ -54,7 +54,7 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
         <div className="flex items-center gap-1">
           {[
             { key: 'game', label: 'Deploy', active: state.activeTab === 'game', onClick: () => onSetTab('game') },
-            { key: 'gacha', label: 'Summon', active: state.activeTab === 'gacha', onClick: () => onSetTab('gacha') },
+            { key: 'progress', label: 'Progression', active: state.activeTab === 'progress', onClick: () => onSetTab('progress') },
           ].map(btn => (
             <button
               key={btn.key}

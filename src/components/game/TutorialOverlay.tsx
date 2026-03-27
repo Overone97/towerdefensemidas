@@ -12,7 +12,7 @@ const STEPS = [
   },
   {
     title: '🥚 Invoquer des Champions',
-    description: 'Cliquez sur l\'onglet "Summon" en bas pour invoquer un champion aléatoire. Chaque invocation coûte de l\'or.',
+    description: 'Clique sur l\'onglet "Progression" en bas pour débloquer ton prochain champion avec des éclats.',
     tip: 'Les champions ont différentes raretés : Common, Uncommon, Rare, Epic, Legendary.',
   },
   {

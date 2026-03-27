@@ -143,7 +143,7 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
               <div className="flex flex-wrap gap-1">
                 {sortedChars.length === 0 ? (
                   <span className="text-muted-foreground text-xs py-1">
-                    {state.inventory.length === 0 ? 'No characters yet. Use Summon tab!' : 'All characters deployed!'}
+                    {state.inventory.length === 0 ? 'Aucun champion pour l’instant. Va dans Progression.' : 'Tous les champions sont déjà posés !'}
                   </span>
                 ) : (
                   sortedChars.map(char => {
@@ -218,20 +218,16 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
       ) : (
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button
-              onClick={onSummon}
-              disabled={state.gold < state.gachaCost}
-              className="px-6 shrink-0"
-            >
-              🥚 Summon ({state.gachaCost}g)
-            </Button>
-            <span className="text-xs text-muted-foreground font-mono">Random champion from pool</span>
+            <div>
+              <div className="text-sm font-bold text-cyan-300">🧩 {state.unlockShards} éclats</div>
+              <div className="text-xs text-muted-foreground font-mono">Gagne des éclats en tuant, puis débloque le prochain champion.</div>
+            </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {lastSummon && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 border-amber-500/50 bg-amber-900/30 animate-fade-in">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg border-2 border-cyan-500/50 bg-cyan-900/30 animate-fade-in">
                 <CharacterSprite config={lastSummon.config} size={20} owned />
-                <span className="text-sm font-bold text-amber-200">{lastSummon.config.name}</span>
+                <span className="text-sm font-bold text-cyan-100">{lastSummon.config.name} débloqué</span>
               </div>
             )}
             <span className="text-sm text-muted-foreground font-mono">{state.inventory.length}/80</span>
