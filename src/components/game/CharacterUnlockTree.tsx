@@ -9,10 +9,12 @@ interface CharacterUnlockTreeProps {
   unlockShards: number;
   stars: number;
   mapsCompleted: number;
+  achievementsUnlocked: number;
+  questsCompleted: number;
   onUnlock: (championId: string) => void;
 }
 
-const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, stars, mapsCompleted, onUnlock }) => {
+const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, stars, mapsCompleted, achievementsUnlocked, questsCompleted, onUnlock }) => {
   const visibleNodes = progress.slice(0, 18);
 
   return (
@@ -22,10 +24,12 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
           <div className="text-sm font-bold text-foreground">Arbre de déblocage</div>
           <div className="text-xs text-muted-foreground">Débloque les champions un par un. Plus tu avances, plus ça pique.</div>
         </div>
-        <div className="flex items-center gap-3 text-xs font-mono">
+        <div className="flex items-center gap-3 text-xs font-mono flex-wrap">
           <span className="text-cyan-300">🧩 {unlockShards} éclats</span>
           <span className="text-yellow-300">⭐ {stars}</span>
           <span className="text-emerald-300">🗺️ {mapsCompleted} maps</span>
+          <span className="text-amber-300">🏆 {achievementsUnlocked} succès</span>
+          <span className="text-fuchsia-300">🎯 {questsCompleted} défis</span>
         </div>
       </div>
 
@@ -37,6 +41,8 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
           const shardsOk = unlockShards >= node.shardCost;
           const starsOk = stars >= node.requiredStars;
           const mapsOk = mapsCompleted >= node.requiredMapsCompleted;
+          const achievementsOk = achievementsUnlocked >= node.requiredAchievements;
+          const questsOk = questsCompleted >= node.requiredQuests;
 
           return (
             <div
@@ -67,6 +73,8 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
                 <div className={shardsOk ? 'text-cyan-300' : 'text-muted-foreground'}>🧩 {node.shardCost} éclats</div>
                 <div className={starsOk ? 'text-yellow-300' : 'text-muted-foreground'}>⭐ {node.requiredStars} étoiles</div>
                 <div className={mapsOk ? 'text-emerald-300' : 'text-muted-foreground'}>🗺️ {node.requiredMapsCompleted} maps finies</div>
+                <div className={achievementsOk ? 'text-amber-300' : 'text-muted-foreground'}>🏆 {node.requiredAchievements} succès</div>
+                <div className={questsOk ? 'text-fuchsia-300' : 'text-muted-foreground'}>🎯 {node.requiredQuests} défis</div>
               </div>
 
               <div className="mt-3 flex items-center justify-between gap-2">

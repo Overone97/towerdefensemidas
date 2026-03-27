@@ -1080,10 +1080,14 @@ export class GameEngine {
     return CHARACTER_UNLOCK_TREE.map(node => {
       const isUnlocked = unlocked.has(node.championId);
       const isNext = !isUnlocked && nextNode?.championId === node.championId;
+      const achievementsCount = this.saveData.achievementsUnlocked.length;
+      const questsCount = this.saveData.questsCompleted.length;
       const canUnlock = isNext
         && (this.saveData.unlockShards || 0) >= node.shardCost
         && this.saveData.stars >= node.requiredStars
-        && this.saveData.mapsCompleted.length >= node.requiredMapsCompleted;
+        && this.saveData.mapsCompleted.length >= node.requiredMapsCompleted
+        && achievementsCount >= node.requiredAchievements
+        && questsCount >= node.requiredQuests;
 
       return {
         championId: node.championId,
@@ -1091,6 +1095,8 @@ export class GameEngine {
         shardCost: node.shardCost,
         requiredStars: node.requiredStars,
         requiredMapsCompleted: node.requiredMapsCompleted,
+        requiredAchievements: node.requiredAchievements,
+        requiredQuests: node.requiredQuests,
         unlocked: isUnlocked,
         isNext,
         canUnlock,

@@ -215,6 +215,8 @@ export interface CharacterUnlockProgress {
   shardCost: number;
   requiredStars: number;
   requiredMapsCompleted: number;
+  requiredAchievements: number;
+  requiredQuests: number;
   unlocked: boolean;
   isNext: boolean;
   canUnlock: boolean;

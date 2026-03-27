@@ -7,6 +7,8 @@ export interface CharacterUnlockNode {
   shardCost: number;
   requiredStars: number;
   requiredMapsCompleted: number;
+  requiredAchievements: number;
+  requiredQuests: number;
 }
 
 const RARITY_WEIGHT: Record<Rarity, number> = {
@@ -52,12 +54,22 @@ function buildUnlockTree(): CharacterUnlockNode[] {
       ? 0
       : Math.max(0, Math.floor(index / 9));
 
+    const requiredAchievements = index <= 3
+      ? 0
+      : Math.max(0, Math.floor(index / 6));
+
+    const requiredQuests = index <= 5
+      ? 0
+      : Math.max(0, Math.floor(index / 7));
+
     return {
       championId: character.id,
       order: index,
       shardCost,
       requiredStars,
       requiredMapsCompleted,
+      requiredAchievements,
+      requiredQuests,
     };
   });
 }

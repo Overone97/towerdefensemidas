@@ -565,6 +565,8 @@ const TowerDefenseGame: React.FC = () => {
               unlockShards={state.unlockShards}
               stars={state.stars}
               mapsCompleted={saveData.mapsCompleted.length}
+              achievementsUnlocked={saveData.achievementsUnlocked.length}
+              questsCompleted={saveData.questsCompleted.length}
               onUnlock={(championId) => {
                 const result = engine.unlockCharacter(championId);
                 if (result) {
