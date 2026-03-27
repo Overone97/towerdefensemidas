@@ -1,4 +1,4 @@
-import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice, CharacterUnlockProgress } from './types';
+import { GameState, OwnedCharacter, Point, Slot, Rarity, MidrunChoice, CharacterUnlockProgress, CharacterConfig } from './types';
 import { EnemyManager } from './managers/EnemyManager';
 import { TowerManager } from './managers/TowerManager';
 import { WaveManager } from './managers/WaveManager';
@@ -34,6 +34,50 @@ export const fishState = {
   jumpPhase: 0,
   caught: false,
 };
+
+const UNIT_XP = {
+  kill: 12,
+  bossKill: 48,
+  waveClear: 18,
+};
+
+const RARITY_XP_MULT: Record<Rarity, number> = {
+  common: 1,
+  uncommon: 0.96,
+  rare: 0.92,
+  epic: 0.88,
+  legendary: 0.84,
+};
+
+function getXpToNextLevel(level: number, rarity: Rarity): number {
+  const rarityTax = rarity === 'legendary' ? 12 : rarity === 'epic' ? 8 : rarity === 'rare' ? 4 : rarity === 'uncommon' ? 2 : 0;
+  return 30 + (level - 1) * 18 + rarityTax;
+}
+
+function getChampionRoleXpMult(config: CharacterConfig): number {
+  switch (config.attackPattern) {
+    case 'single':
+      return config.range >= 170 ? 0.94 : 1.04;
+    case 'rapid':
+      return 0.9;
+    case 'aoe_circle':
+      return 0.9;
+    case 'line':
+      return 0.95;
+    case 'poison':
+    case 'poison_trail':
+    case 'mushroom':
+      return 0.93;
+    case 'slow':
+      return 1.08;
+    case 'chain':
+      return 0.92;
+    case 'burst':
+      return 0.97;
+    default:
+      return 1;
+  }
+}
 
 export class GameEngine {
   enemyManager = new EnemyManager();
@@ -226,6 +270,7 @@ export class GameEngine {
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
         this.grantUnlockShards(Math.max(1, Math.ceil(result.reward * 0.35)));
+        this.awardUnitXp(unitId, enemy.type === 'boss' ? UNIT_XP.bossKill : UNIT_XP.kill);
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#ffdd44', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
@@ -351,6 +396,7 @@ export class GameEngine {
 
     if (this.waveManager.isComplete()) {
       this.state.victory = true;
+      this.awardWaveXp();
       soundManager.playVictory();
 
       if (this.activeDungeon) {
@@ -552,11 +598,40 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config,
       level: 1,
+      xp: 0,
       equipment: {},
       stars: 1,
     };
     this.state.inventory.push(character);
     return character;
+  }
+
+  private awardUnitXp(characterInstanceId: number, amount: number): void {
+    if (amount <= 0) return;
+    const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
+    if (!character) return;
+
+    const adjustedXp = Math.max(
+      1,
+      Math.round(amount * RARITY_XP_MULT[character.config.rarity] * getChampionRoleXpMult(character.config))
+    );
+
+    character.xp = (character.xp || 0) + adjustedXp;
+    while (character.level < 50 && (character.xp || 0) >= getXpToNextLevel(character.level, character.config.rarity)) {
+      character.xp = (character.xp || 0) - getXpToNextLevel(character.level, character.config.rarity);
+      character.level += 1;
+    }
+  }
+
+  private awardWaveXp(): void {
+    const placedUnits = [...this.state.placedUnits];
+    if (placedUnits.length === 0) return;
+
+    const supportPatterns = new Set(['slow', 'poison_trail', 'mushroom']);
+    for (const unit of placedUnits) {
+      const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 4 : 0;
+      this.awardUnitXp(unit.characterInstanceId, UNIT_XP.waveClear + participationBonus);
+    }
   }
 
   unlockCharacter(championId: string): OwnedCharacter | null {
@@ -1026,6 +1101,7 @@ export class GameEngine {
       instanceId: nextInstanceId++,
       config: fizz,
       level: 1,
+      xp: 0,
       equipment: {},
       stars: 1,
     };

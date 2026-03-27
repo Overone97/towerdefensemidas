@@ -116,6 +116,7 @@ export interface OwnedCharacter {
   instanceId: number;
   config: CharacterConfig;
   level: number;
+  xp?: number;
   equipment: EquippedItems;
   stars: number; // 1★ → 2★ → 3★ merge evolution
 }
