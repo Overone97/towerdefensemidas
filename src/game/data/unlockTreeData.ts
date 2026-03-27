@@ -39,37 +39,60 @@ const ORDERED_CHARACTERS = [...ALL_CHARACTERS]
   .filter(c => c.id !== 'fizz')
   .sort(compareCharacters);
 
+function getShardCost(index: number, rarityWeight: number): number {
+  if (index < 5) return 0;
+  if (index < 10) return 18 + (index - 5) * 5 + rarityWeight * 4;
+  if (index < 20) return 45 + (index - 10) * 8 + rarityWeight * 7;
+  if (index < 35) return 130 + (index - 20) * 11 + rarityWeight * 10;
+  if (index < 55) return 310 + (index - 35) * 15 + rarityWeight * 14;
+  return 670 + (index - 55) * 22 + rarityWeight * 18;
+}
+
+function getRequiredStars(index: number, rarityWeight: number): number {
+  if (index < 8) return 0;
+  if (index < 16) return Math.max(1, Math.floor((index - 8) / 4));
+  if (index < 30) return 2 + Math.floor((index - 16) / 4) + Math.floor(rarityWeight / 2);
+  if (index < 50) return 6 + Math.floor((index - 30) / 3) + rarityWeight;
+  return 14 + Math.floor((index - 50) / 2) + rarityWeight;
+}
+
+function getRequiredMapsCompleted(index: number): number {
+  if (index < 12) return 0;
+  if (index < 24) return 1;
+  if (index < 40) return 2;
+  if (index < 60) return 3;
+  return 4;
+}
+
+function getRequiredAchievements(index: number): number {
+  if (index < 14) return 0;
+  if (index < 24) return 1;
+  if (index < 36) return 2;
+  if (index < 52) return 3;
+  if (index < 70) return 4;
+  return 5;
+}
+
+function getRequiredQuests(index: number): number {
+  if (index < 18) return 0;
+  if (index < 30) return 1;
+  if (index < 44) return 2;
+  if (index < 60) return 3;
+  return 4;
+}
+
 function buildUnlockTree(): CharacterUnlockNode[] {
   return ORDERED_CHARACTERS.map((character, index) => {
     const rarityWeight = RARITY_WEIGHT[character.rarity];
-    const shardCost = index === 0
-      ? 0
-      : Math.round(20 + index * 8 + rarityWeight * 14 + Math.max(0, index - 8) * 3.5);
-
-    const requiredStars = index <= 2
-      ? 0
-      : Math.max(0, Math.floor(index / 5) + rarityWeight * 2);
-
-    const requiredMapsCompleted = index <= 4
-      ? 0
-      : Math.max(0, Math.floor(index / 9));
-
-    const requiredAchievements = index <= 3
-      ? 0
-      : Math.max(0, Math.floor(index / 6));
-
-    const requiredQuests = index <= 5
-      ? 0
-      : Math.max(0, Math.floor(index / 7));
 
     return {
       championId: character.id,
       order: index,
-      shardCost,
-      requiredStars,
-      requiredMapsCompleted,
-      requiredAchievements,
-      requiredQuests,
+      shardCost: getShardCost(index, rarityWeight),
+      requiredStars: getRequiredStars(index, rarityWeight),
+      requiredMapsCompleted: getRequiredMapsCompleted(index),
+      requiredAchievements: getRequiredAchievements(index),
+      requiredQuests: getRequiredQuests(index),
     };
   });
 }

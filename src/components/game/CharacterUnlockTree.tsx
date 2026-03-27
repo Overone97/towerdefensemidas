@@ -22,7 +22,7 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div>
           <div className="text-sm font-bold text-foreground">Arbre de déblocage</div>
-          <div className="text-xs text-muted-foreground">Débloque les champions un par un. Plus tu avances, plus ça pique.</div>
+          <div className="text-xs text-muted-foreground">Early game généreux, mid game motivant, late game exigeant. Le bon poison.</div>
         </div>
         <div className="flex items-center gap-3 text-xs font-mono flex-wrap">
           <span className="text-cyan-300">🧩 {unlockShards} éclats</span>
@@ -79,7 +79,7 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
 
               <div className="mt-3 flex items-center justify-between gap-2">
                 <div className="text-[10px] text-muted-foreground">
-                  {!node.unlocked && !node.isNext ? 'Débloque le précédent d’abord.' : node.unlocked ? 'Prêt à jouer.' : 'Objectif du moment.'}
+                  {!node.unlocked && !node.isNext ? 'Débloque le précédent d’abord.' : node.unlocked ? 'Déjà dans ton roster.' : 'Finis les prérequis, puis paie en éclats.'}
                 </div>
                 <Button
                   size="sm"
