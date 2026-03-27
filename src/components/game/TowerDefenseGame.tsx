@@ -9,6 +9,7 @@ import UnitInfoPanel from './UnitInfoPanel';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
 import CharacterUnlockTree from './CharacterUnlockTree';
+import StarterSummonOverlay from './StarterSummonOverlay';
 import SynergyPanel from './SynergyPanel';
 import TalentTree from './TalentTree';
 import MapSelect from './MapSelect';
@@ -453,6 +454,8 @@ const TowerDefenseGame: React.FC = () => {
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
   const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0;
+  const starterChoices = state.inventory.filter(c => ['garen', 'ashe', 'teemo', 'lux', 'leona'].includes(c.config.id)).slice(0, 3);
+  const showStarterSummon = state.currentWave === 0 && state.placedUnits.length === 0 && starterChoices.length >= 3;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
@@ -491,56 +494,73 @@ const TowerDefenseGame: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Team Sidebar - left */}
-      {state.placedUnits.length > 0 && (
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
-          <TeamSidebar
-            placedUnits={state.placedUnits}
-            selectedUnitId={state.selectedUnitId}
-            onSelectUnit={(id: number) => { engine.selectPlacedUnit(id); onStateChange(); }}
-            onActivateAbility={handleActivateAbility}
-          />
+      {/* Responsive side panels */}
+      <div className="absolute left-2 right-2 top-[112px] z-20 pointer-events-none flex flex-col gap-2 xl:grid xl:grid-cols-[220px_minmax(0,1fr)_260px] xl:items-start">
+        <div className="pointer-events-auto xl:self-start">
+          {state.placedUnits.length > 0 && (
+            <TeamSidebar
+              placedUnits={state.placedUnits}
+              selectedUnitId={state.selectedUnitId}
+              onSelectUnit={(id: number) => { engine.selectPlacedUnit(id); onStateChange(); }}
+              onActivateAbility={handleActivateAbility}
+            />
+          )}
         </div>
-      )}
 
-      {/* Floating Synergy Panel - right */}
-      {state.activeSynergies.length > 0 && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
-          <SynergyPanel synergies={state.activeSynergies} />
-        </div>
-      )}
+        <div className="hidden xl:block" />
 
-      {/* Floating Unit Info Panel */}
-      {selectedUnit && (
-        <div className="absolute right-2 bottom-40 z-30 pointer-events-auto">
-          <UnitInfoPanel
-            unit={selectedUnit}
-            gold={state.gold}
-            onUpgrade={handleUpgrade}
-            onRemove={handleRemove}
-            onSetPriority={handleSetPriority}
-            onActivateAbility={handleActivateAbility}
-            onOpenSkins={(champId) => setSkinChampionId(champId)}
-            hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
-          />
+        <div className="pointer-events-auto xl:self-start xl:justify-self-end flex flex-col gap-2">
+          {state.activeSynergies.length > 0 && (
+            <SynergyPanel synergies={state.activeSynergies} />
+          )}
+          {selectedUnit && (
+            <UnitInfoPanel
+              unit={selectedUnit}
+              gold={state.gold}
+              onUpgrade={handleUpgrade}
+              onRemove={handleRemove}
+              onSetPriority={handleSetPriority}
+              onActivateAbility={handleActivateAbility}
+              onOpenSkins={(champId) => setSkinChampionId(champId)}
+              hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
+            />
+          )}
         </div>
-      )}
+      </div>
 
       {/* Skin Selector Modal */}
       {skinChampionId && (
-        <div className="absolute right-2 bottom-40 z-40 pointer-events-auto">
-          <SkinSelector
-            championId={skinChampionId}
-            championName={state.inventory.find(c => c.config.id === skinChampionId)?.config.name || skinChampionId}
-            unlockedSkins={engine.getUnlockedSkins()}
-            equippedSkins={engine.getEquippedSkins()}
-            stars={state.stars}
-            onBuy={(skinId) => { engine.buySkin(skinId); onStateChange(); }}
-            onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
-            onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
-            onClose={() => setSkinChampionId(null)}
-          />
+        <div className="absolute inset-x-2 bottom-[150px] z-40 pointer-events-auto flex justify-end">
+          <div className="w-full max-w-[420px]">
+            <SkinSelector
+              championId={skinChampionId}
+              championName={state.inventory.find(c => c.config.id === skinChampionId)?.config.name || skinChampionId}
+              unlockedSkins={engine.getUnlockedSkins()}
+              equippedSkins={engine.getEquippedSkins()}
+              stars={state.stars}
+              onBuy={(skinId) => { engine.buySkin(skinId); onStateChange(); }}
+              onEquip={(cid, sid) => { engine.equipSkin(cid, sid); onStateChange(); }}
+              onUnequip={(cid) => { engine.unequipSkin(cid); onStateChange(); }}
+              onClose={() => setSkinChampionId(null)}
+            />
+          </div>
         </div>
+      )}
+
+      {showStarterSummon && (
+        <StarterSummonOverlay
+          starters={starterChoices}
+          onChoose={(instanceId) => {
+            const centerSlots = state.slots
+              .map((slot, index) => ({ slot, index, dist: Math.abs(slot.x - 400) + Math.abs(slot.y - 250) }))
+              .filter(({ slot }) => slot.unitId === null)
+              .sort((a, b) => a.dist - b.dist);
+            const targetSlot = centerSlots[0];
+            if (!targetSlot) return;
+            engine.placeUnit(targetSlot.index, instanceId);
+            onStateChange();
+          }}
+        />
       )}
 
       {/* Floating UnitBar / Progression - bottom */}
