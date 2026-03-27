@@ -9,13 +9,17 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ synergies }) => {
   if (synergies.length === 0) return null;
 
   return (
-    <div className="absolute top-16 left-4 bg-card/92 border border-border rounded-lg p-2 w-72 shadow-lg z-10">
-      <div className="text-xs text-muted-foreground font-mono mb-2">Synergies actives ({synergies.length})</div>
-      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+    <div className="w-full max-w-full rounded-2xl border border-border/50 bg-card/88 p-3 shadow-lg backdrop-blur-md md:max-w-[260px]">
+      <div className="mb-2">
+        <div className="text-xs font-bold text-foreground">Synergies actives</div>
+        <div className="text-[10px] text-muted-foreground">{synergies.length} bonus en cours</div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-1">
         {synergies.map((s, i) => (
-          <div key={i} className="rounded border border-white/10 bg-black/20 p-1.5">
+          <div key={i} className="rounded-xl border border-white/10 bg-black/20 p-2">
             <div className="text-xs font-bold text-foreground">{s.name}</div>
-            <div className="text-[11px] text-emerald-300 leading-tight">{s.description}</div>
+            <div className="text-[11px] text-emerald-300 leading-tight mt-0.5">{s.description}</div>
           </div>
         ))}
       </div>
