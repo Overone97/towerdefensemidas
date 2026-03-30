@@ -369,7 +369,7 @@ function drawAscensionAmbience(ctx: CanvasRenderingContext2D, mapId: string, t: 
   ctx.save();
 
   // Global vignette for boss-map feeling
-  const vignette = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.8);
+  const vignette = safeRadialGradient(ctx, w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.8);
   vignette.addColorStop(0, 'rgba(0,0,0,0)');
   vignette.addColorStop(1, mapId === 'void_rift' ? 'rgba(30,0,50,0.42)' : mapId === 'freljord_storm' ? 'rgba(0,15,40,0.38)' : 'rgba(45,0,0,0.44)');
   ctx.fillStyle = vignette;
@@ -762,7 +762,7 @@ function drawGroundEffects(ctx: CanvasRenderingContext2D, effects: GroundEffect[
       const r = ge.radius * pulse;
 
       // Cloud gradient
-      const grad = ctx.createRadialGradient(ge.x, ge.y, 0, ge.x, ge.y, r);
+      const grad = safeRadialGradient(ctx, ge.x, ge.y, 0, ge.x, ge.y, r);
       grad.addColorStop(0, ge.color + '55');
       grad.addColorStop(0.5, ge.color + '33');
       grad.addColorStop(1, 'transparent');
@@ -803,7 +803,7 @@ function drawGroundEffects(ctx: CanvasRenderingContext2D, effects: GroundEffect[
       if (ge.exploded) {
         // Explosion flash
         ctx.globalAlpha = ge.duration * 2;
-        const explGrad = ctx.createRadialGradient(ge.x, ge.y, 0, ge.x, ge.y, ge.aoeRadius || 40);
+        const explGrad = safeRadialGradient(ctx, ge.x, ge.y, 0, ge.x, ge.y, ge.aoeRadius || 40);
         explGrad.addColorStop(0, '#ffff44aa');
         explGrad.addColorStop(0.5, '#88dd4466');
         explGrad.addColorStop(1, 'transparent');
@@ -865,7 +865,7 @@ function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): voi
     const innerR = Math.max(0, r - waveThickness);
 
     // Radial gradient across the wave band: bright leading edge, fading trail
-    const bandGrad = ctx.createRadialGradient(wave.x, wave.y, innerR, wave.x, wave.y, outerR + 4);
+    const bandGrad = safeRadialGradient(ctx, wave.x, wave.y, innerR, wave.x, wave.y, outerR + 4);
     bandGrad.addColorStop(0, 'transparent');
     bandGrad.addColorStop(0.2, wave.weaponColor + 'aa');
     bandGrad.addColorStop(0.5, wave.weaponColor);
@@ -908,7 +908,7 @@ function drawAoeWaves(ctx: CanvasRenderingContext2D, waves: AoeWaveState[]): voi
     }
 
     // ── Outer glow halo ──
-    const glowGrad = ctx.createRadialGradient(wave.x, wave.y, outerR, wave.x, wave.y, outerR + 20);
+    const glowGrad = safeRadialGradient(ctx, wave.x, wave.y, outerR, wave.x, wave.y, outerR + 20);
     glowGrad.addColorStop(0, wave.weaponColor + '55');
     glowGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGrad;
@@ -941,7 +941,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
     if (isSelected) {
       // Outer pulsing ring
       const pulse = 0.6 + Math.sin(now * 3) * 0.15;
-      const rangeGrad = ctx.createRadialGradient(unit.x, unit.y, stats.range * 0.7, unit.x, unit.y, stats.range);
+      const rangeGrad = safeRadialGradient(ctx, unit.x, unit.y, stats.range * 0.7, unit.x, unit.y, stats.range);
       rangeGrad.addColorStop(0, 'rgba(68, 170, 255, 0.0)');
       rangeGrad.addColorStop(0.8, `rgba(68, 170, 255, ${0.06 * pulse})`);
       rangeGrad.addColorStop(1, `rgba(68, 170, 255, ${0.15 * pulse})`);
@@ -1076,7 +1076,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
     // Selection indicator (subtle glow instead of box)
     if (isSelected) {
       ctx.save();
-      const selGlow = ctx.createRadialGradient(unit.x, unit.y, 8, unit.x, unit.y, 18);
+      const selGlow = safeRadialGradient(ctx, unit.x, unit.y, 8, unit.x, unit.y, 18);
       selGlow.addColorStop(0, 'rgba(255, 255, 255, 0)');
       selGlow.addColorStop(0.7, 'rgba(100, 200, 255, 0.15)');
       selGlow.addColorStop(1, `rgba(100, 200, 255, ${0.3 + Math.sin(now * 4) * 0.1})`);
@@ -1109,7 +1109,7 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
       ctx.translate(proj.x, proj.y);
       ctx.rotate(angle + (proj.rotation || 0));
 
-      const trail = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+      const trail = safeRadialGradient(ctx, 0, 0, 1, 0, 0, 14);
       trail.addColorStop(0, 'rgba(255, 216, 120, 0.95)');
       trail.addColorStop(0.6, 'rgba(255, 185, 70, 0.35)');
       trail.addColorStop(1, 'rgba(255, 185, 70, 0)');
