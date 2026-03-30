@@ -941,7 +941,9 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
     if (isSelected) {
       // Outer pulsing ring
       const pulse = 0.6 + Math.sin(now * 3) * 0.15;
-      const rangeGrad = safeRadialGradient(ctx, unit.x, unit.y, stats.range * 0.7, unit.x, unit.y, stats.range);
+      const innerRange = Math.max(0, Math.min(stats.range - 0.001, stats.range * 0.7));
+      const outerRange = Math.max(0.001, stats.range);
+      const rangeGrad = safeRadialGradient(ctx, unit.x, unit.y, innerRange, unit.x, unit.y, outerRange);
       rangeGrad.addColorStop(0, 'rgba(68, 170, 255, 0.0)');
       rangeGrad.addColorStop(0.8, `rgba(68, 170, 255, ${0.06 * pulse})`);
       rangeGrad.addColorStop(1, `rgba(68, 170, 255, ${0.15 * pulse})`);
