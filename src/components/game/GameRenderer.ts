@@ -6,6 +6,7 @@ import { drawEnemySprite } from '../../game/rendering/enemySprites';
 import { ALL_MAPS } from '../../game/data/allMaps';
 import { fishState } from '../../game/GameEngine';
 import { getSkinById } from '../../game/data/skinData';
+import { safeRadialGradient } from '../../game/rendering/safeCanvas';
 import plainsBg from '../../assets/maps/plains-bg.jpg';
 import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
