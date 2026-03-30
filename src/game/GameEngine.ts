@@ -520,7 +520,7 @@ export class GameEngine {
 
   private generateMidrunChoices(): MidrunChoice[] {
     return [
-      { id: 'greed', title: '💰 Pacte de cupidité', description: '+180 or maintenant, mais -1 PV max de base.' },
+      { id: 'greed', title: '🧩 Pacte d’éclats', description: '+45 éclats maintenant, mais -1 PV max de base.' },
       { id: 'fortify', title: '🛡️ Serment du bastion', description: '+2 PV de base max et +2 PV soignés.' },
       { id: 'fury', title: '⚔️ Fureur tactique', description: '+12% dégâts de tours ce run, mais ennemis +8% vitesse.' },
     ];

@@ -38,9 +38,9 @@ export const MAP_QUESTS: QuestDef[] = [
   {
     id: 'plains_rich',
     mapId: 'plains',
-    description: 'Finir avec 500+ gold',
+    description: 'Finir avec 80+ éclats',
     starsReward: 1,
-    condition: (ctx) => ctx.victory && ctx.goldEarned >= 500,
+    condition: (ctx) => ctx.victory && ctx.goldEarned >= 80,
   },
 
   // Forest
@@ -84,9 +84,9 @@ export const MAP_QUESTS: QuestDef[] = [
   {
     id: 'volcano_rich',
     mapId: 'volcano',
-    description: 'Finir avec 800+ gold',
+    description: 'Finir avec 140+ éclats',
     starsReward: 2,
-    condition: (ctx) => ctx.victory && ctx.goldEarned >= 800,
+    condition: (ctx) => ctx.victory && ctx.goldEarned >= 140,
   },
 ];
 

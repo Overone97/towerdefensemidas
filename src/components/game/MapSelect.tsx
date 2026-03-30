@@ -166,7 +166,7 @@ const MapSelect: React.FC<MapSelectProps> = ({ stars, mapsCompleted, questsCompl
                 {/* Rewards */}
                 <div className="flex gap-2 text-xs mt-1">
                   <span className="text-yellow-400 font-mono">+{dungeon.reward.stars}⭐</span>
-                  <span className="text-yellow-600 font-mono">+{dungeon.reward.gold}💰</span>
+                  <span className="text-cyan-400 font-mono">+{Math.max(10, Math.floor(dungeon.reward.gold / 10))}🧩</span>
                   {dungeon.reward.guaranteedEquipRarity && (
                     <span className="text-cyan-400 font-mono">🎁 {dungeon.reward.guaranteedEquipRarity}</span>
                   )}
