@@ -17,6 +17,7 @@ export interface SaveData {
   totalSummons: number;
   unlockedCharacters: string[];
   unlockShards: number;
+  exclusiveTokens: number;
   talents: Record<string, number>;
   stars: number;
   gold: number;
@@ -55,6 +56,7 @@ function defaultSave(): SaveData {
     totalSummons: 0,
     unlockedCharacters: getStarterChampionIds(),
     unlockShards: 0,
+    exclusiveTokens: 0,
     talents: {},
     stars: 0,
     gold: 200,
@@ -103,6 +105,8 @@ export function loadSave(): SaveData {
       ? merged.stars : def.stars;
     merged.unlockShards = typeof merged.unlockShards === 'number' && merged.unlockShards >= 0 && merged.unlockShards <= 999999
       ? merged.unlockShards : def.unlockShards;
+    merged.exclusiveTokens = typeof merged.exclusiveTokens === 'number' && merged.exclusiveTokens >= 0 && merged.exclusiveTokens <= 999999
+      ? merged.exclusiveTokens : def.exclusiveTokens;
     if (!Array.isArray(merged.unlockedCharacters)) {
       merged.unlockedCharacters = def.unlockedCharacters;
     } else {

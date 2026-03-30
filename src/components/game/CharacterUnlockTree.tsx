@@ -7,12 +7,13 @@ import { Button } from '../ui/button';
 interface CharacterUnlockTreeProps {
   progress: CharacterUnlockProgress[];
   unlockShards: number;
+  exclusiveTokens: number;
   stars: number;
   mapsCompleted: number;
   onUnlock: (championId: string) => void;
 }
 
-const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, stars, mapsCompleted, onUnlock }) => {
+const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, exclusiveTokens, stars, mapsCompleted, onUnlock }) => {
   const visibleNodes = progress.slice(0, 18);
 
   return (
@@ -22,8 +23,9 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
           <div className="text-sm font-bold text-foreground">Arbre de déblocage</div>
           <div className="text-xs text-muted-foreground">Débloque les champions un par un. Plus tu avances, plus ça pique.</div>
         </div>
-        <div className="flex items-center gap-3 text-xs font-mono">
+        <div className="flex items-center gap-3 text-xs font-mono flex-wrap">
           <span className="text-cyan-300">🧩 {unlockShards} éclats</span>
+          <span className="text-fuchsia-300">💎 {exclusiveTokens} jetons</span>
           <span className="text-yellow-300">⭐ {stars}</span>
           <span className="text-emerald-300">🗺️ {mapsCompleted} maps</span>
         </div>

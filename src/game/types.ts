@@ -245,6 +245,7 @@ export interface GameState {
   gachaCost: number;
   totalSummons: number;
   unlockShards: number;
+  exclusiveTokens: number;
   activeTab: 'game' | 'progress';
   activeSynergies: ActiveSynergy[];
   stars: number;
