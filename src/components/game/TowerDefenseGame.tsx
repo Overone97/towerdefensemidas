@@ -516,7 +516,6 @@ const TowerDefenseGame: React.FC = () => {
           {selectedUnit && (
             <UnitInfoPanel
               unit={selectedUnit}
-              gold={state.gold}
               onUpgrade={handleUpgrade}
               onRemove={handleRemove}
               onSetPriority={handleSetPriority}

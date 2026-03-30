@@ -20,7 +20,7 @@ const QUEST_TEMPLATES = [
   { id: 'kill_enemies', desc: 'Tuer {n} ennemis', icon: '💀', targets: [30, 50, 100], reward: { stars: 1, gold: 100 } },
   { id: 'kill_bosses', desc: 'Tuer {n} boss', icon: '👹', targets: [1, 2, 3], reward: { stars: 2, gold: 150 } },
   { id: 'complete_waves', desc: 'Compléter {n} vagues', icon: '🌊', targets: [5, 8, 12], reward: { stars: 1, gold: 80 } },
-  { id: 'earn_gold', desc: 'Gagner {n} or', icon: '💰', targets: [200, 500, 1000], reward: { stars: 1, gold: 50 } },
+  { id: 'earn_gold', desc: 'Gagner {n} éclats', icon: '🧩', targets: [200, 500, 1000], reward: { stars: 1, gold: 50 } },
   { id: 'place_units', desc: 'Placer {n} unités', icon: '🏗️', targets: [5, 8, 12], reward: { stars: 1, gold: 60 } },
   { id: 'use_abilities', desc: 'Utiliser {n} abilities', icon: '⚡', targets: [3, 5, 8], reward: { stars: 1, gold: 70 } },
   { id: 'perfect_wave', desc: 'Survivre {n} vagues sans dégât', icon: '🛡️', targets: [1, 2, 3], reward: { stars: 2, gold: 120 } },

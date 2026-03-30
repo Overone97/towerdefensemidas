@@ -133,12 +133,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (s) => s.fishCaught,
     reward: { stars: 5 },
   },
-  // Gold
+  // Economy
   {
     id: 'rich',
-    name: 'Rich',
-    description: 'Earn 5000 gold total',
-    icon: '💰',
+    name: 'Riche en éclats',
+    description: 'Accumuler 5000 éclats au total',
+    icon: '🧩',
     condition: (s) => s.totalGold >= 5000,
     reward: { stars: 5 },
   },

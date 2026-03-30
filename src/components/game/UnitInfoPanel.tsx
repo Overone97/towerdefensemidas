@@ -7,7 +7,6 @@ import CharacterSprite from './CharacterSprite';
 
 interface UnitInfoPanelProps {
   unit: PlacedUnit;
-  gold: number;
   onUpgrade: (unitId: number) => void;
   onRemove: (unitId: number) => void;
   onSetPriority: (unitId: number, priority: TargetPriority) => void;
@@ -29,7 +28,7 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
   burst: { label: 'Burst', icon: '💣', desc: 'Explose vite et fort.' },
 };
 
-const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, gold, onUpgrade, onRemove, onSetPriority, onActivateAbility, onOpenSkins, hasAvailableSkins }) => {
+const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, onUpgrade, onRemove, onSetPriority, onActivateAbility, onOpenSkins, hasAvailableSkins }) => {
   const stats = getCharacterStats(unit.config, unit.level, unit.stars);
   const nextStats = getCharacterStats(unit.config, unit.level + 1, unit.stars);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);

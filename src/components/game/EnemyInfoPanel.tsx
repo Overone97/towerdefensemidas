@@ -84,7 +84,7 @@ const EnemyInfoPanel: React.FC<EnemyInfoPanelProps> = ({ enemy, onClose }) => {
           <span className="text-foreground">{enemy.speed.toFixed(0)} / {enemy.baseSpeed.toFixed(0)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">💰 Récompense</span>
+          <span className="text-muted-foreground">🧩 Récompense</span>
           <span className="text-yellow-400">{enemy.reward}g</span>
         </div>
         {enemy.stealthed && (
