@@ -44,12 +44,12 @@ const HUD: React.FC<HUDProps> = ({ state, onSetTab, onOpenTalents, onOpenMaps, o
       <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <div className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 text-xs font-mono text-foreground flex items-center gap-1.5">
-            <span className="text-yellow-400">💰</span>
-            <span className="font-bold">{state.gold}</span>
-          </div>
-          <div className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 text-xs font-mono text-foreground flex items-center gap-1.5">
             <span className="text-cyan-300">🧩</span>
             <span className="font-bold">{state.unlockShards}</span>
+          </div>
+          <div className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 text-xs font-mono text-foreground flex items-center gap-1.5">
+            <span className="text-fuchsia-300">💎</span>
+            <span className="font-bold">{state.exclusiveTokens}</span>
           </div>
           <div className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 text-xs font-mono text-foreground flex items-center gap-1.5">
             <span className="text-yellow-300">⭐</span>

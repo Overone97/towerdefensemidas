@@ -159,6 +159,7 @@ export class GameEngine {
       gachaCost: 0,
       totalSummons: this.saveData.totalSummons,
       unlockShards: this.saveData.unlockShards || 0,
+      exclusiveTokens: this.saveData.exclusiveTokens || 0,
       activeTab: 'game',
       activeSynergies: [],
       stars: this.saveData.stars,
@@ -264,19 +265,17 @@ export class GameEngine {
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (unitId) this.trackDamage(unitId, damage);
       if (result.killed && enemy) {
-        const goldEarned = Math.floor(result.reward * talentBonus.goldMult * ascensionBonus.goldMult);
-        this.state.gold += goldEarned;
+        const shardEarned = Math.max(1, Math.ceil(result.reward * 0.35));
         this.state.score += result.reward;
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
-        this.grantUnlockShards(Math.max(1, Math.ceil(result.reward * 0.35)));
+        this.grantUnlockShards(shardEarned);
         this.awardUnitXp(unitId, enemy.type === 'boss' ? UNIT_XP.bossKill : UNIT_XP.kill);
-        this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#ffdd44', 9);
+        this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
-        this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
         // Track stats
         this.saveData.stats.totalKills++;
-        this.saveData.stats.totalGold += goldEarned;
+        this.saveData.stats.totalGold += shardEarned;
         if (enemy.type === 'boss') {
           soundManager.playBossDeath();
           this.saveData.stats.bossKills++;
@@ -305,16 +304,15 @@ export class GameEngine {
 
     // Process DOT kills (Singed poison, burn effects) — award gold & score
     for (const enemy of dotKills) {
-      const goldEarned = Math.floor(enemy.reward * talentBonus.goldMult * ascensionBonus.goldMult);
-      this.state.gold += goldEarned;
+      const shardEarned = Math.max(1, Math.ceil(enemy.reward * 0.35));
+      this.grantUnlockShards(shardEarned);
       this.state.score += enemy.reward;
       this.state.enemiesKilled++;
       this.state.waveEnemiesKilledThisWave++;
-      this.floatingTextManager.spawn(enemy.x, enemy.y, `+${goldEarned}💰`, '#44ff44', 9);
+      this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#44ffcc', 9);
       this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
-      this.trackDailyEvent({ type: 'earn_gold', count: goldEarned });
       this.saveData.stats.totalKills++;
-      this.saveData.stats.totalGold += goldEarned;
+      this.saveData.stats.totalGold += shardEarned;
       if (enemy.type === 'boss' || enemy.type.startsWith('dragon_')) {
         soundManager.playBossDeath();
         this.saveData.stats.bossKills++;
@@ -532,7 +530,9 @@ export class GameEngine {
     if (!this.state.midrunChoiceOpen) return false;
 
     if (choiceId === 'greed') {
-      this.state.gold += 180;
+      this.grantUnlockShards(45);
+      this.saveData.exclusiveTokens = (this.saveData.exclusiveTokens || 0) + 3;
+      this.state.exclusiveTokens = this.saveData.exclusiveTokens;
       this.state.maxBaseHp = Math.max(3, this.state.maxBaseHp - 1);
       this.state.baseHp = Math.min(this.state.baseHp, this.state.maxBaseHp);
     } else if (choiceId === 'fortify') {
@@ -565,9 +565,9 @@ export class GameEngine {
     if (!config) return false;
     const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
     if (ascensionBonus.waveIncome > 0) {
-      const income = Math.floor(ascensionBonus.waveIncome);
-      this.state.gold += income;
-      this.floatingTextManager.spawn(392, 38, `+${income}💰 rente`, '#ffd36a', 11);
+      const income = Math.max(2, Math.floor(ascensionBonus.waveIncome * 0.35));
+      this.grantUnlockShards(income);
+      this.floatingTextManager.spawn(392, 38, `+${income}🧩 rythme`, '#67e8f9', 11);
     }
     soundManager.playWaveStart();
     this.state.waveActive = true;
@@ -810,9 +810,11 @@ export class GameEngine {
     if (!unit) return false;
 
     const cost = getCharacterUpgradeCost(unit.config, unit.level);
-    if (this.state.gold < cost) return false;
+    const character = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
+    if (!character) return false;
+    if ((character.xp || 0) < cost) return false;
 
-    this.state.gold -= cost;
+    character.xp = (character.xp || 0) - cost;
     this.towerManager.upgradeUnit(unitId);
 
     const invChar = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
@@ -1332,7 +1334,8 @@ export class GameEngine {
     quest.claimed = true;
     this.saveData.stars += quest.reward.stars;
     this.state.stars = this.saveData.stars;
-    this.state.gold += quest.reward.gold;
+    this.saveData.exclusiveTokens = (this.saveData.exclusiveTokens || 0) + Math.max(1, Math.floor(quest.reward.gold / 50));
+    this.state.exclusiveTokens = this.saveData.exclusiveTokens;
     saveDailyQuests(this.dailyQuests);
     this.persistSave();
     return true;
@@ -1381,7 +1384,7 @@ export class GameEngine {
       ...this.createInitialState(),
       inventory,
       currentMapId: map.id,
-      gold: dungeon.rules.startGold || 200,
+      gold: 0,
       totalWaves: dungeon.totalWaves,
     };
     this.state.slots = map.slots.map(s => ({ ...s }));
@@ -1419,7 +1422,9 @@ export class GameEngine {
     // Award rewards
     this.saveData.stars += dungeon.reward.stars;
     this.state.stars = this.saveData.stars;
-    this.state.gold += dungeon.reward.gold;
+    this.grantUnlockShards(Math.max(10, Math.floor(dungeon.reward.gold / 10)));
+    this.saveData.exclusiveTokens = (this.saveData.exclusiveTokens || 0) + Math.max(1, Math.floor(dungeon.reward.gold / 100));
+    this.state.exclusiveTokens = this.saveData.exclusiveTokens;
 
     let equipDrop: string | undefined;
     if (dungeon.reward.guaranteedEquipRarity) {
@@ -1507,8 +1512,9 @@ export class GameEngine {
   private persistSave(): void {
     this.saveData.inventory = inventoryToSaveData(this.state.inventory);
     this.saveData.equipmentInventory = [...this.state.equipmentInventory];
-    this.saveData.gold = this.state.gold;
+    this.saveData.gold = 0;
     this.saveData.unlockShards = this.state.unlockShards;
+    this.saveData.exclusiveTokens = this.state.exclusiveTokens;
     writeSave(this.saveData);
   }
 }
