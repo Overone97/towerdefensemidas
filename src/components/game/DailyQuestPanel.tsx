@@ -66,7 +66,7 @@ const DailyQuestPanel: React.FC<DailyQuestPanelProps> = ({ engine, onStateChange
               </div>
               <div className="flex items-center justify-between mt-1">
                 <span className="text-xs text-gray-300">
-                  +{quest.reward.stars}⭐ +{quest.reward.gold}💰
+                  +{quest.reward.stars}⭐ +{Math.max(1, Math.floor(quest.reward.gold / 50))}💎
                 </span>
                 {quest.completed && !quest.claimed && (
                   <button

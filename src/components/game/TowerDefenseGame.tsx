@@ -583,6 +583,7 @@ const TowerDefenseGame: React.FC = () => {
             <CharacterUnlockTree
               progress={engine.getCharacterUnlockProgress()}
               unlockShards={state.unlockShards}
+              exclusiveTokens={state.exclusiveTokens}
               stars={state.stars}
               mapsCompleted={saveData.mapsCompleted.length}
               onUnlock={(championId) => {
