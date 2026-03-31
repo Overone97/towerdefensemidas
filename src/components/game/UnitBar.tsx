@@ -188,9 +188,15 @@ const UnitBar: React.FC<UnitBarProps> = ({ state, unplacedCharacters, lastSummon
                             <span className="text-[9px] font-mono text-muted-foreground">
                               Lv.{char.level} {ATTACK_PATTERN_ICONS[char.config.attackPattern]} {dps}dps
                             </span>
-                            <span className="text-[8px] font-mono text-cyan-300/80">
-                              XP {char.xp || 0}
-                            </span>
+                            <div className="w-full mt-1">
+                              <div className="h-1.5 rounded-full bg-black/30 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                                  style={{ width: `${Math.max(0, Math.min(100, (((char.xp || 0) / (30 + (char.level - 1) * 18)) * 100)))}%` }}
+                                />
+                              </div>
+                              <span className="text-[8px] font-mono text-cyan-300/80">XP {char.xp || 0}</span>
+                            </div>
                           </div>
                         </button>
 

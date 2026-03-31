@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlacedUnit, TargetPriority } from '../../game/types';
-import { getCharacterStats, getCharacterUpgradeCost } from '../../game/data/characterData';
+import { getCharacterStats } from '../../game/data/characterData';
+import { getXpToNextLevel } from '../../game/GameEngine';
 import { ABILITIES } from '../../game/data/abilityData';
 import { Button } from '../ui/button';
 import CharacterSprite from './CharacterSprite';
@@ -31,9 +32,9 @@ const PATTERN_LABELS: Record<string, { label: string; icon: string; desc: string
 const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, onUpgrade, onRemove, onSetPriority, onActivateAbility, onOpenSkins, hasAvailableSkins }) => {
   const stats = getCharacterStats(unit.config, unit.level, unit.stars);
   const nextStats = getCharacterStats(unit.config, unit.level + 1, unit.stars);
-  const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
   const currentXp = unit as PlacedUnit & { xp?: number };
-  const canUpgrade = (currentXp.xp || 0) >= upgradeCost;
+  const xpToNext = getXpToNextLevel(unit.level, unit.config.rarity);
+  const xpProgress = Math.max(0, Math.min(100, ((currentXp.xp || 0) / xpToNext) * 100));
   const dps = (stats.attack * stats.attackSpeed).toFixed(1);
   const nextDps = (nextStats.attack * nextStats.attackSpeed).toFixed(1);
   const pattern = PATTERN_LABELS[unit.config.attackPattern] || { label: unit.config.attackPattern, icon: '?', desc: '' };
@@ -76,9 +77,14 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, onUpgrade, onRemove
           <div className="text-[10px] text-primary/80">DPS</div>
           <div className="text-sm font-mono font-bold text-primary">{dps} <span className="text-xs text-green-400">→ {nextDps}</span></div>
         </div>
-        <div className="flex justify-between text-cyan-300 pt-1">
-          <span>✨ XP</span>
-          <span>{currentXp.xp || 0}</span>
+        <div className="col-span-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-2">
+          <div className="flex items-center justify-between text-cyan-200 text-[10px] mb-1">
+            <span>✨ XP</span>
+            <span>{currentXp.xp || 0} / {xpToNext}</span>
+          </div>
+          <div className="h-2 rounded-full bg-black/30 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all" style={{ width: `${xpProgress}%` }} />
+          </div>
         </div>
       </div>
 
@@ -149,10 +155,7 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, onUpgrade, onRemove
         );
       })()}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Button onClick={() => onUpgrade(unit.id)} disabled={!canUpgrade} size="sm" className="w-full">
-          ⬆ Upgrade ({upgradeCost} XP)
-        </Button>
+      <div className="grid grid-cols-1 gap-2">
         <Button onClick={() => onRemove(unit.id)} size="sm" variant="destructive" className="w-full">
           Retirer
         </Button>
