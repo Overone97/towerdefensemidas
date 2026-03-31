@@ -36,9 +36,26 @@ export const fishState = {
 };
 
 const UNIT_XP = {
-  kill: 12,
-  bossKill: 48,
-  waveClear: 18,
+  waveClearBase: 10,
+  waveClearStep: 2,
+};
+
+const ENEMY_TYPE_XP: Record<string, number> = {
+  normal: 6,
+  fast: 5,
+  tank: 10,
+  armored: 9,
+  healer: 11,
+  stealth: 10,
+  splitter: 8,
+  dragon_fire: 24,
+  dragon_ice: 24,
+  dragon_earth: 28,
+  dragon_air: 22,
+  boss: 40,
+  void_empress: 60,
+  ice_witch: 56,
+  noxian_grand_general: 72,
 };
 
 const RARITY_XP_MULT: Record<Rarity, number> = {
@@ -49,7 +66,7 @@ const RARITY_XP_MULT: Record<Rarity, number> = {
   legendary: 0.84,
 };
 
-function getXpToNextLevel(level: number, rarity: Rarity): number {
+export function getXpToNextLevel(level: number, rarity: Rarity): number {
   const rarityTax = rarity === 'legendary' ? 12 : rarity === 'epic' ? 8 : rarity === 'rare' ? 4 : rarity === 'uncommon' ? 2 : 0;
   return 30 + (level - 1) * 18 + rarityTax;
 }
@@ -270,7 +287,7 @@ export class GameEngine {
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
         this.grantUnlockShards(shardEarned);
-        this.awardUnitXp(unitId, enemy.type === 'boss' ? UNIT_XP.bossKill : UNIT_XP.kill);
+        this.awardUnitXp(unitId, ENEMY_TYPE_XP[enemy.type] || 6);
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         // Track stats
@@ -628,9 +645,11 @@ export class GameEngine {
     if (placedUnits.length === 0) return;
 
     const supportPatterns = new Set(['slow', 'poison_trail', 'mushroom']);
+    const waveXp = UNIT_XP.waveClearBase + Math.max(0, this.state.currentWave - 1) * UNIT_XP.waveClearStep;
+
     for (const unit of placedUnits) {
-      const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 4 : 0;
-      this.awardUnitXp(unit.characterInstanceId, UNIT_XP.waveClear + participationBonus);
+      const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 3 : 0;
+      this.awardUnitXp(unit.characterInstanceId, waveXp + participationBonus);
     }
   }
 
@@ -806,24 +825,7 @@ export class GameEngine {
   }
 
   upgradeUnit(unitId: number): boolean {
-    const unit = this.towerManager.units.find(u => u.id === unitId);
-    if (!unit) return false;
-
-    const cost = getCharacterUpgradeCost(unit.config, unit.level);
-    const character = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
-    if (!character) return false;
-    if ((character.xp || 0) < cost) return false;
-
-    character.xp = (character.xp || 0) - cost;
-    this.towerManager.upgradeUnit(unitId);
-
-    const invChar = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
-    if (invChar) {
-      invChar.level = unit.level;
-      this.persistSave();
-    }
-
-    return true;
+    return false;
   }
 
   selectSlot(index: number): void {
