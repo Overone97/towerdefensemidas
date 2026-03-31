@@ -6,6 +6,7 @@ import GameCanvas from './GameCanvas';
 import HUD from './HUD';
 import UnitBar from './UnitBar';
 import UnitInfoPanel from './UnitInfoPanel';
+import UnitPanelErrorBoundary from './UnitPanelErrorBoundary';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
 import CharacterUnlockTree from './CharacterUnlockTree';
@@ -514,15 +515,17 @@ const TowerDefenseGame: React.FC = () => {
             <SynergyPanel synergies={state.activeSynergies} />
           )}
           {selectedUnit && (
-            <UnitInfoPanel
-              unit={selectedUnit}
-              onUpgrade={handleUpgrade}
-              onRemove={handleRemove}
-              onSetPriority={handleSetPriority}
-              onActivateAbility={handleActivateAbility}
-              onOpenSkins={(champId) => setSkinChampionId(champId)}
-              hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
-            />
+            <UnitPanelErrorBoundary>
+              <UnitInfoPanel
+                unit={selectedUnit}
+                onUpgrade={handleUpgrade}
+                onRemove={handleRemove}
+                onSetPriority={handleSetPriority}
+                onActivateAbility={handleActivateAbility}
+                onOpenSkins={(champId) => setSkinChampionId(champId)}
+                hasAvailableSkins={getSkinsForChampion(selectedUnit.config.id).length > 0}
+              />
+            </UnitPanelErrorBoundary>
           )}
         </div>
       </div>
