@@ -7,6 +7,7 @@ import HUD from './HUD';
 import UnitBar from './UnitBar';
 import UnitInfoPanel from './UnitInfoPanel';
 import UnitPanelErrorBoundary from './UnitPanelErrorBoundary';
+import { GAME_VERSION } from '../../game/data/version';
 import GameOverScreen from './GameOverScreen';
 import GachaReveal from './GachaReveal';
 import CharacterUnlockTree from './CharacterUnlockTree';
@@ -463,6 +464,10 @@ const TowerDefenseGame: React.FC = () => {
       {/* Canvas fills entire background */}
       <div className="absolute inset-0 flex items-center justify-center">
         <GameCanvas engine={engine} onStateChange={onStateChange} onFishCaught={handleFishCaught} />
+      </div>
+
+      <div className="absolute top-3 left-4 z-30 pointer-events-none select-none text-[11px] font-mono text-white/50 tracking-[0.18em] drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]">
+        v{GAME_VERSION}
       </div>
 
       {/* Floating HUD - top */}
