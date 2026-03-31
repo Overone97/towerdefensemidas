@@ -32,10 +32,10 @@ const UnitInfoPanel: React.FC<UnitInfoPanelProps> = ({ unit, onUpgrade, onRemove
   const stats = getCharacterStats(unit.config, unit.level, unit.stars);
   const nextStats = getCharacterStats(unit.config, unit.level + 1, unit.stars);
   const upgradeCost = getCharacterUpgradeCost(unit.config, unit.level);
+  const currentXp = unit as PlacedUnit & { xp?: number };
   const canUpgrade = (currentXp.xp || 0) >= upgradeCost;
   const dps = (stats.attack * stats.attackSpeed).toFixed(1);
   const nextDps = (nextStats.attack * nextStats.attackSpeed).toFixed(1);
-  const currentXp = unit as PlacedUnit & { xp?: number };
   const pattern = PATTERN_LABELS[unit.config.attackPattern] || { label: unit.config.attackPattern, icon: '?', desc: '' };
 
   const priorities: { value: TargetPriority; label: string; icon: string }[] = [
