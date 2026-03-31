@@ -83,7 +83,7 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
       if (phase === 'egg') {
         // Glow behind egg (grows with progress)
         const glowSize = 50 + (hatchProgress / 100) * 40;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize);
+        const grad = safeRadialGradient(ctx, cx, cy, 0, cx, cy, glowSize);
         grad.addColorStop(0, accentColor + '44');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
@@ -134,7 +134,7 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
 
         // Light burst
         const burstSize = 30 + crackProgress * 150;
-        const burstGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, burstSize);
+        const burstGrad = safeRadialGradient(ctx, cx, cy, 0, cx, cy, burstSize);
         burstGrad.addColorStop(0, '#ffffff');
         burstGrad.addColorStop(0.3, accentColor + 'cc');
         burstGrad.addColorStop(1, 'transparent');
@@ -181,7 +181,7 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
         // Glow behind character
         const pulse = Math.sin(t * 3) * 0.15 + 0.85;
         const glowSize = 70;
-        const grad = ctx.createRadialGradient(cx, cy - 10, 0, cx, cy - 10, glowSize * pulse);
+        const grad = safeRadialGradient(ctx, cx, cy - 10, 0, cx, cy - 10, glowSize * pulse);
         grad.addColorStop(0, accentColor + '66');
         grad.addColorStop(0.5, accentColor + '22');
         grad.addColorStop(1, 'transparent');
