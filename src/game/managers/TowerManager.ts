@@ -61,7 +61,7 @@ export class TowerManager {
   unitEquipment: Map<number, EquippedItems> = new Map(); // unitId -> equipment
   iceDragonAuras: { x: number; y: number; radius: number }[] = [];
 
-  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems, stars: number = 1): PlacedUnit {
+  placeUnit(config: CharacterConfig, slot: Slot, slotIndex: number, characterInstanceId: number, level: number, equipment?: EquippedItems, stars: number = 1, xp: number = 0): PlacedUnit {
     const isRoamer = config.attackPattern === 'poison_trail' || config.attackPattern === 'mushroom';
     const unit: PlacedUnit = {
       id: nextUnitId++,
@@ -71,6 +71,7 @@ export class TowerManager {
       x: slot.x,
       y: slot.y,
       level,
+      xp,
       stars,
       attackCooldown: 0,
       targetId: null,

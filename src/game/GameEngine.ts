@@ -644,6 +644,7 @@ export class GameEngine {
     const placedUnit = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
     if (placedUnit) {
       placedUnit.level = character.level;
+      placedUnit.xp = character.xp || 0;
     }
   }
 
@@ -756,7 +757,7 @@ export class GameEngine {
     // Dungeon: no equipment — strip equipment for placement
     const equipmentToUse = this.activeDungeon?.rules.noEquipment ? {} : character.equipment;
 
-    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, equipmentToUse, character.stars);
+    const unit = this.towerManager.placeUnit(character.config, slot, slotIndex, characterInstanceId, character.level, equipmentToUse, character.stars, character.xp || 0);
     slot.unitId = unit.id;
     soundManager.playPlaceUnit();
     this.trackDailyEvent({ type: 'place_units', count: 1 });

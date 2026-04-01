@@ -129,6 +129,7 @@ export interface PlacedUnit {
   x: number;
   y: number;
   level: number;
+  xp?: number;
   stars: number;
   attackCooldown: number;
   targetId: number | null;
