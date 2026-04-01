@@ -7,6 +7,7 @@ import { FloatingTextManager } from './managers/FloatingTextManager';
 import { ScreenShake } from './managers/ScreenShake';
 import { computeSynergies } from './managers/SynergyManager';
 import { loadSave, writeSave, saveDataToInventory, inventoryToSaveData, SaveData } from './managers/SaveManager';
+import { saveCloudForCurrentUser } from './managers/CloudSaveManager';
 import { ACHIEVEMENTS, AchievementStats } from './data/achievementData';
 import { getTalentBonus, getAscensionBonus, getAscensionUpgradeCost, getAscensionSpent } from './data/talentData';
 import { ALL_MAPS } from './data/allMaps';
@@ -1519,5 +1520,6 @@ export class GameEngine {
     this.saveData.unlockShards = this.state.unlockShards;
     this.saveData.exclusiveTokens = this.state.exclusiveTokens;
     writeSave(this.saveData);
+    void saveCloudForCurrentUser(this.saveData);
   }
 }

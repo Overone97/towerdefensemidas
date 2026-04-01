@@ -30,6 +30,8 @@ import OptionsScreen from './OptionsScreen';
 import CreditsScreen from './CreditsScreen';
 import { getSkinsForChampion } from '../../game/data/skinData';
 import { supabase } from '@/integrations/supabase/client';
+import { loadCloudSaveForCurrentUser, saveCloudForCurrentUser } from '../../game/managers/CloudSaveManager';
+import { writeSave } from '../../game/managers/SaveManager';
 
 type Screen = 'menu' | 'game' | 'talents' | 'maps' | 'wiki' | 'achievements' | 'equipment' | 'aram_solo' | 'aram_duo' | 'skin_shop' | 'options' | 'credits';
 
@@ -111,18 +113,39 @@ const TowerDefenseGame: React.FC = () => {
     setCinematicTimer(2.2);
   }, [screen, state.currentMapId, state.currentWave, state.waveActive]);
 
-  // Admin mode bootstrap (account-bound)
+  // Admin mode bootstrap + cloud save bootstrap (account-bound)
   useEffect(() => {
     const applySession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       engine.setAdminByEmail(session?.user?.email);
+
+      if (session?.user) {
+        const cloudSave = await loadCloudSaveForCurrentUser();
+        if (cloudSave?.inventory?.length || cloudSave?.unlockedCharacters?.length) {
+          writeSave(cloudSave);
+          window.location.reload();
+          return;
+        }
+      }
+
       onStateChange();
     };
 
     applySession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       engine.setAdminByEmail(session?.user?.email);
+
+      if (session?.user) {
+        const cloudSave = await loadCloudSaveForCurrentUser();
+        if (cloudSave?.inventory?.length || cloudSave?.unlockedCharacters?.length) {
+          writeSave(cloudSave);
+          window.location.reload();
+          return;
+        }
+        await saveCloudForCurrentUser();
+      }
+
       onStateChange();
     });
 
@@ -455,9 +478,10 @@ const TowerDefenseGame: React.FC = () => {
   const placedInstanceIds = new Set(state.placedUnits.map(u => u.characterInstanceId));
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
-  const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0;
+  const hasPersistentProgress = saveData.inventory.length > 0 || saveData.unlockedCharacters.length > 5 || saveData.mapsCompleted.length > 0;
+  const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0 && !hasPersistentProgress;
   const starterChoices = state.inventory.filter(c => ['garen', 'ashe', 'teemo', 'lux', 'leona'].includes(c.config.id)).slice(0, 3);
-  const showStarterSummon = state.currentWave === 0 && state.placedUnits.length === 0 && starterChoices.length >= 3;
+  const showStarterSummon = state.currentWave === 0 && state.placedUnits.length === 0 && starterChoices.length >= 3 && !hasPersistentProgress;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">

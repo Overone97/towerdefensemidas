@@ -41,6 +41,24 @@ export type Database = {
         }
         Relationships: []
       }
+      player_saves: {
+        Row: {
+          user_id: string
+          save_data: Json
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          save_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          save_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
