@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import menuBg from '@/assets/ui/main-menu-bg.jpg';
+import AuthButton from './AuthButton';
 
 interface MainMenuScreenProps {
   onStart: () => void;
@@ -99,6 +100,12 @@ const MainMenuScreen: React.FC<MainMenuScreenProps> = ({
             <p className="text-xs text-blue-100/75 mt-1">Menu principal • édition officielle</p>
 
             <div className="mt-2 text-[11px] text-cyan-100/80 min-h-5">{actionDescription[active]}</div>
+
+            <div className="mt-4 flex items-center justify-center">
+              <div className="rounded-full border border-white/10 bg-[#08122a]/60 px-3 py-1.5 backdrop-blur-sm shadow-[0_0_20px_rgba(15,23,42,0.35)]">
+                <AuthButton />
+              </div>
+            </div>
 
             <div className="mt-4 rounded-xl border border-blue-200/20 bg-[#08122a]/58 backdrop-blur-sm p-3 space-y-2">
               <Button action="start" label="START" icon="▶" onClick={onStart} primary />
