@@ -19,10 +19,17 @@ const AuthButton: React.FC = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+        console.error('Supabase env missing for Google login');
+        return;
+      }
+
+      const redirectTo = `${window.location.origin}${window.location.pathname}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo,
+          skipBrowserRedirect: false,
         },
       });
       if (error) console.error('Login error:', error);

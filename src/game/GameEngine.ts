@@ -640,6 +640,11 @@ export class GameEngine {
       character.xp = (character.xp || 0) - getXpToNextLevel(character.level, character.config.rarity);
       character.level += 1;
     }
+
+    const placedUnit = this.towerManager.units.find(u => u.characterInstanceId === characterInstanceId);
+    if (placedUnit) {
+      placedUnit.level = character.level;
+    }
   }
 
   private awardWaveXp(): void {
