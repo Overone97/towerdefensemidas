@@ -29,7 +29,7 @@ const CLASS_META: Record<string, { label: string; color: string; glow: string }>
 const LANE_POSITIONS = ['self-start', 'self-center', 'self-end'];
 
 const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, exclusiveTokens, stars, mapsCompleted, onUnlock }) => {
-  const visibleNodes = useMemo(() => progress.slice(0, 21), [progress]);
+  const visibleNodes = useMemo(() => progress, [progress]);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
 
   return (
@@ -37,17 +37,18 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <div className="text-sm font-bold text-white">Arbre d’ascension des champions</div>
-          <div className="text-xs text-slate-300/75">Liaisons animées, noeuds iconiques, montée en puissance bien sale. Là on commence à vendre du rêve.</div>
+          <div className="text-xs text-slate-300/75">Arbre complet du roster, progression bas → haut, classes visibles, même logique pour tout le monde.</div>
         </div>
         <div className="flex items-center gap-3 text-xs font-mono flex-wrap">
           <span className="text-cyan-300">🧩 {unlockShards} éclats</span>
           <span className="text-fuchsia-300">💎 {exclusiveTokens} jetons</span>
           <span className="text-yellow-300">⭐ {stars}</span>
           <span className="text-emerald-300">🗺️ {mapsCompleted} maps</span>
+          <span className="text-slate-300">🌳 {visibleNodes.length} champions</span>
         </div>
       </div>
 
-      <div className="max-h-[460px] overflow-y-auto pr-2 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04),transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.82),rgba(2,6,23,0.92))] p-4 shadow-[inset_0_1px_40px_rgba(255,255,255,0.03)]">
+      <div className="max-h-[560px] overflow-y-auto pr-2 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04),transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.82),rgba(2,6,23,0.92))] p-4 shadow-[inset_0_1px_40px_rgba(255,255,255,0.03)]">
         <div className="relative flex flex-col-reverse gap-5 items-stretch">
           <div className="absolute left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 bg-gradient-to-b from-cyan-400/10 via-fuchsia-400/40 to-cyan-400/10 animate-pulse" />
           <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_20%,rgba(56,189,248,0.06),transparent_20%),radial-gradient(circle_at_50%_80%,rgba(217,70,239,0.05),transparent_24%)]" />
