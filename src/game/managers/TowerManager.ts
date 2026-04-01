@@ -603,7 +603,7 @@ export class TowerManager {
           const edx = e.x - proj.x; const edy = e.y - proj.y;
           if (Math.sqrt(edx * edx + edy * edy) < 15) {
             proj.hitEnemies.push(e.id);
-            damages.push({ enemyId: e.id, damage: proj.damage });
+            damages.push({ enemyId: e.id, damage: proj.damage, unitId: proj.sourceUnitId });
             if (proj.appliesPoison) statusEffects.push({ enemyId: e.id, effect: { type: 'poison', damagePerSecond: proj.appliesPoison.damage, duration: proj.appliesPoison.duration, slowFactor: 1 } });
             if (proj.appliesSlow) statusEffects.push({ enemyId: e.id, effect: { type: 'slow', damagePerSecond: 0, duration: proj.appliesSlow.duration, slowFactor: proj.appliesSlow.factor } });
           }
@@ -638,7 +638,7 @@ export class TowerManager {
             if (!e.alive || e.id === proj.targetId) continue;
             const edx = e.x - proj.x; const edy = e.y - proj.y;
             if (Math.sqrt(edx * edx + edy * edy) <= proj.aoeRadius) {
-              damages.push({ enemyId: e.id, damage: Math.floor(proj.damage * 0.6) });
+              damages.push({ enemyId: e.id, damage: Math.floor(proj.damage * 0.6), unitId: proj.sourceUnitId });
             }
           }
         }
