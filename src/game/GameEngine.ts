@@ -287,7 +287,8 @@ export class GameEngine {
         this.state.enemiesKilled++;
         this.state.waveEnemiesKilledThisWave++;
         this.grantUnlockShards(shardEarned);
-        this.awardUnitXp(unitId, ENEMY_TYPE_XP[enemy.type] || 6);
+        const killerUnit = this.towerManager.units.find(u => u.id === unitId);
+        if (killerUnit) this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6);
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         // Track stats
