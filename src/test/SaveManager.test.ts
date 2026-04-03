@@ -29,7 +29,7 @@ describe('SaveManager', () => {
       expect(save.gold).toBe(200);
       expect(save.stars).toBe(0);
       expect(save.highScore).toBe(0);
-      expect(save.inventory).toEqual([]);
+      expect(save.inventory).toEqual([{ configId: 'garen', level: 1, xp: 0, equipment: {}, stars: 1 }]);
       expect(save.equipmentInventory).toEqual([]);
       expect(save.totalSummons).toBe(0);
       expect(save.talents).toEqual({});
@@ -52,7 +52,7 @@ describe('SaveManager', () => {
       const save = loadSave();
       expect(save.gold).toBe(200);
       expect(save.stars).toBe(0);
-      expect(save.inventory).toEqual([]);
+      expect(save.inventory).toEqual([{ configId: 'garen', level: 1, xp: 0, equipment: {}, stars: 1 }]);
     });
 
     it('retourne les valeurs par défaut quand le JSON est null', () => {
@@ -144,7 +144,7 @@ describe('SaveManager', () => {
       const save = loadSave();
       expect(save.gold).toBe(500);
       expect(save.stars).toBe(0); // valeur par défaut
-      expect(save.inventory).toEqual([]); // valeur par défaut
+      expect(save.inventory).toEqual([{ configId: 'garen', level: 1, xp: 0, equipment: {}, stars: 1 }]); // valeur par défaut
     });
   });
 

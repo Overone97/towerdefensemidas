@@ -51,7 +51,7 @@ export interface SaveData {
 
 function defaultSave(): SaveData {
   return {
-    inventory: [],
+    inventory: [{ configId: 'garen', level: 1, xp: 0, equipment: {}, stars: 1 }],
     equipmentInventory: [],
     totalSummons: 0,
     unlockedCharacters: getStarterChampionIds(),
