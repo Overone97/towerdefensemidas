@@ -284,41 +284,7 @@ export class GameEngine {
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (unitId) this.trackDamage(unitId, damage);
       if (result.killed && enemy) {
-        const shardEarned = Math.max(1, Math.ceil(result.reward * 0.35));
-        this.state.score += result.reward;
-        this.state.enemiesKilled++;
-        this.state.waveEnemiesKilledThisWave++;
-        this.grantUnlockShards(shardEarned);
-        const killerUnit = this.towerManager.units.find(u => u.id === unitId);
-        if (killerUnit) this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6, `kill:${enemy.type}`);
-        this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
-        this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
-        // Track stats
-        this.saveData.stats.totalKills++;
-        this.saveData.stats.totalGold += shardEarned;
-        if (enemy.type === 'boss') {
-          soundManager.playBossDeath();
-          this.saveData.stats.bossKills++;
-          this.saveData.stars += 1;
-          this.state.stars = this.saveData.stars;
-          this.screenShake.trigger(10, 0.5);
-          this.floatingTextManager.spawn(enemy.x, enemy.y - 10, 'BOSS KILL! +1⭐', '#ff88ff', 14);
-          this.trackDailyEvent({ type: 'kill_bosses', count: 1 });
-          const drop = rollBossDrop(this.state.currentWave);
-          if (drop) {
-            this.state.equipmentInventory.push(drop.id);
-            this.saveData.equipmentInventory = [...this.state.equipmentInventory];
-            this.state.lastDrop = drop.id;
-          }
-          this.persistSave();
-        }
-        // Death particles
-        if (enemy.type === 'boss') {
-          this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
-        } else {
-          soundManager.playEnemyDeath();
-          this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
-        }
+        this.handleEnemyKill(enemy, unitId);
       }
     }
 
@@ -666,6 +632,47 @@ export class GameEngine {
     };
   }
 
+  private handleEnemyKill(enemy: Enemy, killerUnitId?: number): void {
+    const shardEarned = Math.max(1, Math.ceil(enemy.reward * 0.35));
+    this.state.score += enemy.reward;
+    this.state.enemiesKilled++;
+    this.state.waveEnemiesKilledThisWave++;
+    this.grantUnlockShards(shardEarned);
+
+    if (killerUnitId) {
+      const killerUnit = this.towerManager.units.find(u => u.id === killerUnitId);
+      if (killerUnit) {
+        this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6, `kill:${enemy.type}`);
+      }
+    }
+
+    this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
+    this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
+    this.saveData.stats.totalKills++;
+    this.saveData.stats.totalGold += shardEarned;
+
+    if (enemy.type === 'boss') {
+      soundManager.playBossDeath();
+      this.saveData.stats.bossKills++;
+      this.saveData.stars += 1;
+      this.state.stars = this.saveData.stars;
+      this.screenShake.trigger(10, 0.5);
+      this.floatingTextManager.spawn(enemy.x, enemy.y - 10, 'BOSS KILL! +1⭐', '#ff88ff', 14);
+      this.trackDailyEvent({ type: 'kill_bosses', count: 1 });
+      const drop = rollBossDrop(this.state.currentWave);
+      if (drop) {
+        this.state.equipmentInventory.push(drop.id);
+        this.saveData.equipmentInventory = [...this.state.equipmentInventory];
+        this.state.lastDrop = drop.id;
+      }
+      this.persistSave();
+      this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
+    } else {
+      soundManager.playEnemyDeath();
+      this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
+    }
+  }
+
   private awardWaveXp(): void {
     const placedUnits = [...this.state.placedUnits];
     if (placedUnits.length === 0) return;
@@ -884,24 +891,7 @@ export class GameEngine {
       const enemy = this.enemyManager.enemies.find(e => e.id === enemyId);
       const result = this.enemyManager.damageEnemy(enemyId, damage);
       if (result.killed && enemy) {
-        const talentBonus = getTalentBonus(this.saveData.talents);
-        const ascensionBonus = getAscensionBonus(this.saveData.ascensionUpgrades || {});
-        const goldEarned = Math.floor(result.reward * talentBonus.goldMult * ascensionBonus.goldMult);
-        this.state.gold += goldEarned;
-        this.state.score += result.reward;
-        this.state.enemiesKilled++;
-        this.saveData.stats.totalKills++;
-        this.saveData.stats.totalGold += goldEarned;
-        if (enemy.type === 'boss') {
-          this.saveData.stats.bossKills++;
-          // Award 1 star per boss kill
-          this.saveData.stars += 1;
-          this.state.stars = this.saveData.stars;
-          this.persistSave();
-          this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
-        } else {
-          this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
-        }
+        this.handleEnemyKill(enemy, unitId);
       }
     }
     // Ability particles
