@@ -690,7 +690,9 @@ export class GameEngine {
 
     for (const unit of placedUnits) {
       const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 3 : 0;
-      this.awardUnitXp(unit.characterInstanceId, waveXp + participationBonus, `wave:${this.state.currentWave}`);
+      const totalWaveXp = waveXp + participationBonus;
+      this.awardUnitXp(unit.characterInstanceId, totalWaveXp, `wave:${this.state.currentWave}`);
+      this.floatingTextManager.spawn(unit.x, unit.y - 36, `WAVE XP +${totalWaveXp}`, '#93c5fd', 9);
     }
   }
 

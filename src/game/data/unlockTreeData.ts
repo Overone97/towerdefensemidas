@@ -18,8 +18,17 @@ const RARITY_WEIGHT: Record<Rarity, number> = {
 };
 
 const STARTER_ORDER = ['garen', 'ashe', 'leona', 'teemo', 'lux'];
+const CURATED_EARLY_ORDER = ['garen', 'ashe', 'leona', 'teemo', 'lux', 'nidalee', 'caitlyn', 'leesin'];
 
 function compareCharacters(a: CharacterConfig, b: CharacterConfig): number {
+  const aCurated = CURATED_EARLY_ORDER.indexOf(a.id);
+  const bCurated = CURATED_EARLY_ORDER.indexOf(b.id);
+  if (aCurated !== -1 || bCurated !== -1) {
+    if (aCurated === -1) return 1;
+    if (bCurated === -1) return -1;
+    return aCurated - bCurated;
+  }
+
   const aStarter = STARTER_ORDER.indexOf(a.id);
   const bStarter = STARTER_ORDER.indexOf(b.id);
   if (aStarter !== -1 || bStarter !== -1) {
