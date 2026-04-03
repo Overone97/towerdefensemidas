@@ -391,6 +391,14 @@ export class GameEngine {
     this.screenShake.update(dt);
 
     this.state.enemies = this.enemyManager.enemies;
+    for (const unit of this.towerManager.units) {
+      const linkedCharacter = this.state.inventory.find(c => c.instanceId === unit.characterInstanceId);
+      if (linkedCharacter) {
+        unit.level = linkedCharacter.level;
+        unit.xp = linkedCharacter.xp || 0;
+      }
+    }
+
     this.state.placedUnits = this.towerManager.units;
     this.state.projectiles = this.towerManager.projectiles;
     this.state.aoeWaves = this.towerManager.aoeWaves;
@@ -645,6 +653,7 @@ export class GameEngine {
     if (placedUnit) {
       placedUnit.level = character.level;
       placedUnit.xp = character.xp || 0;
+      this.floatingTextManager.spawn(placedUnit.x, placedUnit.y - 24, `+${adjustedXp} XP`, '#67e8f9', 10);
     }
   }
 
