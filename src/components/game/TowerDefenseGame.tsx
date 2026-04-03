@@ -494,6 +494,15 @@ const TowerDefenseGame: React.FC = () => {
         v{GAME_VERSION}
       </div>
 
+      {state.xpDebug && (
+        <div className="absolute top-8 left-4 z-30 pointer-events-none rounded-xl border border-cyan-400/20 bg-slate-950/70 px-3 py-2 text-[11px] font-mono text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.15)] backdrop-blur-sm">
+          <div className="font-bold text-cyan-300">XP DEBUG</div>
+          <div>{state.xpDebug.characterName} +{state.xpDebug.amount} XP</div>
+          <div className="text-cyan-200/80">source: {state.xpDebug.source}</div>
+          <div className="text-cyan-200/80">lvl {state.xpDebug.level} • xp {state.xpDebug.xp}</div>
+        </div>
+      )}
+
       {/* Floating HUD - top */}
       <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">

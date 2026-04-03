@@ -247,6 +247,13 @@ export interface GameState {
   totalSummons: number;
   unlockShards: number;
   exclusiveTokens: number;
+  xpDebug?: {
+    characterName: string;
+    amount: number;
+    source: string;
+    level: number;
+    xp: number;
+  } | null;
   activeTab: 'game' | 'progress';
   activeSynergies: ActiveSynergy[];
   stars: number;
