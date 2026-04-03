@@ -478,7 +478,7 @@ const TowerDefenseGame: React.FC = () => {
   const placedInstanceIds = new Set(state.placedUnits.map(u => u.characterInstanceId));
   const unplacedCharacters = state.inventory.filter(c => !placedInstanceIds.has(c.instanceId));
 
-  const hasPersistentProgress = saveData.inventory.length > 0 || saveData.unlockedCharacters.length > 5 || saveData.mapsCompleted.length > 0;
+  const hasPersistentProgress = saveData.inventory.length > 5 || saveData.mapsCompleted.length > 0 || saveData.totalSummons > 0;
   const showTutorial = !saveData.tutorialCompleted && state.inventory.length === 0 && state.currentWave === 0 && !hasPersistentProgress;
   const starterChoices = state.inventory.filter(c => ['garen', 'ashe', 'teemo', 'lux', 'leona'].includes(c.config.id)).slice(0, 3);
   const showStarterSummon = state.currentWave === 0 && state.placedUnits.length === 0 && starterChoices.length >= 3 && !hasPersistentProgress;

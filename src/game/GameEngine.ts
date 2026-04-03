@@ -37,8 +37,8 @@ export const fishState = {
 };
 
 const UNIT_XP = {
-  waveClearBase: 10,
-  waveClearStep: 2,
+  waveClearBase: 16,
+  waveClearStep: 3,
 };
 
 const ENEMY_TYPE_XP: Record<string, number> = {

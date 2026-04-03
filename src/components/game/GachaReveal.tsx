@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { OwnedCharacter } from '../../game/types';
 import { playGachaSounds } from '../../game/audio/gachaAudio';
 import { drawLolSprite } from '../../game/rendering/lolSprites';
+import { safeRadialGradient } from '../../game/rendering/safeCanvas';
 
 interface GachaRevealProps {
   character: OwnedCharacter;
