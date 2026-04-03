@@ -639,8 +639,9 @@ export class GameEngine {
     this.state.waveEnemiesKilledThisWave++;
     this.grantUnlockShards(shardEarned);
 
+    let killerUnit = undefined;
     if (killerUnitId) {
-      const killerUnit = this.towerManager.units.find(u => u.id === killerUnitId);
+      killerUnit = this.towerManager.units.find(u => u.id === killerUnitId);
       if (killerUnit) {
         this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6, `kill:${enemy.type}`);
       }
@@ -669,6 +670,13 @@ export class GameEngine {
       this.particleManager.spawnBossExplosion(enemy.x, enemy.y);
     } else {
       soundManager.playEnemyDeath();
+      if (killerUnit) {
+        const pattern = killerUnit.config.attackPattern;
+        if (pattern === 'single' || pattern === 'burst') this.particleManager.spawnClassImpact(enemy.x, enemy.y, 'burst');
+        else if (pattern === 'aoe_circle' || pattern === 'line' || pattern === 'chain' || pattern === 'rapid') this.particleManager.spawnClassImpact(enemy.x, enemy.y, 'aoe');
+        else if (pattern === 'poison' || pattern === 'poison_trail' || pattern === 'mushroom') this.particleManager.spawnClassImpact(enemy.x, enemy.y, 'poison');
+        else this.particleManager.spawnClassImpact(enemy.x, enemy.y, 'support');
+      }
       this.particleManager.spawnDeathExplosion(enemy.x, enemy.y, enemy.bodyColor);
     }
   }
