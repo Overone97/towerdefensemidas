@@ -178,6 +178,7 @@ export class GameEngine {
       totalSummons: this.saveData.totalSummons,
       unlockShards: this.saveData.unlockShards || 0,
       exclusiveTokens: this.saveData.exclusiveTokens || 0,
+      xpDebug: null,
       activeTab: 'game',
       activeSynergies: [],
       stars: this.saveData.stars,
@@ -289,7 +290,7 @@ export class GameEngine {
         this.state.waveEnemiesKilledThisWave++;
         this.grantUnlockShards(shardEarned);
         const killerUnit = this.towerManager.units.find(u => u.id === unitId);
-        if (killerUnit) this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6);
+        if (killerUnit) this.awardUnitXp(killerUnit.characterInstanceId, ENEMY_TYPE_XP[enemy.type] || 6, `kill:${enemy.type}`);
         this.floatingTextManager.spawn(enemy.x, enemy.y, `+${shardEarned}🧩`, '#67e8f9', 9);
         this.trackDailyEvent({ type: 'kill_enemies', count: 1 });
         // Track stats
@@ -633,7 +634,7 @@ export class GameEngine {
     return character;
   }
 
-  private awardUnitXp(characterInstanceId: number, amount: number): void {
+  private awardUnitXp(characterInstanceId: number, amount: number, source: string = 'unknown'): void {
     if (amount <= 0) return;
     const character = this.state.inventory.find(c => c.instanceId === characterInstanceId);
     if (!character) return;
@@ -655,6 +656,14 @@ export class GameEngine {
       placedUnit.xp = character.xp || 0;
       this.floatingTextManager.spawn(placedUnit.x, placedUnit.y - 24, `+${adjustedXp} XP`, '#67e8f9', 10);
     }
+
+    this.state.xpDebug = {
+      characterName: character.config.name,
+      amount: adjustedXp,
+      source,
+      level: character.level,
+      xp: character.xp || 0,
+    };
   }
 
   private awardWaveXp(): void {
@@ -666,7 +675,7 @@ export class GameEngine {
 
     for (const unit of placedUnits) {
       const participationBonus = supportPatterns.has(unit.config.attackPattern) ? 3 : 0;
-      this.awardUnitXp(unit.characterInstanceId, waveXp + participationBonus);
+      this.awardUnitXp(unit.characterInstanceId, waveXp + participationBonus, `wave:${this.state.currentWave}`);
     }
   }
 
