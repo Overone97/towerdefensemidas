@@ -113,6 +113,11 @@ export class GameEngine {
   private runAttackMult = 1;
   private runSpeedMult = 1;
   private runRangeMult = 1;
+  private runPoisonMult = 1;
+  private runAttackSpeedMult = 1;
+  private runBurstMult = 1;
+  private runAoeMult = 1;
+  private runSupportMult = 1;
 
   private saveData: SaveData;
   state: GameState;
@@ -513,11 +518,23 @@ export class GameEngine {
   }
 
   private generateMidrunChoices(): MidrunChoice[] {
-    return [
+    const pool: MidrunChoice[] = [
       { id: 'greed', title: '🧩 Pacte d’éclats', description: '+45 éclats maintenant, mais -1 PV max de base.' },
       { id: 'fortify', title: '🛡️ Serment du bastion', description: '+2 PV de base max et +2 PV soignés.' },
       { id: 'fury', title: '⚔️ Fureur tactique', description: '+12% dégâts de tours ce run, mais ennemis +8% vitesse.' },
+      { id: 'venom', title: '☠️ Doctrine toxique', description: '+18% dégâts poison ce run.' },
+      { id: 'tempo', title: '💨 Tempo de guerre', description: '+10% vitesse d’attaque de l’équipe.' },
+      { id: 'focus', title: '🎯 Discipline létale', description: '+15% dégâts des DPS Burst.' },
+      { id: 'surge', title: '🌩️ Surtension', description: '+1 jeton exclusif et +25 éclats.' },
+      { id: 'recovery', title: '💚 Repli maîtrisé', description: 'Soigne 3 PV de base maintenant.' },
+      { id: 'insight', title: '👁️ Lecture du champ', description: '+1 map complétée virtuelle pour les prérequis ce run.' },
+      { id: 'guard', title: '🧱 Ligne solide', description: 'Les ennemis perdent 6% vitesse ce run.' },
+      { id: 'storm', title: '⚡ Front orageux', description: '+14% dégâts AOE ce run.' },
+      { id: 'support', title: '🧊 Main froide', description: '+20% puissance des slows/supports ce run.' },
     ];
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
   }
 
   pickMidrunChoice(choiceId: string): boolean {
@@ -538,6 +555,29 @@ export class GameEngine {
         if (!e.alive) continue;
         e.baseSpeed *= 1.08;
       }
+    } else if (choiceId === 'venom') {
+      this.runPoisonMult *= 1.18;
+    } else if (choiceId === 'tempo') {
+      this.runAttackSpeedMult *= 1.10;
+    } else if (choiceId === 'focus') {
+      this.runBurstMult *= 1.15;
+    } else if (choiceId === 'surge') {
+      this.grantUnlockShards(25);
+      this.saveData.exclusiveTokens = (this.saveData.exclusiveTokens || 0) + 1;
+      this.state.exclusiveTokens = this.saveData.exclusiveTokens;
+    } else if (choiceId === 'recovery') {
+      this.state.baseHp = Math.min(this.state.maxBaseHp, this.state.baseHp + 3);
+    } else if (choiceId === 'insight') {
+      this.state.stars += 1;
+    } else if (choiceId === 'guard') {
+      for (const e of this.enemyManager.enemies) {
+        if (!e.alive) continue;
+        e.baseSpeed *= 0.94;
+      }
+    } else if (choiceId === 'storm') {
+      this.runAoeMult *= 1.14;
+    } else if (choiceId === 'support') {
+      this.runSupportMult *= 1.20;
     } else {
       return false;
     }
@@ -1096,6 +1136,11 @@ export class GameEngine {
     this.runAttackMult = 1;
     this.runSpeedMult = 1;
     this.runRangeMult = 1;
+    this.runPoisonMult = 1;
+    this.runAttackSpeedMult = 1;
+    this.runBurstMult = 1;
+    this.runAoeMult = 1;
+    this.runSupportMult = 1;
     this.ascensionEventCooldown = 12;
     this.lastAscensionBossIntroWave = 0;
     
