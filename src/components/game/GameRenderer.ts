@@ -7,6 +7,7 @@ import { ALL_MAPS } from '../../game/data/allMaps';
 import { fishState } from '../../game/GameEngine';
 import { getSkinById } from '../../game/data/skinData';
 import { safeRadialGradient } from '../../game/rendering/safeCanvas';
+import endBaseTower from '../../assets/base/end-base-tower.jpg';
 import plainsBg from '../../assets/maps/plains-bg.jpg';
 import forestBg from '../../assets/maps/forest-bg.jpg';
 import volcanoBg from '../../assets/maps/volcano-bg.jpg';
@@ -1160,56 +1161,21 @@ function drawProjectiles(ctx: CanvasRenderingContext2D, projectiles: Projectile[
   }
 }
 
+const endBaseTowerImage = new Image();
+endBaseTowerImage.src = endBaseTower;
+
 function drawBase(ctx: CanvasRenderingContext2D, waypoints: Point[]): void {
   const last = waypoints[waypoints.length - 1];
-  // Shift left if too close to edge
-  const bx = last.x >= 780 ? last.x - 30 : last.x;
-  const by = last.y;
+  const bx = last.x >= 780 ? last.x - 42 : last.x;
+  const by = last.y + 8;
+  const width = 118;
+  const height = 148;
 
-  // Stone platform (larger)
-  ctx.fillStyle = '#666666';
-  ctx.beginPath();
-  ctx.ellipse(bx, by + 12, 36, 14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#888888';
-  ctx.beginPath();
-  ctx.ellipse(bx, by + 9, 32, 11, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Castle/tower base (2x bigger)
-  ctx.fillStyle = '#4477aa';
-  ctx.fillRect(bx - 20, by - 32, 40, 44);
-  // Battlements
-  ctx.fillStyle = '#5588bb';
-  ctx.fillRect(bx - 24, by - 40, 12, 12);
-  ctx.fillRect(bx - 4, by - 44, 8, 16);
-  ctx.fillRect(bx + 12, by - 40, 12, 12);
-  // Door
-  ctx.fillStyle = '#2a4a6a';
-  ctx.fillRect(bx - 8, by - 4, 16, 16);
-  // Windows
-  ctx.fillStyle = '#ffdd44';
-  ctx.fillRect(bx - 14, by - 22, 6, 6);
-  ctx.fillRect(bx + 8, by - 22, 6, 6);
-  // Flag
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(bx, by - 44);
-  ctx.lineTo(bx, by - 62);
-  ctx.stroke();
-  ctx.fillStyle = '#ff4444';
-  ctx.beginPath();
-  ctx.moveTo(bx, by - 62);
-  ctx.lineTo(bx + 14, by - 57);
-  ctx.lineTo(bx, by - 52);
-  ctx.fill();
-
-  // Label
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 10px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('🏰 BASE', bx, by + 30);
+  ctx.save();
+  ctx.shadowColor = 'rgba(80, 220, 255, 0.28)';
+  ctx.shadowBlur = 24;
+  ctx.drawImage(endBaseTowerImage, bx - width / 2, by - height / 2, width, height);
+  ctx.restore();
 }
 
 // ── Pond & Fish Easter Egg ──
