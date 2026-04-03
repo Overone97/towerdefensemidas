@@ -183,6 +183,25 @@ export class ParticleManager {
     }
   }
 
+  /** Class feedback burst */
+  spawnClassImpact(x: number, y: number, role: 'burst' | 'aoe' | 'poison' | 'support'): void {
+    if (role === 'burst') {
+      this.spawnCritFlash(x, y);
+      this.spawnDeathExplosion(x, y, '#ff7a7a', 10);
+      return;
+    }
+    if (role === 'aoe') {
+      this.spawnFireBurst(x, y, 26);
+      return;
+    }
+    if (role === 'poison') {
+      this.spawnPoisonPuff(x, y);
+      this.spawnPoisonPuff(x + 6, y - 4);
+      return;
+    }
+    this.spawnIceEffect(x, y, 18);
+  }
+
   /** Star evolution burst (for merge animation) */
   spawnStarEvolution(x: number, y: number, stars: number): void {
     const color = stars === 3 ? '#ffcc00' : '#44ccff';
