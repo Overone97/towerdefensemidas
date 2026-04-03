@@ -31,6 +31,7 @@ const LANE_POSITIONS = ['self-start', 'self-center', 'self-end'];
 const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unlockShards, exclusiveTokens, stars, mapsCompleted, onUnlock }) => {
   const visibleNodes = useMemo(() => progress, [progress]);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const starterFallback = visibleNodes.filter(node => node.order < 5);
 
   return (
     <div className="px-4 py-3 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.08),rgba(2,6,23,0.96)_45%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98))] backdrop-blur-sm border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
@@ -47,6 +48,13 @@ const CharacterUnlockTree: React.FC<CharacterUnlockTreeProps> = ({ progress, unl
           <span className="text-slate-300">🌳 {visibleNodes.length} champions</span>
         </div>
       </div>
+
+      {starterFallback.some(node => !node.unlocked) && (
+        <div className="mb-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-3 text-sm text-cyan-100">
+          <div className="font-bold mb-1">Starter de secours</div>
+          <div className="text-xs text-cyan-200/80">Si l’invocation du début ne s’est pas affichée, tu peux récupérer ton starter ici et lancer la run sans rester bloqué.</div>
+        </div>
+      )}
 
       <div className="max-h-[560px] overflow-y-auto pr-2 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04),transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.82),rgba(2,6,23,0.92))] p-4 shadow-[inset_0_1px_40px_rgba(255,255,255,0.03)]">
         <div className="relative flex flex-col-reverse gap-5 items-stretch">
