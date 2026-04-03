@@ -939,16 +939,17 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
 
     // ── Range circle (enhanced) ──
     if (isSelected) {
+      const safeRange = Math.max(0, stats.range);
       // Outer pulsing ring
       const pulse = 0.6 + Math.sin(now * 3) * 0.15;
-      const innerRange = Math.max(0, Math.min(stats.range - 0.001, stats.range * 0.7));
-      const outerRange = Math.max(0.001, stats.range);
+      const innerRange = Math.max(0, Math.min(safeRange - 0.001, safeRange * 0.7));
+      const outerRange = Math.max(0.001, safeRange);
       const rangeGrad = safeRadialGradient(ctx, unit.x, unit.y, innerRange, unit.x, unit.y, outerRange);
       rangeGrad.addColorStop(0, 'rgba(68, 170, 255, 0.0)');
       rangeGrad.addColorStop(0.8, `rgba(68, 170, 255, ${0.06 * pulse})`);
       rangeGrad.addColorStop(1, `rgba(68, 170, 255, ${0.15 * pulse})`);
       ctx.beginPath();
-      ctx.arc(unit.x, unit.y, stats.range, 0, Math.PI * 2);
+      ctx.arc(unit.x, unit.y, safeRange, 0, Math.PI * 2);
       ctx.fillStyle = rangeGrad;
       ctx.fill();
 
@@ -961,7 +962,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       ctx.strokeStyle = `rgba(100, 200, 255, ${0.5 + Math.sin(now * 2) * 0.2})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(unit.x, unit.y, stats.range, 0, Math.PI * 2);
+      ctx.arc(unit.x, unit.y, safeRange, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
@@ -970,7 +971,7 @@ function drawUnits(ctx: CanvasRenderingContext2D, units: PlacedUnit[], selectedI
       ctx.strokeStyle = 'rgba(100, 200, 255, 0.35)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(unit.x, unit.y, stats.range - 3, 0, Math.PI * 2);
+      ctx.arc(unit.x, unit.y, Math.max(0, safeRange - 3), 0, Math.PI * 2);
       ctx.stroke();
     }
 
