@@ -180,15 +180,16 @@ const GachaReveal: React.FC<GachaRevealProps> = ({ character, onComplete }) => {
 
       if (phase === 'reveal') {
         // Glow behind character
-        const pulse = Math.sin(t * 3) * 0.15 + 0.85;
+        const pulse = Math.max(0.2, Math.sin(t * 3) * 0.15 + 0.85);
         const glowSize = 70;
-        const grad = safeRadialGradient(ctx, cx, cy - 10, 0, cx, cy - 10, glowSize * pulse);
+        const revealRadius = Math.max(1, glowSize * pulse);
+        const grad = safeRadialGradient(ctx, cx, cy - 10, 0, cx, cy - 10, revealRadius);
         grad.addColorStop(0, accentColor + '66');
         grad.addColorStop(0.5, accentColor + '22');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(cx, cy - 10, glowSize * pulse, 0, Math.PI * 2);
+        ctx.arc(cx, cy - 10, revealRadius, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw actual character sprite (LoL PNG)
